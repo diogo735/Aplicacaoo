@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "521075155754",
+    "firebase_url": "https://softinsa-basededados-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "softinsa-basededados",
+    "storage_bucket": "softinsa-basededados.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:521075155754:android:c6dccc29d89d750f68b453",
+        "android_client_info": {
+          "package_name": "com.example.ficha3"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBF9dboxbUb3F4Hj-YjWa4QZAXKSSemEic"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

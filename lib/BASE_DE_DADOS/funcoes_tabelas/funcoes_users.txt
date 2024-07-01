@@ -1,0 +1,102 @@
+static Future<void> insertUsuarios(Database db) async {
+    
+
+    await db.insert(
+      'usuario',
+      {
+        'nome': 'Susana',
+        'sobrenome': 'Carvalho',
+        'caminho_foto': 'assets/images/pessoa5.jpg',
+        'caminho_fundo': 'assets/images/fundo_susana.jpg',
+        'centro_id':5,
+        'sobre_min':'Para mim, a neve não é apenas um clima, é uma paixão que aquece meu coração gelado! ❄️⛷️🏂 #AmoNeve #InvernoÉVida'
+      },
+    );
+    await db.insert(
+      'usuario',
+      {
+        'nome': 'Rafael',
+        'sobrenome': 'Marques',
+        'centro_id':4,
+        'caminho_foto': 'assets/images/rafa.jpg',
+        'caminho_fundo': 'assets/images/fundo_rafa.jpg',
+        'sobre_min':'Max Verstappen Tu-tu-du-du Max Verstappen Tu-tu-du-du 🏎️🏎️🏎️'
+      },
+    );
+    
+    await db.insert(
+      'usuario',
+      {
+        'nome': 'João',
+        'sobrenome': 'Silva',
+        'centro_id':3,
+        'caminho_foto': 'assets/images/pessoa1.jpeg',
+        'caminho_fundo':'assets/images/imagens_perfilusers/fundo_1.png',
+        'sobre_min':'Explorando trilhas e conquistando montanhas, pedalando com paixão pelas maravilhas da natureza !!!'
+      },
+    );
+    await db.insert(
+      'usuario',
+      {
+        'nome': 'Maria',
+        'sobrenome': 'Santos',
+        'centro_id':2,
+        'caminho_foto': 'assets/images/pessoa2.jpeg',
+        'caminho_fundo':'assets/images/imagens_perfilusers/fundo_2.png',
+        'sobre_min':'Deslizando pelas quadras com força e delicadeza, pronta para vencer cada jogo com classe e charme 👸 !'
+      },
+    );
+    await db.insert(
+      'usuario',
+      {
+        'nome': 'Rita',
+        'sobrenome': 'Gomes',
+        'centro_id':1,
+        'caminho_foto': 'assets/images/pessoa4.jpg',
+        'caminho_fundo':'assets/images/imagens_perfilusers/fundo_3.png',
+        'sobre_min':'Pedalando com liberdade e alegria, explorando novos caminhos e conquistando o mundo sobre duas rodas 🚲 !'
+      },
+    );
+    /*
+    await db.insert(
+      'usuario',
+      {
+        'nome': 'Ana',
+        'sobrenome': 'Ferreira',
+        'caminho_foto': 'assets/images/pessoa3.jpeg'
+      },
+    );
+     await db.insert(
+      'usuario',
+      {
+        'nome': 'Miguel',
+        'sobrenome': 'Sousa',
+        'caminho_foto': 'assets/images/pessoa6.jpg'
+      },
+    );
+     await db.insert(
+      'usuario',
+      {
+        'nome': 'Lucas',
+        'sobrenome': 'Oliveira',
+        'caminho_foto': 'assets/images/pessoa7.jpeg'
+      },
+    );
+     await db.insert(
+      'usuario',
+      {
+        'nome': 'Julia',
+        'sobrenome': 'Matos',
+        'caminho_foto': 'assets/images/pessoa8.jpg'
+      },
+    );
+     
+     await db.insert(
+      'usuario',
+      {
+        'nome': 'Luara ',
+        'sobrenome': 'Costa',
+        'caminho_foto': 'assets/images/pessoa9.jpg'
+      },
+    );*/
+  }
