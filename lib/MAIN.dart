@@ -8,6 +8,7 @@ import 'package:ficha3/PAGINA_DE_LOGIN/PaginaLogin.dart';
 import 'package:ficha3/PAGINA_DE_LOGIN/login_email.dart';
 import 'package:ficha3/PAGINA_DE_LOGIN/login_google.dart';
 import 'package:ficha3/PAGINA_DE_LOGIN/registo.dart';
+import 'package:ficha3/PAGINA_INICIAL/PAGINA_VERTODOS/vertodos_eventos.dart';
 import 'package:ficha3/PAGINA_loading_user.dart';
 import 'package:ficha3/centro_provider.dart';
 import 'package:flutter/material.dart';
@@ -61,10 +62,11 @@ class MeuApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ), // ThemeData&& userId
-      initialRoute: estalogado ? '/home' : '/',
+      initialRoute: estalogado ? '/home' : '/vereventos',
       routes: {
         '/home': (BuildContext context) => MinhaPaginaInicial(userId: userId),
         '/': (context) => const PaginaLogin(),
+        '/vereventos': (context) => vertodos_eventos(),
         //'/criar_partilha':(context) =>CriarPartilha(cor: Colors.blue,idArea: 2,),
         '/registo': (context) => Registo(),
         '/email': (context) => LoginEmail(),

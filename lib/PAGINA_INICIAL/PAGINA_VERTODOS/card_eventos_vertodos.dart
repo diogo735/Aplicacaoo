@@ -2,11 +2,13 @@
 
 import 'dart:io';
 
+import 'package:ficha3/AREAS/PAGINA_DE_UMA_AREA/sub_menu_eventos/pagina_evento.dart';
 import 'package:flutter/material.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_tipodeevento.dart';
 
 Widget CARD_EVENTO_VERTODOS({
    required BuildContext context,
+   required int id,
   required String nomeEvento,
   required int dia,mes,ano,
   required String horas,
@@ -35,17 +37,30 @@ Widget CARD_EVENTO_VERTODOS({
         return Text('Erro: ${snapshot.error}');
       } else {
         final String tipoEvento = snapshot.data!;
-        return _buildEventoWidget(
-          context: context,
-          nomeEvento: nomeEvento,
-          data: formatarData(dia, mes, ano),
-          horas: horas,
-          local: local,
-          numeroParticipantes: numeroParticipantes,
-          imagePath: imagePath,
-          tipoEvento: tipoEvento,
-          tipo_evento:
-          tipo_evento, // Passando o id_tipo do evento para o widget interno
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => PaginaEvento(
+                  
+                  idEvento: id,
+                 
+                ),
+              ),
+            );
+          },
+          child: _buildEventoWidget(
+            context: context,
+            nomeEvento: nomeEvento,
+            data: formatarData(dia, mes, ano),
+            horas: horas,
+            local: local,
+            numeroParticipantes: numeroParticipantes,
+            imagePath: imagePath,
+            tipoEvento: tipoEvento,
+            tipo_evento: tipo_evento, // Passando o id_tipo do evento para o widget interno
+          ),
         );
       }
     },

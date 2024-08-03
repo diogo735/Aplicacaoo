@@ -24,7 +24,8 @@ class _vertodos_eventosState extends State<vertodos_eventos> {
     Funcoes_Eventos funcoesEventos = Funcoes_Eventos();
     final centroProvider = Provider.of<Centro_Provider>(context, listen: false);
     final centroSelecionado = centroProvider.centroSelecionado;
-    int centroId = centroSelecionado!.id;
+    int centroId=5;
+    //int centroId = centroSelecionado!.id;
     //int centroId = 2; //////////////////
     List<Map<String, dynamic>> eventosCarregados =
         await funcoesEventos.consultaEventosPorCentroId(centroId);
@@ -236,6 +237,7 @@ class _vertodos_eventosState extends State<vertodos_eventos> {
                                 left: 4, right: 10, top: 20),
                             child: CARD_EVENTO_VERTODOS(
                               context: context,
+                              id:eventos[index]['id'],
                               nomeEvento: eventos[index]['nome'],
                               dia: eventos[index]['dia_realizacao'],
                               mes: eventos[index]['mes_realizacao'],
@@ -283,6 +285,7 @@ class _vertodos_eventosState extends State<vertodos_eventos> {
                                         left: 4, right: 10, top: 20),
                                     child: CARD_EVENTO_VERTODOS(
                                       context: context,
+                                      id:eventos[index]['id'],
                                       nomeEvento: eventos[index]['nome'],
                                       dia: eventos[index]['dia_realizacao'],
                                       mes: eventos[index]['mes_realizacao'],
@@ -336,6 +339,7 @@ class _vertodos_eventosState extends State<vertodos_eventos> {
                                         left: 4, right: 10, top: 20),
                                     child: CARD_EVENTO_VERTODOS(
                                       context: context,
+                                      id:eventos[index]['id'],
                                       nomeEvento: eventos[index]['nome'],
                                       dia: eventos[index]['dia_realizacao'],
                                       mes: eventos[index]['mes_realizacao'],
@@ -389,6 +393,7 @@ class _vertodos_eventosState extends State<vertodos_eventos> {
                                   left: 4, right: 10, top: 20),
                               child: CARD_EVENTO_VERTODOS(
                                 context: context,
+                                id:eventos[index]['id'],
                                 nomeEvento: eventos[index]['nome'],
                                 dia: eventos[index]['dia_realizacao'],
                                 mes: eventos[index]['mes_realizacao'],
@@ -440,6 +445,7 @@ class _vertodos_eventosState extends State<vertodos_eventos> {
                                   left: 4, right: 10, top: 20),
                               child: CARD_EVENTO_VERTODOS(
                                 context: context,
+                                id:eventos[index]['id'],
                                 nomeEvento: eventos[index]['nome'],
                                 dia: eventos[index]['dia_realizacao'],
                                 mes: eventos[index]['mes_realizacao'],
@@ -492,6 +498,7 @@ class _vertodos_eventosState extends State<vertodos_eventos> {
                                   left: 4, right: 10, top: 20),
                               child: CARD_EVENTO_VERTODOS(
                                 context: context,
+                                id:eventos[index]['id'],
                                 nomeEvento: eventos[index]['nome'],
                                 dia: eventos[index]['dia_realizacao'],
                                 mes: eventos[index]['mes_realizacao'],
@@ -544,6 +551,7 @@ class _vertodos_eventosState extends State<vertodos_eventos> {
                                   left: 4, right: 10, top: 20),
                               child: CARD_EVENTO_VERTODOS(
                                 context: context,
+                                id:eventos[index]['id'],
                                 nomeEvento: eventos[index]['nome'],
                                 dia: eventos[index]['dia_realizacao'],
                                 mes: eventos[index]['mes_realizacao'],
@@ -595,6 +603,7 @@ class _vertodos_eventosState extends State<vertodos_eventos> {
                                   left: 4, right: 10, top: 20),
                               child: CARD_EVENTO_VERTODOS(
                                 context: context,
+                                id:eventos[index]['id'],
                                 nomeEvento: eventos[index]['nome'],
                                 dia: eventos[index]['dia_realizacao'],
                                 mes: eventos[index]['mes_realizacao'],
