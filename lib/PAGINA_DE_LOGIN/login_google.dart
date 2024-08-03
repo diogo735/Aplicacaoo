@@ -1,3 +1,4 @@
+import 'package:ficha3/BASE_DE_DADOS/APIS/TOKENJTW.dart';
 import 'package:ficha3/BASE_DE_DADOS/APIS/api_login.dart';
 import 'package:ficha3/PAGINA_DE_LOGIN/login_email.dart';
 import 'package:ficha3/PAGINA_loading_user.dart';
@@ -14,6 +15,8 @@ class LoginGoogle extends StatelessWidget {
     try {
       final user = await GoogleSignInApi.login();
       if (user != null) {
+
+       
         final result = await apiLogin.loginByGoogle(user.email);
         print('Login Result com o google: $result');
 

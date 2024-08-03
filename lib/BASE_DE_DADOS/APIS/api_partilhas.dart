@@ -1,9 +1,11 @@
 import 'dart:convert';
+import 'package:ficha3/BASE_DE_DADOS/APIS/TOKENJTW.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_comentarios_partilhasfotos.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_likes_partilhas.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_partilhasfotos.dart';
 import 'package:http/http.dart' as http;
 import 'package:connectivity_plus/connectivity_plus.dart';
+
 
 class ApiPartilhas {
   final String apiUrlPartilhas =
@@ -26,11 +28,20 @@ class ApiPartilhas {
       'https://backend-teste-q43r.onrender.com/likepartilhas/apagar1like1parilha';
 
   Future<void> fetchAndStorePartilhas(int centroId) async {
-    var connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.none) {
-      throw Exception('Sem conexão com a internet');
+    await _checkConnectivity();
+
+    String? jwtToken = TokenService().getToken();
+    if (jwtToken == null) {
+      throw Exception('JWT Token is not set.');
     }
-    final response = await http.get(Uri.parse('$apiUrlPartilhas$centroId'));
+
+    final response = await http.get(
+      Uri.parse('$apiUrlPartilhas$centroId'),
+      headers: {
+        'Authorization': 'Bearer $jwtToken',
+      },
+    );
+
     if (response.statusCode == 200) {
       List<dynamic> partilhasList = json.decode(response.body);
 
@@ -57,15 +68,18 @@ class ApiPartilhas {
   }
 
   Future<void> criarPartilha(Map<String, dynamic> partilha) async {
-    var connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.none) {
-      throw Exception('Sem conexão com a internet');
+    await _checkConnectivity();
+
+    String? jwtToken = TokenService().getToken();
+    if (jwtToken == null) {
+      throw Exception('JWT Token is not set.');
     }
 
     final response = await http.post(
       Uri.parse(apiUrlCriarPartilha),
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': 'Bearer $jwtToken',
       },
       body: json.encode(partilha),
     );
@@ -73,27 +87,32 @@ class ApiPartilhas {
     if (response.statusCode == 201 || response.statusCode == 200) {
       print('Partilha criada com sucesso');
     } else {
-     print('Falha ao criar a partilha: ${response.body}');
+      print('Falha ao criar a partilha: ${response.body}');
     }
   }
 
   Future<void> fetchAndStoreComentarios() async {
-    var connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.none) {
-      throw Exception('Sem conexão com a internet');
+    await _checkConnectivity();
+
+    String? jwtToken = TokenService().getToken();
+    if (jwtToken == null) {
+      throw Exception('JWT Token is not set.');
     }
 
     List<Map<String, dynamic>> partilhas =
         await Funcoes_Partilhas.consultaPartilhas();
 
     for (var partilha in partilhas) {
-      final response =
-          await http.get(Uri.parse('$apiUrlComentarios${partilha['id']}'));
+      final response = await http.get(
+        Uri.parse('$apiUrlComentarios${partilha['id']}'),
+        headers: {
+          'Authorization': 'Bearer $jwtToken',
+        },
+      );
       if (response.statusCode == 200) {
         List<dynamic> comentariosList = json.decode(response.body);
         await Funcoes_Comentarios_das_Partilhas.deleteComentariosByPartilhaId(
-            partilha[
-                'id']); // Função para deletar comentários antigos da partilha
+            partilha['id']);
 
         for (var comentario in comentariosList) {
           await Funcoes_Comentarios_das_Partilhas.insertComentario({
@@ -106,23 +125,24 @@ class ApiPartilhas {
           });
         }
       } else {
-        print(
-            'Falha ao carregar os comentários para a partilha ${partilha['id']}');
+        print('Falha ao carregar os comentários para a partilha ${partilha['id']}');
       }
     }
   }
 
-  Future<bool> criarComentario(
-      int partilhaId, Map<String, dynamic> comentario) async {
-    var connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.none) {
-      throw Exception('Sem conexão com a internet');
+  Future<bool> criarComentario(int partilhaId, Map<String, dynamic> comentario) async {
+    await _checkConnectivity();
+
+    String? jwtToken = TokenService().getToken();
+    if (jwtToken == null) {
+      throw Exception('JWT Token is not set.');
     }
 
     final response = await http.post(
       Uri.parse('$apiUrlCriarComentario$partilhaId'),
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': 'Bearer $jwtToken',
       },
       body: json.encode(comentario),
     );
@@ -137,13 +157,20 @@ class ApiPartilhas {
   }
 
   Future<void> fetchAndStoreLikes(int centroId) async {
-    var connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.none) {
-      throw Exception('Sem conexão com a internet');
+    await _checkConnectivity();
+
+    String? jwtToken = TokenService().getToken();
+    if (jwtToken == null) {
+      throw Exception('JWT Token is not set.');
     }
 
-    final response =
-        await http.get(Uri.parse('$apiUrlLikesDeUmCentro$centroId'));
+    final response = await http.get(
+      Uri.parse('$apiUrlLikesDeUmCentro$centroId'),
+      headers: {
+        'Authorization': 'Bearer $jwtToken',
+      },
+    );
+
     if (response.statusCode == 200) {
       List<dynamic> likesList = json.decode(response.body);
 
@@ -161,21 +188,23 @@ class ApiPartilhas {
     }
   }
 
-  
   Future<bool> criarLike(int id_usuario, int partilha_id) async {
-    var connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.none) {
-      throw Exception('Sem conexão com a internet');
+    await _checkConnectivity();
+
+    String? jwtToken = TokenService().getToken();
+    if (jwtToken == null) {
+      throw Exception('JWT Token is not set.');
     }
 
     final response = await http.post(
       Uri.parse(apiUrlCriarLike),
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': 'Bearer $jwtToken',
       },
       body: json.encode({
         'id_usuario': id_usuario,
-        'partilha_id': partilha_id
+        'partilha_id': partilha_id,
       }),
     );
 
@@ -189,19 +218,22 @@ class ApiPartilhas {
   }
 
   Future<bool> apagarLike(int id_usuario, int partilha_id) async {
-    var connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.none) {
-      throw Exception('Sem conexão com a internet');
+    await _checkConnectivity();
+
+    String? jwtToken = TokenService().getToken();
+    if (jwtToken == null) {
+      throw Exception('JWT Token is not set.');
     }
 
     final response = await http.delete(
       Uri.parse(apiUrlDeletarLike),
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': 'Bearer $jwtToken',
       },
       body: json.encode({
         'id_usuario': id_usuario,
-        'partilha_id': partilha_id
+        'partilha_id': partilha_id,
       }),
     );
 
@@ -211,6 +243,13 @@ class ApiPartilhas {
     } else {
       print('Falha ao deletar o like: ${response.body}');
       return false;
+    }
+  }
+
+  Future<void> _checkConnectivity() async {
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.none) {
+      throw Exception('Sem conexão com a internet');
     }
   }
 }

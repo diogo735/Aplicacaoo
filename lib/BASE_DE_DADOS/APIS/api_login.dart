@@ -1,6 +1,8 @@
 import 'dart:convert';
-import 'package:ficha3/PAGINA_DE_LOGIN/login_google.dart';
+import 'package:ficha3/BASE_DE_DADOS/APIS/TOKENJTW.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart';
+
 
 class ApiLogin {
   final String baseUrl;
@@ -9,22 +11,43 @@ class ApiLogin {
 
   Future<Map<String, dynamic>> login(String email, String password) async {
     final url = Uri.parse('$baseUrl/users/verificar_email?email=$email&password=$password');
-    //print('Request URL: $url'); 
-    final response = await http.get(url);
+    String? jwtToken = TokenService().getToken(); // Obtém o token de TokenService
+
+    if (jwtToken == null) {
+      throw Exception('JWT Token is not set.');
+    }
+
+    final response = await http.get(
+      url,
+      headers: {
+        'Authorization': 'Bearer $jwtToken',  // Usa o token JWT do TokenService
+      }
+    );
 
     if (response.statusCode == 200) {
       final responseBody = jsonDecode(response.body);
-     // print('Response Body: $responseBody'); 
       return responseBody;
     } else {
-      print('Error: ${response.statusCode} - ${response.reasonPhrase}'); // Adiciona log do erro
+      print('Error: ${response.statusCode} - ${response.reasonPhrase}');
       throw Exception('Failed to login');
     }
   }
 
-   Future<Map<String, dynamic>> loginByGoogle(String email) async {
+  Future<Map<String, dynamic>> loginByGoogle(String email) async {
     final url = Uri.parse('$baseUrl/users/verificar_email_google?email=$email');
-    final response = await http.get(url);
+    String? jwtToken = TokenService().getToken(); // Obtém o token de TokenService
+
+    if (jwtToken == null) {
+      throw Exception('JWT Token is not set.');
+    }
+
+    final response = await http.get(
+      url,
+      headers: {
+        'Authorization': 'Bearer $jwtToken',  // Usa o token JWT do TokenService
+      }
+    );
+
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {

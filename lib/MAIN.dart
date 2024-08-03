@@ -1,5 +1,7 @@
 import 'package:ficha3/AREAS/PAGINA_DE_UMA_AREA/sub_menu_partilhas/carregar_partilha.dart';
+import 'package:ficha3/BASE_DE_DADOS/APIS/TOKENJTW.dart';
 import 'package:ficha3/BASE_DE_DADOS/APIS/api_centro.dart';
+import 'package:ficha3/BASE_DE_DADOS/APIS/api_login.dart';
 import 'package:ficha3/BASE_DE_DADOS/basededados.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_centros.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_usuarios.dart';
@@ -29,7 +31,7 @@ import 'dart:async';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await DatabaseHelper.basededados;
-
+  TokenService().setToken("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJhZG1pbnZpc2V1QHNvZnRpbnNhLnB0IiwiaWF0IjoxNzIyMjkzNzM3LCJleHAiOjE3Mjc1NDk3Mzd9.0S97khTjH4SIdImVjae--MmvNDQqPHf3tQaI4lslB2U");
   final prefs = await SharedPreferences.getInstance();
   final bool estalogado = prefs.getBool('isLoggedIn') ?? false;
   final String? userId = prefs.getString('userId');
@@ -62,7 +64,7 @@ class MeuApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ), // ThemeData&& userId
-      initialRoute: estalogado ? '/home' : '/vereventos',
+      initialRoute: estalogado ? '/home' : '/',
       routes: {
         '/home': (BuildContext context) => MinhaPaginaInicial(userId: userId),
         '/': (context) => const PaginaLogin(),

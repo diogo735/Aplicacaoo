@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:ficha3/BASE_DE_DADOS/APIS/TOKENJTW.dart';
 import 'package:ficha3/BASE_DE_DADOS/APIS/api_partilhas.dart';
 import 'package:ficha3/BASE_DE_DADOS/APIS/api_usuarios.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_centros.dart';
@@ -55,7 +56,15 @@ class _LoadingScreenState extends State<LoadingScreen> {
   Future<Map<String, dynamic>> fetchUserDetails(int userId) async {
     final String apiUrl =
         'https://backend-teste-q43r.onrender.com/users/detalhes_user/$userId';
-    final response = await http.get(Uri.parse(apiUrl));
+
+         String? jwtToken = TokenService().getToken(); 
+    if (jwtToken == null) {
+      throw Exception('JWT Token is not set.');
+    }
+
+    final response = await http.get(Uri.parse(apiUrl),headers: {
+        'Authorization': 'Bearer $jwtToken', 
+      });
 
     if (response.statusCode == 200) {
       return json.decode(response.body);
