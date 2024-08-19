@@ -37,6 +37,7 @@ class ApiService {
             'imagem_centro': centro['imagem'],
           });
         }
+        print("     -->Centros carregados com sucesso!");
       } else {
         throw Exception('Falha ao carregar os centros: ${response.body}');
       }

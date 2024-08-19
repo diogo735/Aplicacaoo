@@ -1,10 +1,19 @@
+import 'dart:async';
+
 import 'package:ficha3/AREAS/PAGINA_DE_UMA_AREA/sub_menu_eventos/card_evento.dart';
+import 'package:ficha3/AREAS/PAGINA_DE_UMA_AREA/sub_menu_eventos/pagina_De_um_evento/criar_evento/pagina_criar_evento.dart';
+import 'package:ficha3/AREAS/PAGINA_DE_UMA_AREA/sub_menu_eventos/pagina_De_um_evento/pagina_evento.dart';
+import 'package:ficha3/BASE_DE_DADOS/APIS/api_geolocaliza%C3%A7%C3%A3o.dart';
+import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_listaparticipantes_evento.dart';
+import 'package:ficha3/PAGINA_INICIAL/PAGINA_VERTODOS/calendariogeral_eventos/calendario_evetnos_geral.dart';
+import 'package:ficha3/centro_provider.dart';
 import 'package:flutter/material.dart';
 
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_eventos.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:ficha3/AREAS/PAGINA_DE_UMA_AREA/sub_menu_eventos/calendario_area/calendario_eventos.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_topicos.dart';
+import 'package:provider/provider.dart';
 
 class submenueventos extends StatefulWidget {
   final int id_area;
@@ -23,81 +32,205 @@ class _submenueventosState extends State<submenueventos> {
   List<Map<String, dynamic>> topicos = [];
   double bottomMargin = 20.0;
   double rightMargin = 12.0;
+  Map<int, String> localPorEvento = {};
+  Map<int, int> numeroParticipantesPorEvento = {};
+  bool _loading = true;
+ @override
+  void dispose() {
+    // Limpeza de recursos, se necessário
+    super.dispose();
+  }
 
   @override
   void initState() {
     super.initState();
-    _carregarEventos();
-    _carregarTopicos();
+    _carregarDados();
   }
 
-  void _carregarEventos() async {
-    Funcoes_Eventos funcoesEventos = Funcoes_Eventos();
-    List<Map<String, dynamic>> eventosCarregados =
-        await funcoesEventos.consultaEventosPorArea(widget.id_area);
+  Future<void> _carregarDados() async {
+    if (!mounted) return;
     setState(() {
-      eventos = eventosCarregados;
+      _loading = true;
     });
+
+    // Aguarda o carregamento dos eventos, locais e participantes
+    await _carregarEventos();
+    await Future.wait([
+      carregarNumeroDeParticipantes(),
+      carregarLocais(),
+    ]);
+    await _carregarTopicos();
+
+    if (mounted) {
+      setState(() {
+        _loading = false;
+      });
+    }
   }
 
-  void _carregarTopicos() async {
+  Future<void> _carregarEventos() async {
+    print('Iniciando o carregamento dos eventos...');
+
+    Funcoes_Eventos funcoesEventos = Funcoes_Eventos();
+
+    // Obtém o centro selecionado do provider
+    final centroProvider = Provider.of<Centro_Provider>(context, listen: false);
+    final centroSelecionado = centroProvider.centroSelecionado;
+
+    if (centroSelecionado == null) {
+      print('Nenhum centro selecionado!');
+      return; // Sai da função se não houver centro selecionado
+    }
+
+    int centroId = centroSelecionado.id;
+
+    try {
+      // Consulta os eventos da área e centro selecionados
+      List<Map<String, dynamic>> eventosCarregados =
+          await funcoesEventos.consultaEventosPorArea(widget.id_area, centroId);
+
+      print('Eventos carregados: ${eventosCarregados.length} encontrados');
+
+      if (mounted) {
+        setState(() {
+          eventos = eventosCarregados;
+        });
+      }
+
+      print('Eventos atualizados no estado');
+    } catch (e) {
+      print('Erro ao carregar eventos: $e');
+    }
+  }
+
+  Future<void> _carregarTopicos() async {
     Funcoes_Topicos funcoesTopicos = Funcoes_Topicos();
     List<Map<String, dynamic>> topicosCarregados =
         await funcoesTopicos.consultaTopicosPorArea(widget.id_area);
-    setState(() {
-      topicos = topicosCarregados;
-    });
+    
+    if (mounted) {
+      setState(() {
+        topicos = topicosCarregados;
+      });
+    }
   }
 
+  Future<void> carregarNumeroDeParticipantes() async {
+    Map<int, int> participantes = {};
+
+    for (var evento in eventos) {
+      int eventoId = evento['id'];
+      int numeroDeParticipantes =
+          await Funcoes_Participantes_Evento.getNumeroDeParticipantes(eventoId);
+      participantes[eventoId] = numeroDeParticipantes;
+    }
+
+    if (mounted) {
+      setState(() {
+        numeroParticipantesPorEvento = participantes;
+      });
+    }
+  }
+
+  Future<void> carregarLocais() async {
+    for (var evento in eventos) {
+      int eventoId = evento['id'];
+      double latitude = evento['latitude']; 
+      double longitude =
+          evento['longitude']; 
+      String address = await _getAddressUsingOSM(latitude, longitude);
+      
+      if (mounted) {
+        setState(() {
+          localPorEvento[eventoId] = address;
+        });
+      }
+    }
+  }
+
+  Future<String> _getAddressUsingOSM(double latitude, double longitude) async {
+    LocalizacaoOSM localizacaoOSM = LocalizacaoOSM();
+    return await localizacaoOSM.getEnderecoFromCoordinates(latitude, longitude);
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body:eventos.isEmpty
+      body: _loading
           ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Image.asset(
-                    'assets/images/no_events.png',
-                    width:100,
-                    height: 100,
-                  ),
-                  SizedBox(height: 15),
-                  Text(
-                    'Sem eventos ainda !',
-                    style: TextStyle(
-                        fontSize: 16,
-                        color: Color.fromARGB(255, 156, 156, 156)),
-                  ),
-                ],
+              child: CircularProgressIndicator(
+                color: widget.cor_da_area,
               ),
             )
-          : Stack(
-        children: [
-          SingleChildScrollView(
-            child: Column(
-              children: eventos.map((evento) {
-                return Padding(
-                  padding: const EdgeInsets.only(top: 15),
-                  child: CARD_EVENTO(
-                    cor: widget.cor_da_area,
-                    nomeEvento: evento['nome'],
-                    dia: evento['dia_realizacao'],
-                    mes: evento['mes_realizacao'],
-                    ano: evento['ano_realizacao'],
-                    local: evento['local'],
-                    numeroParticipantes: evento['numero_inscritos'].toString(),
-                    imagePath: evento['caminho_imagem'],
-                    tipo_evento: evento['tipodeevento_id'],
-                    horas: evento['horas'],
-                    context: context,
+          : eventos.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset(
+                        'assets/images/no_events.png',
+                        width: 100,
+                        height: 100,
+                      ),
+                      const SizedBox(height: 15),
+                      const Text(
+                        'Sem eventos ainda !',
+                        style: TextStyle(
+                            fontSize: 16,
+                            color: Color.fromARGB(255, 156, 156, 156)),
+                      ),
+                    ],
                   ),
-                );
-              }).toList(),
-            ),
-          ),
-        ],
-      ),
+                )
+              : Stack(
+                  children: [
+                    SingleChildScrollView(
+                      child: Column(
+                        children: eventos.asMap().entries.map((entry) {
+                          int index = entry.key;
+                          var evento = entry.value;
+
+                          int eventoId = evento['id'];
+                          int numeroParticipantes =
+                              numeroParticipantesPorEvento[eventoId] ?? 0;
+                          String local =
+                              localPorEvento[eventoId] ?? 'Carregando...';
+
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 15),
+                            child: GestureDetector(
+                              onTap: () {
+                                // Navegue para a página de detalhes do evento
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => PaginaEvento(
+                                      idEvento: eventoId,
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: CARD_EVENTO(
+                                cor: widget.cor_da_area,
+                                nomeEvento: evento['nome'],
+                                tocpico_evento: evento['topico_id'],
+                                dia: evento['dia_realizacao'],
+                                mes: evento['mes_realizacao'],
+                                ano: evento['ano_realizacao'],
+                                local: local,
+                                numeroParticipantes:
+                                    numeroParticipantes.toString(),
+                                imagePath: evento['caminho_imagem'],
+                                tipo_evento: evento['tipodeevento_id'],
+                                horas: evento['horas'],
+                                context: context,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    )
+                  ],
+                ),
       floatingActionButton: SpeedDial(
         icon: Icons.add,
         backgroundColor: widget.cor_da_area,
@@ -137,74 +270,85 @@ class _submenueventosState extends State<submenueventos> {
               ),
             ),
             backgroundColor: widget.cor_da_area,
-            onTap: () {},
-          ),
-          if(eventos.isNotEmpty)
-          SpeedDialChild(
-            child: Material(
-              shape: RoundedRectangleBorder(
-                side: BorderSide(width: 1, color: widget.cor_da_area),
-                borderRadius: BorderRadius.circular(15),
-              ),
-              color: const Color.fromARGB(
-                  255, 255, 255, 255), // Cor de fundo do botão
-              child: Container(
-                alignment: Alignment.center, // Alinhamento do texto
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.filter_alt_outlined,
-                        color: widget.cor_da_area), // Adiciona o ícone aqui
-                    SizedBox(width: 8), // Espaçamento entre o ícone e o texto
-                    Text(
-                      'Filtrar por',
-                      style: TextStyle(
-                        color: widget.cor_da_area, // Cor do texto
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold, // Peso da fonte do texto
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            backgroundColor: widget.cor_da_area,
             onTap: () {
-              _abrirFiltrarPor();
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CriarEvento(
+                    cor: widget.cor_da_area,
+                    idArea: widget.id_area,
+                  ),
+                ),
+              );
             },
           ),
-          if(eventos.isNotEmpty)
-          SpeedDialChild(
-            child: Material(
-              shape: RoundedRectangleBorder(
-                side: BorderSide(width: 1, color: widget.cor_da_area),
-                borderRadius: BorderRadius.circular(15),
-              ),
-              color: const Color.fromARGB(255, 255, 255, 255),
-              child: Container(
-                alignment: Alignment.center,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.sort_rounded, color: widget.cor_da_area),
-                    SizedBox(width: 8),
-                    Text(
-                      'Ordenar por',
-                      style: TextStyle(
-                        color: widget.cor_da_area,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+          if (eventos.isNotEmpty)
+            SpeedDialChild(
+              child: Material(
+                shape: RoundedRectangleBorder(
+                  side: BorderSide(width: 1, color: widget.cor_da_area),
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                color: const Color.fromARGB(
+                    255, 255, 255, 255), // Cor de fundo do botão
+                child: Container(
+                  alignment: Alignment.center, // Alinhamento do texto
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.filter_alt_outlined,
+                          color: widget.cor_da_area), // Adiciona o ícone aqui
+                      const SizedBox(
+                          width: 8), // Espaçamento entre o ícone e o texto
+                      Text(
+                        'Filtrar por',
+                        style: TextStyle(
+                          color: widget.cor_da_area, // Cor do texto
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold, // Peso da fonte do texto
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
+              backgroundColor: widget.cor_da_area,
+              onTap: () {
+                _abrirFiltrarPor();
+              },
             ),
-            backgroundColor: widget.cor_da_area,
-            onTap: () {
-              _abrirOrdenarPor();
-            },
-          ),
+          if (eventos.isNotEmpty)
+            SpeedDialChild(
+              child: Material(
+                shape: RoundedRectangleBorder(
+                  side: BorderSide(width: 1, color: widget.cor_da_area),
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                color: const Color.fromARGB(255, 255, 255, 255),
+                child: Container(
+                  alignment: Alignment.center,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.sort_rounded, color: widget.cor_da_area),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Ordenar por',
+                        style: TextStyle(
+                          color: widget.cor_da_area,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              backgroundColor: widget.cor_da_area,
+              onTap: () {
+                _abrirOrdenarPor();
+              },
+            ),
           SpeedDialChild(
             child: Material(
               shape: RoundedRectangleBorder(
@@ -220,7 +364,8 @@ class _submenueventosState extends State<submenueventos> {
                   children: [
                     Icon(Icons.calendar_month_rounded,
                         color: widget.cor_da_area), // Adiciona o ícone aqui
-                    SizedBox(width: 8), // Espaçamento entre o ícone e o texto
+                    const SizedBox(
+                        width: 8), // Espaçamento entre o ícone e o texto
                     Text(
                       'Calendario',
                       style: TextStyle(
@@ -238,7 +383,7 @@ class _submenueventosState extends State<submenueventos> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) => calendariogeral_eventos(
+                    builder: (context) => CalendarioGeralEventos(
                           id_area: widget.id_area,
                           cor_da_area: widget.cor_da_area,
                         )),
@@ -297,8 +442,15 @@ class _submenueventosState extends State<submenueventos> {
                     ElevatedButton(
                       onPressed: () async {
                         Funcoes_Eventos funcoeseventos = Funcoes_Eventos();
+                        final centroProvider = Provider.of<Centro_Provider>(
+                            context,
+                            listen: false);
+                        final centroSelecionado =
+                            centroProvider.centroSelecionado;
+                        int centroId = centroSelecionado!.id;
                         List<Map<String, dynamic>> evetnosOrdenados =
-                            await funcoeseventos.consultaEventosPorArea(widget.id_area);
+                            await funcoeseventos.consultaEventosPorArea(
+                                centroId, widget.id_area);
                         setState(() {
                           eventos = evetnosOrdenados;
                           //print("Grupos ordenados:");
@@ -542,9 +694,16 @@ class _submenueventosState extends State<submenueventos> {
                     for (var topico in topicos)
                       ElevatedButton(
                         onPressed: () async {
+                          final centroProvider = Provider.of<Centro_Provider>(
+                              context,
+                              listen: false);
+                          final centroSelecionado =
+                              centroProvider.centroSelecionado;
+                          int centroId = centroSelecionado!.id;
                           Funcoes_Eventos funcoeseventos = Funcoes_Eventos();
                           List<Map<String, dynamic>> eventosOrdenados =
-                              await funcoeseventos.consultaEventosPorArea(widget.id_area);
+                              await funcoeseventos.consultaEventosPorArea(
+                                  centroId, widget.id_area);
                           eventos = eventosOrdenados;
 
                           List<Map<String, dynamic>> eventosDoTopico =
@@ -578,7 +737,7 @@ class _submenueventosState extends State<submenueventos> {
                                 const SizedBox(width: 15),
                                 Text(
                                   topico['nome_topico'], // Nome do tópico
-                                  style:  TextStyle(
+                                  style: TextStyle(
                                     color: widget.cor_da_area,
                                     fontSize: 19,
                                     fontFamily: 'ABeeZee',

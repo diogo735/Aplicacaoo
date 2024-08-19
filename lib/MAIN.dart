@@ -1,3 +1,4 @@
+import 'package:ficha3/AREAS/PAGINA_DE_UMA_AREA/sub_menu_eventos/pagina_De_um_evento/pagina_evento.dart';
 import 'package:ficha3/AREAS/PAGINA_DE_UMA_AREA/sub_menu_partilhas/carregar_partilha.dart';
 import 'package:ficha3/BASE_DE_DADOS/APIS/TOKENJTW.dart';
 import 'package:ficha3/BASE_DE_DADOS/APIS/api_centro.dart';
@@ -9,11 +10,14 @@ import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_usuarios.dart';
 import 'package:ficha3/PAGINA_DE_LOGIN/PaginaLogin.dart';
 import 'package:ficha3/PAGINA_DE_LOGIN/login_email.dart';
 import 'package:ficha3/PAGINA_DE_LOGIN/login_google.dart';
-import 'package:ficha3/PAGINA_DE_LOGIN/registo.dart';
+import 'package:ficha3/PAGINA_DE_LOGIN/pagina_de_registo/registo.dart';
+import 'package:ficha3/PAGINA_INICIAL/PAGINA_PERFIL/PAGINA_DE_PERFIL.dart';
 import 'package:ficha3/PAGINA_INICIAL/PAGINA_VERTODOS/vertodos_eventos.dart';
 import 'package:ficha3/PAGINA_loading_user.dart';
 import 'package:ficha3/centro_provider.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'AREAS/Pagina_Das_areas_todas.dart';
@@ -21,7 +25,7 @@ import 'AREAS/Pagina_Das_areas_todas.dart';
 import 'package:ficha3/GRUPOS/grupos.dart';
 
 import 'package:ficha3/PAGINA_INICIAL/HOME.dart';
-import 'package:ficha3/PAGINA_INICIAL/PAGINA_PERFIL/PAGINA_DE_PERFIL.dart';
+
 
 import 'package:ficha3/NOTIFICAÇÕES/NOTIFICACOES.dart';
 import 'package:ficha3/usuario_provider.dart';
@@ -31,7 +35,8 @@ import 'dart:async';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await DatabaseHelper.basededados;
-  TokenService().setToken("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJhZG1pbnZpc2V1QHNvZnRpbnNhLnB0IiwiaWF0IjoxNzIyMjkzNzM3LCJleHAiOjE3Mjc1NDk3Mzd9.0S97khTjH4SIdImVjae--MmvNDQqPHf3tQaI4lslB2U");
+  TokenService().setToken(
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJhZG1pbnZpc2V1QHNvZnRpbnNhLnB0IiwiaWF0IjoxNzIyMjkzNzM3LCJleHAiOjE3Mjc1NDk3Mzd9.0S97khTjH4SIdImVjae--MmvNDQqPHf3tQaI4lslB2U");
   final prefs = await SharedPreferences.getInstance();
   final bool estalogado = prefs.getBool('isLoggedIn') ?? false;
   final String? userId = prefs.getString('userId');
@@ -63,15 +68,19 @@ class MeuApp extends StatelessWidget {
       title: 'SoftShares',
       theme: ThemeData(
         primarySwatch: Colors.blue,
-      ), // ThemeData&& userId
-      initialRoute: estalogado ? '/home' : '/',
+      ),
+      // ThemeData&& userId
+      //initialRoute: estalogado ? '/home' : '/', <- é para ser assim/pagina_de_um_evento
+      initialRoute: '/PAGINA_COM_LOGO',
       routes: {
         '/home': (BuildContext context) => MinhaPaginaInicial(userId: userId),
+        '/PAGINA_COM_LOGO': (context) => PAGINA_ICNICO_APENAS_LOGO(),
         '/': (context) => const PaginaLogin(),
         '/vereventos': (context) => vertodos_eventos(),
+        '/pagina_de_um_evento': (context) => const PaginaEvento(idEvento: 1),
         //'/criar_partilha':(context) =>CriarPartilha(cor: Colors.blue,idArea: 2,),
         '/registo': (context) => Registo(),
-        '/email': (context) => LoginEmail(),
+        '/email': (context) => const LoginEmail(),
         '/loading': (context) => LoadingScreen(
               userId: 1,
             ),
@@ -160,6 +169,13 @@ class _MinhaPaginaInicialState extends State<MinhaPaginaInicial> {
 
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      systemNavigationBarColor: Colors.white, 
+      systemNavigationBarIconBrightness: Brightness.dark, 
+       // Ícones escuros na barra de status
+    ),
+  );
     return Scaffold(
       body: Center(
         child: _opcoes.elementAt(_indiceSelecionado),
@@ -195,5 +211,81 @@ class _MinhaPaginaInicialState extends State<MinhaPaginaInicial> {
         onTap: _onItemTapped,
       ),
     );
+  }
+}
+
+class PAGINA_ICNICO_APENAS_LOGO extends StatefulWidget {
+  @override
+  _PAGINA_ICNICO_APENAS_LOGOState createState() =>
+      _PAGINA_ICNICO_APENAS_LOGOState();
+}
+
+class _PAGINA_ICNICO_APENAS_LOGOState extends State<PAGINA_ICNICO_APENAS_LOGO> {
+  @override
+  void initState() {
+    super.initState();
+
+    Future.delayed(const Duration(seconds: 3), () async {
+      final prefs = await SharedPreferences.getInstance();
+      final bool estalogado = prefs.getBool('isLoggedIn') ?? false;
+      final String? userId = prefs.getString('userId');
+      final String rota = estalogado ? '/home' : '/';
+
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+            builder: (context) => rota == '/home'
+                ? MinhaPaginaInicial(userId: userId)
+                : const PaginaLogin()),
+        (Route<dynamic> route) => false,
+      );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        systemNavigationBarColor:
+            const Color(0xFF15659F), // Define a cor transparente
+        systemNavigationBarIconBrightness:
+            Brightness.light, // Deixa os ícones da barra de navegação claros
+         // Deixa os ícones da barra de status claros
+      ),
+    );
+    return Scaffold(
+  backgroundColor: const Color(0xFF15659F),
+  body: Container(
+    width: double.infinity,
+    height: double.infinity,
+    child: Column(
+      children: [
+        SizedBox(height: MediaQuery.of(context).size.height /3),
+        Image.asset(
+          'assets/images/logo_sem_fundo.png',
+          width: 125,
+          height: 125,
+        ),
+        const SizedBox(height: 20),
+        const Text(
+          'SoftShares',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.5,
+          ),
+        ),
+        SizedBox(height: MediaQuery.of(context).size.height /4),
+        const CupertinoActivityIndicator(
+          color: Colors.white,
+          radius: 21.0,
+        ),
+       
+      ],
+    ),
+  ),
+);
+
   }
 }

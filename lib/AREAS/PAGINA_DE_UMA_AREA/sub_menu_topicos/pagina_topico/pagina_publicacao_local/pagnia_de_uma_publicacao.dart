@@ -410,7 +410,7 @@ class _pagina_publicacaoState extends State<pagina_publicacao> {
                Row(
                 children: [
                   Padding(
-                    padding: EdgeInsets.only(left: 14),
+                    padding: const EdgeInsets.only(left: 14),
                     child: Align(
                       alignment: Alignment.centerLeft,
                       child: Icon(
@@ -420,10 +420,10 @@ class _pagina_publicacaoState extends State<pagina_publicacao> {
                       ),
                     ),
                   ),
-                  SizedBox(
+                  const SizedBox(
                     width: 6,
                   ),
-                  Text(
+                  const Text(
                     'Descrição do Local',
                     style: TextStyle(
                       color: Colors.black,
@@ -577,7 +577,7 @@ class _pagina_publicacaoState extends State<pagina_publicacao> {
                Row(
                 children: [
                   Padding(
-                    padding: EdgeInsets.only(left: 14),
+                    padding: const EdgeInsets.only(left: 14),
                     child: Align(
                       alignment: Alignment.centerLeft,
                       child: Icon(
@@ -587,10 +587,10 @@ class _pagina_publicacaoState extends State<pagina_publicacao> {
                       ),
                     ),
                   ),
-                  SizedBox(
+                  const SizedBox(
                     width: 6,
                   ),
-                  Text(
+                  const Text(
                     'Localização',
                     style: TextStyle(
                       color: Colors.black,
@@ -651,7 +651,7 @@ class _pagina_publicacaoState extends State<pagina_publicacao> {
                Row(
                 children: [
                   Padding(
-                    padding: EdgeInsets.only(left: 14),
+                    padding: const EdgeInsets.only(left: 14),
                     child: Align(
                       alignment: Alignment.centerLeft,
                       child: Icon(
@@ -661,10 +661,10 @@ class _pagina_publicacaoState extends State<pagina_publicacao> {
                       ),
                     ),
                   ),
-                  SizedBox(
+                  const SizedBox(
                     width: 6,
                   ),
-                  Text(
+                  const Text(
                     'Comentários e Avaliaçoes',
                     style: TextStyle(
                       color: Colors.black,
@@ -846,7 +846,7 @@ class _pagina_publicacaoState extends State<pagina_publicacao> {
                Row(
                 children: [
                   Padding(
-                    padding: EdgeInsets.only(left: 14),
+                    padding: const EdgeInsets.only(left: 14),
                     child: Align(
                       alignment: Alignment.centerLeft,
                       child: Icon(
@@ -856,10 +856,10 @@ class _pagina_publicacaoState extends State<pagina_publicacao> {
                       ),
                     ),
                   ),
-                  SizedBox(
+                  const SizedBox(
                     width: 6,
                   ),
-                  Text(
+                  const Text(
                     'Mais Infromações',
                     style: TextStyle(
                       color: Colors.black,
@@ -1002,7 +1002,7 @@ class _pagina_publicacaoState extends State<pagina_publicacao> {
                Row(
                 children: [
                   Padding(
-                    padding: EdgeInsets.only(left: 14),
+                    padding: const EdgeInsets.only(left: 14),
                     child: Align(
                       alignment: Alignment.centerLeft,
                       child: Icon(
@@ -1012,10 +1012,10 @@ class _pagina_publicacaoState extends State<pagina_publicacao> {
                       ),
                     ),
                   ),
-                  SizedBox(
+                  const SizedBox(
                     width: 6,
                   ),
-                  Text(
+                  const Text(
                     'Publicado por ',
                     style: TextStyle(
                       color: Colors.black,

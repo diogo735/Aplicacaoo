@@ -123,7 +123,7 @@ Widget CARD_EVENTO({
                 ),
                 const SizedBox(width: 3), // Espaçamento entre o ícone e o texto
                 Text(
-                  local,
+                  formatText(local, 30),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 15.30,
@@ -168,4 +168,10 @@ Widget CARD_EVENTO({
       ),
     ),
   );
+}
+String formatText(String text, int maxLength) {
+  if (text.length > maxLength) {
+    return text.substring(0, maxLength) + '...';
+  }
+  return text;
 }

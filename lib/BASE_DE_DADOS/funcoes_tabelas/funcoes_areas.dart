@@ -8,48 +8,13 @@ static Future<void> createAreasTable(Database db) async {//CRIA A TABELA DE EVEN
         'CREATE TABLE areas(id INTEGER PRIMARY KEY, nome_area TEXT)');
   }
 
-  static Future<void> insertAreas(Database db) async {//INSERE OS EVENTOS
+  // Função para inserir uma área específica
+   static Future<void> insertArea(Map<String, dynamic> area) async {
+    Database db = await DatabaseHelper.basededados;
     await db.insert(
       'areas',
-      {
-        'nome_area': 'Saúde'
-      },
-    );
-  await db.insert(
-      'areas',
-      {
-        'nome_area': 'Desporto'
-      },
-    );
-    await db.insert(
-      'areas',
-      {
-        'nome_area': 'Gastronomia'
-      },
-    );
-    await db.insert(
-      'areas',
-      {
-        'nome_area': 'Formação'
-      },
-    );
-    await db.insert(
-      'areas',
-      {
-        'nome_area': 'Alojamento'
-      },
-    );
-    await db.insert(
-      'areas',
-      {
-        'nome_area': 'Transportes'
-      },
-    );
-    await db.insert(
-      'areas',
-      {
-        'nome_area': 'Lazer'
-      },
+      area,
+      conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
 
@@ -71,5 +36,24 @@ Future<String?> getNomeAreaPorId(int id) async {
     } else {
       return null; 
     }
+  }
+
+  static Future<int?> getIdAreaPorNome(String nomeArea) async {
+    Database db = await DatabaseHelper.basededados;
+    List<Map<String, dynamic>> result = await db.query(
+      'areas',
+      columns: ['id'],
+      where: 'nome_area = ?',
+      whereArgs: [nomeArea],
+    );
+    if (result.isNotEmpty) {
+      return result.first['id'] as int?;
+    } else {
+      return null;
+    }
+  }
+  static Future<void> clearTable() async {
+    Database db = await DatabaseHelper.basededados;
+    await db.delete('areas');
   }
 }

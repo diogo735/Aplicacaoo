@@ -1,4 +1,7 @@
 
+import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_comentarios_eventos.dart';
+import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_imagens_eventos.dart';
+import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_listaparticipantes_evento.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_eventos.dart';
@@ -50,22 +53,55 @@ class DatabaseHelper {
   await Funcoes_Centros.createCentrosTable(db);//CENTROS // TA A BUSCAR NA API
 
   await Funcoes_Usuarios.createUsuariosTable(db);//users //TA A BUSCAR NA API
-  //await Funcoes_Usuarios.insertUsuarios(db);
+  
 
-  await Funcoes_Areas.createAreasTable(db);//areas
-  await Funcoes_Areas.insertAreas(db);
+  await Funcoes_Areas.createAreasTable(db);//areas ta a buscar a api
+  //await Funcoes_Areas.insertAreas(db);
 
-  await Funcoes_Topicos.createTopicosTable(db);// topicos das areas
-  await Funcoes_Topicos.insertTopicos(db);
+  await Funcoes_Topicos.createTopicosTable(db);// topicos das areas //TA A BUSCAR NA API
+  
 
   await Funcoes_Topicos_imagens.createTopicosImagensTable(db);//IMAGENS DOS TOPICOS
   await Funcoes_Topicos_imagens.insertTopicosImagens(db);
 
-  await Funcoes_TipodeEvento.create_TipodeEVENTO_Table(db);//tipo de evento
-  await Funcoes_TipodeEvento.insertipodeevento(db);
+
+
+
+
+
+
+///////////////////////////////
+  await Funcoes_TipodeEvento.create_TipodeEVENTO_Table(db);//tipo de evento ->TA A BUSCAR DA API
   
-  await Funcoes_Eventos.createEventoTable(db);//eventos
-  await Funcoes_Eventos.insertEvents(db);
+  
+  await Funcoes_Eventos.createEventoTable(db);//eventos->TA A BUSCAR DA API
+  
+
+  await Funcoes_Participantes_Evento.createParticipantesEventoTable(db);//lista de participantes evento->TA A BUSCAR DA API
+  
+
+  await Funcoes_Comentarios_Eventos.criarTabela_Eventos_Comentarios(db);//comentarios eventos->TA A BUSCAR DA API
+  
+
+  await Funcoes_Eventos_Imagens.criarTabela_Eventos_imagens(db);//galeria do evento->TA A BUSCAR DA API
+  
+
+//////////////////////////////////////////////////
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   await Funcoes_Publicacoes.criarTabela_Publicacoes(db);//publicaçoes de locais
   await Funcoes_Publicacoes.insertPublicacoes(db);

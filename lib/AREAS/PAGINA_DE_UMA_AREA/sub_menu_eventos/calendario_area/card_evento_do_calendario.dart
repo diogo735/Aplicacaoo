@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 
 Widget CARD_EVENTO_DO_CALENDARIO(
@@ -54,8 +53,8 @@ Widget CARD_EVENTO_DO_CALENDARIO(
                   topLeft: Radius.circular(10),
                   bottomLeft: Radius.circular(10),
                 ),
-                child: Image.asset(
-                  imagem_topico,
+                child: Image.file(
+                  File(imagem_topico),
                   fit: BoxFit.cover,
                 ),
               ),
@@ -102,7 +101,7 @@ Widget CARD_EVENTO_DO_CALENDARIO(
                 ),
                 Row(
                   children: [
-                     Icon(
+                    Icon(
                       Icons.calendar_month_rounded,
                       size: 14,
                       color: cor,
@@ -110,7 +109,7 @@ Widget CARD_EVENTO_DO_CALENDARIO(
                     const SizedBox(width: 5),
                     Text(
                       formatar_Data(dia, mes),
-                      style:  TextStyle(
+                      style: TextStyle(
                         color: cor,
                         fontSize: 14,
                         fontFamily: 'Roboto',

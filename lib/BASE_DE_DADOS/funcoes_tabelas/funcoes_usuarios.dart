@@ -21,7 +21,66 @@ class Funcoes_Usuarios {
         'FOREIGN KEY (centro_id) REFERENCES centros(id)'
         ')');
   }
-static Future<void> criarPastaUsuariosImagens() async {
+   static Future<int> consultaCentroIdPorUsuarioId(int idUsuario) async {
+    Database db = await DatabaseHelper.basededados;
+
+    List<Map<String, dynamic>> resultado = await db.query(
+      'usuario',
+      columns: ['centro_id'],  
+      where: 'id = ?',         
+      whereArgs: [idUsuario],  
+    );
+
+    if (resultado.isNotEmpty) {
+      return resultado.first['centro_id'] ?? 0;  
+    } else {
+      return 0;  
+    }
+  }
+
+  static Future<void> insertUsuarios(Database db) async {
+    await db.insert(
+      'usuario',
+      {
+        'nome': 'Susana',
+        'sobrenome': 'Carvalho',
+        'caminho_foto': 'assets/images/pessoa5.jpg',
+        'caminho_fundo': 'assets/images/fundo_susana.jpg',
+        'centro_id': 5,
+        'sobre_min':
+            'Para mim, a neve não é apenas um clima, é uma paixão que aquece meu coração gelado! ❄️⛷️🏂 #AmoNeve #InvernoÉVida'
+      },
+    );
+   
+     /*
+     await db.insert(
+      'usuario',
+      {
+        'nome': 'Lucas',
+        'sobrenome': 'Oliveira',
+        'caminho_foto': 'assets/images/pessoa7.jpeg'
+      },
+    );
+     await db.insert(
+      'usuario',
+      {
+        'nome': 'Julia',
+        'sobrenome': 'Matos',
+        'caminho_foto': 'assets/images/pessoa8.jpg'
+      },
+    );
+     
+     await db.insert(
+      'usuario',
+      {
+        'nome': 'Luara ',
+        'sobrenome': 'Costa',
+        'caminho_foto': 'assets/images/pessoa9.jpg'
+      },
+    );*/
+  }
+
+  static Future<void> criarPastaUsuariosImagens() async {
     if (await Permission.storage.request().isGranted) {
       final directory = await getExternalStorageDirectory();
       final baseFolder = Directory('${directory!.path}/ALL_IMAGES');
@@ -43,7 +102,6 @@ static Future<void> criarPastaUsuariosImagens() async {
       final Uint8List bytes = response.bodyBytes;
       final File file = File(filePath);
 
-      
       if (!await file.parent.exists()) {
         await file.parent.create(recursive: true);
       }
@@ -62,8 +120,10 @@ static Future<void> criarPastaUsuariosImagens() async {
     final imagesFolder = Directory('${directory!.path}/ALL_IMAGES/usuarios');
 
     // Use o ID do usuário para criar os nomes dos arquivos
-    final String caminhoFotoLocal = '${imagesFolder.path}/fotodeperfil_user${usuario['id']}.jpg';
-    final String caminhoFundoLocal = '${imagesFolder.path}/fundoperfil_user${usuario['id']}.jpg';
+    final String caminhoFotoLocal =
+        '${imagesFolder.path}/fotodeperfil_user${usuario['id']}.jpg';
+    final String caminhoFundoLocal =
+        '${imagesFolder.path}/fundoperfil_user${usuario['id']}.jpg';
 
     await _downloadAndSaveImage(usuario['caminho_foto'], caminhoFotoLocal);
     await _downloadAndSaveImage(usuario['caminho_fundo'], caminhoFundoLocal);
@@ -77,36 +137,35 @@ static Future<void> criarPastaUsuariosImagens() async {
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
-  
 
- Future<List<Map<String, dynamic>>> consultaUsuarios() async {
+  Future<List<Map<String, dynamic>>> consultaUsuarios() async {
     //FAZ A CONSULTO DOS EVENTOS DA TABELA
     Database db = await DatabaseHelper.basededados;
     return await db.rawQuery('SELECT * FROM usuario');
   }
 
- static Future<String> consultaNomeCompletoUsuarioPorId(int idUsuario) async {
-  Database db = await DatabaseHelper.basededados;
+  static Future<String> consultaNomeCompletoUsuarioPorId(int idUsuario) async {
+    Database db = await DatabaseHelper.basededados;
 
-  List<Map<String, dynamic>> resultado = await db.query(
-    'usuario', 
-    columns: ['nome', 'sobrenome'], 
-    where: 'id = ?', 
-    whereArgs: [idUsuario],
-  );
+    List<Map<String, dynamic>> resultado = await db.query(
+      'usuario',
+      columns: ['nome', 'sobrenome'],
+      where: 'id = ?',
+      whereArgs: [idUsuario],
+    );
 
-  if (resultado.isNotEmpty) {
-    
-    String nome = resultado.first['nome'];
-    String sobrenome = resultado.first['sobrenome'];
-    
-    return '$nome $sobrenome';
-  } else {
-    return '';
+    if (resultado.isNotEmpty) {
+      String nome = resultado.first['nome'];
+      String sobrenome = resultado.first['sobrenome'];
+
+      return '$nome $sobrenome';
+    } else {
+      return '';
+    }
   }
-}
 
-static Future<Map<String, dynamic>?> consultaUsuarioPorId(int idUsuario) async {
+  static Future<Map<String, dynamic>?> consultaUsuarioPorId(
+      int idUsuario) async {
     Database db = await DatabaseHelper.basededados;
 
     List<Map<String, dynamic>> resultado = await db.query(
@@ -121,55 +180,54 @@ static Future<Map<String, dynamic>?> consultaUsuarioPorId(int idUsuario) async {
       return null;
     }
   }
-  
-static Future<String> consultaCaminhoFotoUsuarioPorId(int idUsuario) async {
-  Database db = await DatabaseHelper.basededados;
 
-  List<Map<String, dynamic>> resultado = await db.query(
-    'usuario', 
-    columns: ['caminho_foto'], 
-    where: 'id = ?', 
-    whereArgs: [idUsuario],
-  );
+  static Future<String> consultaCaminhoFotoUsuarioPorId(int idUsuario) async {
+    Database db = await DatabaseHelper.basededados;
 
-  if (resultado.isNotEmpty) {
-    return resultado.first['caminho_foto'];
-  } else {
-    return ''; // Retorna uma string vazia se não houver resultados
+    List<Map<String, dynamic>> resultado = await db.query(
+      'usuario',
+      columns: ['caminho_foto'],
+      where: 'id = ?',
+      whereArgs: [idUsuario],
+    );
+
+    if (resultado.isNotEmpty) {
+      return resultado.first['caminho_foto'];
+    } else {
+      return ''; // Retorna uma string vazia se não houver resultados
+    }
   }
-}
 
-static Future<String> consultaCaminhoFOTOFUNDOUsuarioPorId(int idUsuario) async {
-  Database db = await DatabaseHelper.basededados;
+  static Future<String> consultaCaminhoFOTOFUNDOUsuarioPorId(
+      int idUsuario) async {
+    Database db = await DatabaseHelper.basededados;
 
-  List<Map<String, dynamic>> resultado = await db.query(
-    'usuario', 
-    columns: ['caminho_fundo'], 
-    where: 'id = ?', 
-    whereArgs: [idUsuario],
-  );
+    List<Map<String, dynamic>> resultado = await db.query(
+      'usuario',
+      columns: ['caminho_fundo'],
+      where: 'id = ?',
+      whereArgs: [idUsuario],
+    );
 
-  if (resultado.isNotEmpty) {
-    return resultado.first['caminho_fundo'];
-  } else {
-    return ''; // Retorna uma string vazia se não houver resultados
+    if (resultado.isNotEmpty) {
+      return resultado.first['caminho_fundo'];
+    } else {
+      return ''; // Retorna uma string vazia se não houver resultados
+    }
   }
-}
+
   static Future<String> obterSobreMimUsuarioPorId(int userId) async {
-  
-      Database db = await DatabaseHelper.basededados;
-      List<Map<String, dynamic>> results = await db.query(
-        'usuario',
-        where: 'id = ?',
-        whereArgs: [userId],
-        columns: ['sobre_min'],
-      );
-      if (results.isNotEmpty) {
-        return results.first['sobre_min'] ;
-      } else {
-        return' ';
-      }
-    
+    Database db = await DatabaseHelper.basededados;
+    List<Map<String, dynamic>> results = await db.query(
+      'usuario',
+      where: 'id = ?',
+      whereArgs: [userId],
+      columns: ['sobre_min'],
+    );
+    if (results.isNotEmpty) {
+      return results.first['sobre_min'];
+    } else {
+      return ' ';
+    }
   }
-
 }

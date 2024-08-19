@@ -1,52 +1,63 @@
+import 'dart:io';
+import 'package:ficha3/AREAS/PAGINA_DE_UMA_AREA/sub_menu_eventos/calendario_area/card_evento_do_calendario.dart';
+import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_eventos.dart';
+import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_topicos.dart';
+import 'package:path/path.dart' as p; // Use an alias to avoid conflicts
+import 'package:ficha3/centro_provider.dart';
+import 'package:ficha3/AREAS/PAGINA_DE_UMA_AREA/sub_menu_eventos/pagina_De_um_evento/pagina_evento.dart';
+import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_listaparticipantes_evento.dart';
 import 'package:flutter/material.dart';
-import 'package:path/path.dart';
+import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 
-import 'package:ficha3/AREAS/PAGINA_DE_UMA_AREA/sub_menu_eventos/calendario_area/card_evento_do_calendario.dart';
-import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_eventos.dart';
-import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_topicos.dart';
-
-class calendariogeral_eventos extends StatefulWidget {
+class CalendarioGeralEventos extends StatefulWidget {
   final int id_area;
   final Color cor_da_area;
 
-  calendariogeral_eventos({
+  CalendarioGeralEventos({
     required this.id_area,
     required this.cor_da_area,
   });
+
   @override
-  _calendariogeral_eventosState createState() =>
-      _calendariogeral_eventosState();
+  _CalendarioGeralEventosState createState() => _CalendarioGeralEventosState();
 }
 
-class _calendariogeral_eventosState extends State<calendariogeral_eventos> {
-  List<Map<String, dynamic>> eventos = []; // Lista de eventos
+class _CalendarioGeralEventosState extends State<CalendarioGeralEventos> {
+  List<Map<String, dynamic>> eventos = [];
   DateTime today = DateTime.now();
-  DateTime _selectedDay = DateTime.now(); // Adicione esta variável
+  DateTime _selectedDay = DateTime.now();
 
   @override
   void initState() {
     super.initState();
     initializeDateFormatting("pt_BR");
-    {
-      _carregarEventos();
-    }
+    _carregarEventos();
   }
 
-  
   void _carregarEventos() async {
-    Funcoes_Eventos funcoesEventos = Funcoes_Eventos();
-    List<Map<String, dynamic>> eventosCarregados =
-         await funcoesEventos.consultaEventosPorArea(widget.id_area);
+    final centroProvider = Provider.of<Centro_Provider>(context, listen: false);
+    final centroSelecionado = centroProvider.centroSelecionado;
+
+    if (centroSelecionado == null) {
+      // Handle the case when no center is selected
+      print('Nenhum centro selecionado');
+      return;
+    }
+
+    int centroId = centroSelecionado.id;
+
+    List<Map<String, dynamic>> eventosCarregados = await Funcoes_Eventos()
+        .consultaEventosPorArea(widget.id_area, centroId);
+
     setState(() {
       eventos = eventosCarregados;
     });
   }
 
-  //
-  List<Map<String, dynamic>> _obter_eventos_numdia(DateTime day) {
+  List<Map<String, dynamic>> _obterEventosNumDia(DateTime day) {
     return eventos.where((evento) {
       return evento['dia_realizacao'] == day.day &&
           evento['mes_realizacao'] == day.month &&
@@ -56,7 +67,6 @@ class _calendariogeral_eventosState extends State<calendariogeral_eventos> {
 
   @override
   Widget build(BuildContext context) {
-    // Filtrar eventos para o mês selecionado
     List<Map<String, dynamic>> eventosNumMes = eventos.where((evento) {
       return evento['mes_realizacao'] == _selectedDay.month &&
           evento['ano_realizacao'] == _selectedDay.year;
@@ -65,7 +75,7 @@ class _calendariogeral_eventosState extends State<calendariogeral_eventos> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Calendario de Desporto',
+          'Calendário de Eventos',
           style: TextStyle(
             fontSize: 20,
             color: Color.fromARGB(255, 255, 255, 255),
@@ -87,7 +97,7 @@ class _calendariogeral_eventosState extends State<calendariogeral_eventos> {
               headerStyle: HeaderStyle(
                 formatButtonVisible: false,
                 titleCentered: true,
-                titleTextStyle:  TextStyle(
+                titleTextStyle: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: widget.cor_da_area,
@@ -103,14 +113,14 @@ class _calendariogeral_eventosState extends State<calendariogeral_eventos> {
                   fontFamily: 'ABeeZee',
                   fontWeight: FontWeight.w400,
                   height: 0.11,
-                ), // Estilo dos dias de semana
+                ),
                 weekendStyle: TextStyle(
                   color: Color(0xFF1F2225),
                   fontSize: 14,
                   fontFamily: 'ABeeZee',
                   fontWeight: FontWeight.w400,
                   height: 0.11,
-                ), // Estilo dos fins de semana
+                ),
               ),
               firstDay: DateTime.utc(2024, 1, 1),
               lastDay: DateTime.utc(2030, 3, 14),
@@ -120,13 +130,12 @@ class _calendariogeral_eventosState extends State<calendariogeral_eventos> {
                   borderRadius:
                       BorderRadius.circular(5), // Define o raio dos cantos
                   color: const Color.fromARGB(0, 21, 102, 159),
-                  border: Border.all(
-                      color: widget.cor_da_area, width: 2),
+                  border: Border.all(color: widget.cor_da_area, width: 2),
                 ),
                 todayTextStyle: TextStyle(
                   color: widget.cor_da_area,
                 ),
-                markerDecoration:  BoxDecoration(
+                markerDecoration: BoxDecoration(
                   color: widget.cor_da_area,
                   shape: BoxShape.circle,
                 ),
@@ -138,7 +147,7 @@ class _calendariogeral_eventosState extends State<calendariogeral_eventos> {
                   _selectedDay = focusedDay;
                 });
               },
-              eventLoader: _obter_eventos_numdia,
+              eventLoader: _obterEventosNumDia,
             ),
           ),
           const SizedBox(height: 8),
@@ -164,7 +173,7 @@ class _calendariogeral_eventosState extends State<calendariogeral_eventos> {
                 const SizedBox(
                   height: 15,
                 ),
-                if (eventosNumMes.isNotEmpty) 
+                if (eventosNumMes.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(right: 10.0),
                     child: Text(
@@ -191,7 +200,6 @@ class _calendariogeral_eventosState extends State<calendariogeral_eventos> {
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
-                          // Texto "Ainda sem Eventos!" abaixo da imagem
                           Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -199,7 +207,6 @@ class _calendariogeral_eventosState extends State<calendariogeral_eventos> {
                                 'assets/images/no_events.png',
                                 width: 60,
                                 height: 60,
-                                
                               ),
                               const SizedBox(height: 10),
                               const Text(
@@ -231,17 +238,55 @@ class _calendariogeral_eventosState extends State<calendariogeral_eventos> {
                                     'Erro ao carregar imagem'); // Tratar erro
                               } else {
                                 String caminhoDoTopico = snapshot.data ?? '';
-                                return CARD_EVENTO_DO_CALENDARIO(
-                                  cor:widget.cor_da_area,
-                                  context,
-                                  nomeEvento: eventosNumMes[index]['nome'],
-                                  dia: eventosNumMes[index]['dia_realizacao'],
-                                  mes: eventosNumMes[index]['mes_realizacao'],
-                                  numeroParticipantes: eventosNumMes[index]
-                                      ['numero_inscritos'],
-                                  imagePath: eventosNumMes[index]
-                                      ['caminho_imagem'],
-                                  imagem_topico: caminhoDoTopico,
+                                return FutureBuilder<int>(
+                                  future: Funcoes_Participantes_Evento
+                                      .getNumeroDeParticipantes(
+                                          eventosNumMes[index]['id']),
+                                  builder: (context, participantesSnapshot) {
+                                    if (participantesSnapshot.connectionState ==
+                                        ConnectionState.done) {
+                                      if (participantesSnapshot.hasError) {
+                                        return const Text(
+                                            'Erro ao carregar participantes'); // Tratar erro
+                                      } else {
+                                        int numeroParticipantes =
+                                            participantesSnapshot.data ?? 0;
+                                        return GestureDetector(
+                                          onTap: () {
+                                            // Navega para a nova página quando o cartão for clicado
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    PaginaEvento(
+                                                        idEvento:
+                                                            eventosNumMes[index]
+                                                                ['id']),
+                                              ),
+                                            );
+                                          },
+                                          child: CARD_EVENTO_DO_CALENDARIO(
+                                            context, // Passa o contexto corretamente
+                                            cor: widget.cor_da_area,
+                                            nomeEvento: eventosNumMes[index]
+                                                ['nome'],
+                                            dia: eventosNumMes[index]
+                                                ['dia_realizacao'],
+                                            mes: eventosNumMes[index]
+                                                ['mes_realizacao'],
+                                            numeroParticipantes:
+                                                numeroParticipantes,
+                                            imagePath: eventosNumMes[index]
+                                                ['caminho_imagem'],
+                                            imagem_topico: caminhoDoTopico,
+                                          ),
+                                        );
+                                      }
+                                    } else {
+                                      return const SizedBox
+                                          .shrink(); // Retorna um widget vazio enquanto aguarda
+                                    }
+                                  },
                                 );
                               }
                             } else {

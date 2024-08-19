@@ -24,9 +24,8 @@ class _vertodos_eventosState extends State<vertodos_eventos> {
     Funcoes_Eventos funcoesEventos = Funcoes_Eventos();
     final centroProvider = Provider.of<Centro_Provider>(context, listen: false);
     final centroSelecionado = centroProvider.centroSelecionado;
-    int centroId=5;
-    //int centroId = centroSelecionado!.id;
-    //int centroId = 2; //////////////////
+    int centroId = centroSelecionado!.id;
+
     List<Map<String, dynamic>> eventosCarregados =
         await funcoesEventos.consultaEventosPorCentroId(centroId);
     setState(() {
@@ -73,7 +72,7 @@ class _vertodos_eventosState extends State<vertodos_eventos> {
           child: Column(
             children: [
               Container(
-                color: Color.fromARGB(
+                color: const Color.fromARGB(
                     255, 255, 255, 255), // Cor de fundo da TabBar
                 child: TabBar(
                   isScrollable: true,
@@ -236,16 +235,14 @@ class _vertodos_eventosState extends State<vertodos_eventos> {
                             margin: const EdgeInsets.only(
                                 left: 4, right: 10, top: 20),
                             child: CARD_EVENTO_VERTODOS(
+                              id_topico: eventos[index]['topico_id'],
                               context: context,
-                              id:eventos[index]['id'],
+                              id: eventos[index]['id'],
                               nomeEvento: eventos[index]['nome'],
                               dia: eventos[index]['dia_realizacao'],
                               mes: eventos[index]['mes_realizacao'],
                               ano: eventos[index]['ano_realizacao'],
                               horas: eventos[index]['horas'],
-                              local: eventos[index]['local'],
-                              numeroParticipantes:
-                                  eventos[index]['numero_inscritos'].toString(),
                               imagePath: eventos[index]['caminho_imagem'],
                               tipo_evento: eventos[index]['tipodeevento_id'],
                             ),
@@ -253,7 +250,59 @@ class _vertodos_eventosState extends State<vertodos_eventos> {
                         },
                       ),
                     ),
-                     Container(
+                    Container(
+                      //saude
+                      child: !eventos.any((evento) => evento['area_id'] == 2)
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Image.asset(
+                                    'assets/images/no_events.png',
+                                    width: 50,
+                                    height: 50,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  const Text(
+                                    'Saude\n'
+                                    'ainda nao tem eventos !\n',
+                                    style: TextStyle(
+                                        fontSize: 16, color: Colors.grey),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                            )
+                          : ListView.builder(
+                              scrollDirection: Axis.vertical,
+                              itemCount: eventos.length,
+                              itemBuilder: (context, index) {
+                                if (eventos[index]['area_id'] == 2) {
+                                  return Container(
+                                    margin: const EdgeInsets.only(
+                                        left: 4, right: 10, top: 20),
+                                    child: CARD_EVENTO_VERTODOS(
+                                      id_topico: eventos[index]['topico_id'],
+                                      context: context,
+                                      id: eventos[index]['id'],
+                                      nomeEvento: eventos[index]['nome'],
+                                      dia: eventos[index]['dia_realizacao'],
+                                      mes: eventos[index]['mes_realizacao'],
+                                      ano: eventos[index]['ano_realizacao'],
+                                      horas: eventos[index]['horas'],
+                                      imagePath: eventos[index]
+                                          ['caminho_imagem'],
+                                      tipo_evento: eventos[index]
+                                          ['tipodeevento_id'],
+                                    ),
+                                  );
+                                } else {
+                                  return const SizedBox.shrink();
+                                }
+                              },
+                            ),
+                    ), //desporto
+                    Container(
                       child: !eventos.any((evento) => evento['area_id'] == 1)
                           ? Center(
                               child: Column(
@@ -264,9 +313,9 @@ class _vertodos_eventosState extends State<vertodos_eventos> {
                                     width: 50,
                                     height: 50,
                                   ),
-                                  SizedBox(height: 8),
-                                  Text(
-                                    'Saude\n'
+                                  const SizedBox(height: 8),
+                                  const Text(
+                                    'Desporto\n'
                                     'ainda nao tem eventos !\n',
                                     style: TextStyle(
                                         fontSize: 16, color: Colors.grey),
@@ -284,17 +333,14 @@ class _vertodos_eventosState extends State<vertodos_eventos> {
                                     margin: const EdgeInsets.only(
                                         left: 4, right: 10, top: 20),
                                     child: CARD_EVENTO_VERTODOS(
+                                      id_topico: eventos[index]['topico_id'],
                                       context: context,
-                                      id:eventos[index]['id'],
+                                      id: eventos[index]['id'],
                                       nomeEvento: eventos[index]['nome'],
                                       dia: eventos[index]['dia_realizacao'],
                                       mes: eventos[index]['mes_realizacao'],
                                       ano: eventos[index]['ano_realizacao'],
                                       horas: eventos[index]['horas'],
-                                      local: eventos[index]['local'],
-                                      numeroParticipantes: eventos[index]
-                                              ['numero_inscritos']
-                                          .toString(),
                                       imagePath: eventos[index]
                                           ['caminho_imagem'],
                                       tipo_evento: eventos[index]
@@ -302,66 +348,12 @@ class _vertodos_eventosState extends State<vertodos_eventos> {
                                     ),
                                   );
                                 } else {
-                                  return SizedBox.shrink();
+                                  return const SizedBox.shrink();
                                 }
                               },
                             ),
-                    ),
-                     Container(
-                      child: !eventos.any((evento) => evento['area_id'] == 2)
-                          ? Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Image.asset(
-                                    'assets/images/no_events.png',
-                                    width: 50,
-                                    height: 50,
-                                  ),
-                                  SizedBox(height: 8),
-                                  Text(
-                                    'Desporto\n'
-                                    'ainda nao tem eventos !\n',
-                                    style: TextStyle(
-                                        fontSize: 16, color: Colors.grey),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ],
-                              ),
-                            )
-                          :ListView.builder(
-                              scrollDirection: Axis.vertical,
-                              itemCount: eventos.length,
-                              itemBuilder: (context, index) {
-                                if (eventos[index]['area_id'] == 2) {
-                                  return Container(
-                                    margin: const EdgeInsets.only(
-                                        left: 4, right: 10, top: 20),
-                                    child: CARD_EVENTO_VERTODOS(
-                                      context: context,
-                                      id:eventos[index]['id'],
-                                      nomeEvento: eventos[index]['nome'],
-                                      dia: eventos[index]['dia_realizacao'],
-                                      mes: eventos[index]['mes_realizacao'],
-                                      ano: eventos[index]['ano_realizacao'],
-                                      horas: eventos[index]['horas'],
-                                      local: eventos[index]['local'],
-                                      numeroParticipantes: eventos[index]
-                                              ['numero_inscritos']
-                                          .toString(),
-                                      imagePath: eventos[index]
-                                          ['caminho_imagem'],
-                                      tipo_evento: eventos[index]
-                                          ['tipodeevento_id'],
-                                    ),
-                                  );
-                                } else {
-                                  return SizedBox.shrink();
-                                }
-                              },
-                            ),
-                    ),
-                     Container(
+                    ), //gastronomia
+                    Container(
                       child: !eventos.any((evento) => evento['area_id'] == 3)
                           ? Center(
                               child: Column(
@@ -372,8 +364,8 @@ class _vertodos_eventosState extends State<vertodos_eventos> {
                                     width: 50,
                                     height: 50,
                                   ),
-                                  SizedBox(height: 8),
-                                  Text(
+                                  const SizedBox(height: 8),
+                                  const Text(
                                     'Gastronomia\n'
                                     'ainda nao tem eventos !\n',
                                     style: TextStyle(
@@ -384,36 +376,35 @@ class _vertodos_eventosState extends State<vertodos_eventos> {
                               ),
                             )
                           : ListView.builder(
-                        scrollDirection: Axis.vertical,
-                        itemCount: eventos.length,
-                        itemBuilder: (context, index) {
-                          if (eventos[index]['area_id'] == 3) {
-                            return Container(
-                              margin: const EdgeInsets.only(
-                                  left: 4, right: 10, top: 20),
-                              child: CARD_EVENTO_VERTODOS(
-                                context: context,
-                                id:eventos[index]['id'],
-                                nomeEvento: eventos[index]['nome'],
-                                dia: eventos[index]['dia_realizacao'],
-                                mes: eventos[index]['mes_realizacao'],
-                                ano: eventos[index]['ano_realizacao'],
-                                horas: eventos[index]['horas'],
-                                local: eventos[index]['local'],
-                                numeroParticipantes: eventos[index]
-                                        ['numero_inscritos']
-                                    .toString(),
-                                imagePath: eventos[index]['caminho_imagem'],
-                                tipo_evento: eventos[index]['tipodeevento_id'],
-                              ),
-                            );
-                          } else {
-                            return SizedBox.shrink();
-                          }
-                        },
-                      ),
-                    ),
-                     Container(
+                              scrollDirection: Axis.vertical,
+                              itemCount: eventos.length,
+                              itemBuilder: (context, index) {
+                                if (eventos[index]['area_id'] == 3) {
+                                  return Container(
+                                    margin: const EdgeInsets.only(
+                                        left: 4, right: 10, top: 20),
+                                    child: CARD_EVENTO_VERTODOS(
+                                      id_topico: eventos[index]['topico_id'],
+                                      context: context,
+                                      id: eventos[index]['id'],
+                                      nomeEvento: eventos[index]['nome'],
+                                      dia: eventos[index]['dia_realizacao'],
+                                      mes: eventos[index]['mes_realizacao'],
+                                      ano: eventos[index]['ano_realizacao'],
+                                      horas: eventos[index]['horas'],
+                                      imagePath: eventos[index]
+                                          ['caminho_imagem'],
+                                      tipo_evento: eventos[index]
+                                          ['tipodeevento_id'],
+                                    ),
+                                  );
+                                } else {
+                                  return const SizedBox.shrink();
+                                }
+                              },
+                            ),
+                    ), //formacao
+                    Container(
                       child: !eventos.any((evento) => evento['area_id'] == 4)
                           ? Center(
                               child: Column(
@@ -424,8 +415,8 @@ class _vertodos_eventosState extends State<vertodos_eventos> {
                                     width: 50,
                                     height: 50,
                                   ),
-                                  SizedBox(height: 8),
-                                  Text(
+                                  const SizedBox(height: 8),
+                                  const Text(
                                     'Formação\n'
                                     'ainda nao tem eventos !\n',
                                     style: TextStyle(
@@ -435,143 +426,37 @@ class _vertodos_eventosState extends State<vertodos_eventos> {
                                 ],
                               ),
                             )
-                          :ListView.builder(
-                        scrollDirection: Axis.vertical,
-                        itemCount: eventos.length,
-                        itemBuilder: (context, index) {
-                          if (eventos[index]['area_id'] == 4) {
-                            return Container(
-                              margin: const EdgeInsets.only(
-                                  left: 4, right: 10, top: 20),
-                              child: CARD_EVENTO_VERTODOS(
-                                context: context,
-                                id:eventos[index]['id'],
-                                nomeEvento: eventos[index]['nome'],
-                                dia: eventos[index]['dia_realizacao'],
-                                mes: eventos[index]['mes_realizacao'],
-                                ano: eventos[index]['ano_realizacao'],
-                                horas: eventos[index]['horas'],
-                                local: eventos[index]['local'],
-                                numeroParticipantes: eventos[index]
-                                        ['numero_inscritos']
-                                    .toString(),
-                                imagePath: eventos[index]['caminho_imagem'],
-                                tipo_evento: eventos[index]['tipodeevento_id'],
-                              ),
-                            );
-                          } else {
-                            return SizedBox.shrink();
-                          }
-                        },
-                      ),
-                    ),
-                    // Conteúdo da aba 2
-                     Container(
-                      child: !eventos.any((evento) => evento['area_id'] == 5)
-                          ? Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Image.asset(
-                                    'assets/images/no_events.png',
-                                    width: 50,
-                                    height: 50,
-                                  ),
-                                  SizedBox(height: 8),
-                                  Text(
-                                    'Alojamento\n'
-                                    'ainda nao tem eventos !\n',
-                                    style: TextStyle(
-                                        fontSize: 16, color: Colors.grey),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ],
-                              ),
-                            )
                           : ListView.builder(
-                        scrollDirection: Axis.vertical,
-                        itemCount: eventos.length,
-                        itemBuilder: (context, index) {
-                          if (eventos[index]['area_id'] == 5) {
-                            return Container(
-                              margin: const EdgeInsets.only(
-                                  left: 4, right: 10, top: 20),
-                              child: CARD_EVENTO_VERTODOS(
-                                context: context,
-                                id:eventos[index]['id'],
-                                nomeEvento: eventos[index]['nome'],
-                                dia: eventos[index]['dia_realizacao'],
-                                mes: eventos[index]['mes_realizacao'],
-                                ano: eventos[index]['ano_realizacao'],
-                                horas: eventos[index]['horas'],
-                                local: eventos[index]['local'],
-                                numeroParticipantes: eventos[index]
-                                        ['numero_inscritos']
-                                    .toString(),
-                                imagePath: eventos[index]['caminho_imagem'],
-                                tipo_evento: eventos[index]['tipodeevento_id'],
-                              ),
-                            );
-                          } else {
-                            return SizedBox.shrink();
-                          }
-                        },
-                      ),
+                              scrollDirection: Axis.vertical,
+                              itemCount: eventos.length,
+                              itemBuilder: (context, index) {
+                                if (eventos[index]['area_id'] == 4) {
+                                  return Container(
+                                    margin: const EdgeInsets.only(
+                                        left: 4, right: 10, top: 20),
+                                    child: CARD_EVENTO_VERTODOS(
+                                      id_topico: eventos[index]['topico_id'],
+                                      context: context,
+                                      id: eventos[index]['id'],
+                                      nomeEvento: eventos[index]['nome'],
+                                      dia: eventos[index]['dia_realizacao'],
+                                      mes: eventos[index]['mes_realizacao'],
+                                      ano: eventos[index]['ano_realizacao'],
+                                      horas: eventos[index]['horas'],
+                                      imagePath: eventos[index]
+                                          ['caminho_imagem'],
+                                      tipo_evento: eventos[index]
+                                          ['tipodeevento_id'],
+                                    ),
+                                  );
+                                } else {
+                                  return const SizedBox.shrink();
+                                }
+                              },
+                            ),
                     ),
-                    // Conteúdo da aba 3
-                     Container(
-                      child: !eventos.any((evento) => evento['area_id'] == 6)
-                          ? Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Image.asset(
-                                    'assets/images/no_events.png',
-                                    width: 50,
-                                    height: 50,
-                                  ),
-                                  SizedBox(height: 8),
-                                  Text(
-                                    'Transportes\n'
-                                    'ainda nao tem eventos !\n',
-                                    style: TextStyle(
-                                        fontSize: 16, color: Colors.grey),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ],
-                              ),
-                            )
-                          : ListView.builder(
-                        scrollDirection: Axis.vertical,
-                        itemCount: eventos.length,
-                        itemBuilder: (context, index) {
-                          if (eventos[index]['area_id'] == 6) {
-                            return Container(
-                              margin: const EdgeInsets.only(
-                                  left: 4, right: 10, top: 20),
-                              child: CARD_EVENTO_VERTODOS(
-                                context: context,
-                                id:eventos[index]['id'],
-                                nomeEvento: eventos[index]['nome'],
-                                dia: eventos[index]['dia_realizacao'],
-                                mes: eventos[index]['mes_realizacao'],
-                                ano: eventos[index]['ano_realizacao'],
-                                horas: eventos[index]['horas'],
-                                local: eventos[index]['local'],
-                                numeroParticipantes: eventos[index]
-                                        ['numero_inscritos']
-                                    .toString(),
-                                imagePath: eventos[index]['caminho_imagem'],
-                                tipo_evento: eventos[index]['tipodeevento_id'],
-                              ),
-                            );
-                          } else {
-                            return SizedBox.shrink();
-                          }
-                        },
-                      ),
-                    ),
-                     Container(
+                    // ALOJAMENTO
+                    Container(
                       child: !eventos.any((evento) => evento['area_id'] == 7)
                           ? Center(
                               child: Column(
@@ -582,8 +467,111 @@ class _vertodos_eventosState extends State<vertodos_eventos> {
                                     width: 50,
                                     height: 50,
                                   ),
-                                  SizedBox(height: 8),
-                                  Text(
+                                  const SizedBox(height: 8),
+                                  const Text(
+                                    'Alojamento\n'
+                                    'ainda nao tem eventos !\n',
+                                    style: TextStyle(
+                                        fontSize: 16, color: Colors.grey),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                            )
+                          : ListView.builder(
+                              scrollDirection: Axis.vertical,
+                              itemCount: eventos.length,
+                              itemBuilder: (context, index) {
+                                if (eventos[index]['area_id'] == 7) {
+                                  return Container(
+                                    margin: const EdgeInsets.only(
+                                        left: 4, right: 10, top: 20),
+                                    child: CARD_EVENTO_VERTODOS(
+                                      id_topico: eventos[index]['topico_id'],
+                                      context: context,
+                                      id: eventos[index]['id'],
+                                      nomeEvento: eventos[index]['nome'],
+                                      dia: eventos[index]['dia_realizacao'],
+                                      mes: eventos[index]['mes_realizacao'],
+                                      ano: eventos[index]['ano_realizacao'],
+                                      horas: eventos[index]['horas'],
+                                      imagePath: eventos[index]
+                                          ['caminho_imagem'],
+                                      tipo_evento: eventos[index]
+                                          ['tipodeevento_id'],
+                                    ),
+                                  );
+                                } else {
+                                  return const SizedBox.shrink();
+                                }
+                              },
+                            ),
+                    ),
+                    //TRANSPORTES
+                    Container(
+                      child: !eventos.any((evento) => evento['area_id'] == 6)
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Image.asset(
+                                    'assets/images/no_events.png',
+                                    width: 50,
+                                    height: 50,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  const Text(
+                                    'Transportes\n'
+                                    'ainda nao tem eventos !\n',
+                                    style: TextStyle(
+                                        fontSize: 16, color: Colors.grey),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                            )
+                          : ListView.builder(
+                              scrollDirection: Axis.vertical,
+                              itemCount: eventos.length,
+                              itemBuilder: (context, index) {
+                                if (eventos[index]['area_id'] == 6) {
+                                  return Container(
+                                    margin: const EdgeInsets.only(
+                                        left: 4, right: 10, top: 20),
+                                    child: CARD_EVENTO_VERTODOS(
+                                      id_topico: eventos[index]['topico_id'],
+                                      context: context,
+                                      id: eventos[index]['id'],
+                                      nomeEvento: eventos[index]['nome'],
+                                      dia: eventos[index]['dia_realizacao'],
+                                      mes: eventos[index]['mes_realizacao'],
+                                      ano: eventos[index]['ano_realizacao'],
+                                      horas: eventos[index]['horas'],
+                                      imagePath: eventos[index]
+                                          ['caminho_imagem'],
+                                      tipo_evento: eventos[index]
+                                          ['tipodeevento_id'],
+                                    ),
+                                  );
+                                } else {
+                                  return const SizedBox.shrink();
+                                }
+                              },
+                            ),
+                    ), //LAZER
+                    Container(
+                      child: !eventos.any((evento) => evento['area_id'] == 5)
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Image.asset(
+                                    'assets/images/no_events.png',
+                                    width: 50,
+                                    height: 50,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  const Text(
                                     'Lazer\n'
                                     'ainda nao tem eventos !\n',
                                     style: TextStyle(
@@ -594,34 +582,33 @@ class _vertodos_eventosState extends State<vertodos_eventos> {
                               ),
                             )
                           : ListView.builder(
-                        scrollDirection: Axis.vertical,
-                        itemCount: eventos.length,
-                        itemBuilder: (context, index) {
-                          if (eventos[index]['area_id'] == 7) {
-                            return Container(
-                              margin: const EdgeInsets.only(
-                                  left: 4, right: 10, top: 20),
-                              child: CARD_EVENTO_VERTODOS(
-                                context: context,
-                                id:eventos[index]['id'],
-                                nomeEvento: eventos[index]['nome'],
-                                dia: eventos[index]['dia_realizacao'],
-                                mes: eventos[index]['mes_realizacao'],
-                                ano: eventos[index]['ano_realizacao'],
-                                horas: eventos[index]['horas'],
-                                local: eventos[index]['local'],
-                                numeroParticipantes: eventos[index]
-                                        ['numero_inscritos']
-                                    .toString(),
-                                imagePath: eventos[index]['caminho_imagem'],
-                                tipo_evento: eventos[index]['tipodeevento_id'],
-                              ),
-                            );
-                          } else {
-                            return SizedBox.shrink();
-                          }
-                        },
-                      ),
+                              scrollDirection: Axis.vertical,
+                              itemCount: eventos.length,
+                              itemBuilder: (context, index) {
+                                if (eventos[index]['area_id'] == 5) {
+                                  return Container(
+                                    margin: const EdgeInsets.only(
+                                        left: 4, right: 10, top: 20),
+                                    child: CARD_EVENTO_VERTODOS(
+                                      id_topico: eventos[index]['topico_id'],
+                                      context: context,
+                                      id: eventos[index]['id'],
+                                      nomeEvento: eventos[index]['nome'],
+                                      dia: eventos[index]['dia_realizacao'],
+                                      mes: eventos[index]['mes_realizacao'],
+                                      ano: eventos[index]['ano_realizacao'],
+                                      horas: eventos[index]['horas'],
+                                      imagePath: eventos[index]
+                                          ['caminho_imagem'],
+                                      tipo_evento: eventos[index]
+                                          ['tipodeevento_id'],
+                                    ),
+                                  );
+                                } else {
+                                  return const SizedBox.shrink();
+                                }
+                              },
+                            ),
                     )
                   ],
                 ),

@@ -1,3 +1,5 @@
+import 'package:ficha3/AREAS/PAGINA_DE_UMA_AREA/sub_menu_eventos/pagina_De_um_evento/pagina_evento.dart';
+import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_listaparticipantes_evento.dart';
 import 'package:ficha3/centro_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -163,7 +165,7 @@ class _calendariogeral_eventosState extends State<calendariogeral_eventos> {
                 SizedBox(
                   height: 15,
                 ),
-                if (eventos_num_Mes.isNotEmpty) 
+                if (eventos_num_Mes.isNotEmpty)
                   Padding(
                     padding: EdgeInsets.only(right: 10.0),
                     child: Text(
@@ -198,7 +200,6 @@ class _calendariogeral_eventosState extends State<calendariogeral_eventos> {
                                 'assets/images/no_events.png',
                                 width: 60,
                                 height: 60,
-                                
                               ),
                               SizedBox(height: 10),
                               Text(
@@ -230,15 +231,54 @@ class _calendariogeral_eventosState extends State<calendariogeral_eventos> {
                                     'Erro ao carregar imagem'); // Tratar erro
                               } else {
                                 String caminho_do_topico = snapshot.data ?? '';
-                                return CARD_EVENTO_DO_CALENDARIO(
-                                  nomeEvento: eventos_num_Mes[index]['nome'],
-                                  dia: eventos_num_Mes[index]['dia_realizacao'],
-                                  mes: eventos_num_Mes[index]['mes_realizacao'],
-                                  numeroParticipantes: eventos_num_Mes[index]
-                                      ['numero_inscritos'],
-                                  imagePath: eventos_num_Mes[index]
-                                      ['caminho_imagem'],
-                                  imagem_topico: caminho_do_topico,
+                                return FutureBuilder<int>(
+                                  future: Funcoes_Participantes_Evento
+                                      .getNumeroDeParticipantes(
+                                          eventos_num_Mes[index]['id']),
+                                  builder: (context, snapshot) {
+                                    if (snapshot.connectionState ==
+                                        ConnectionState.done) {
+                                      if (snapshot.hasError) {
+                                        return Text(
+                                            'Erro ao carregar participantes'); // Tratar erro
+                                      } else {
+                                        int numeroParticipantes =
+                                            snapshot.data ?? 0;
+                                        return GestureDetector(
+                                          onTap: () {
+                                            // Navega para a nova página quando o cartão for clicado
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    PaginaEvento(
+                                                        idEvento:
+                                                            eventos_num_Mes[
+                                                                index]['id']),
+                                              ),
+                                            );
+                                          },
+                                          child: CARD_EVENTO_DO_CALENDARIO2(
+                                            context: context,
+                                            nomeEvento: eventos_num_Mes[index]
+                                                ['nome'],
+                                            dia: eventos_num_Mes[index]
+                                                ['dia_realizacao'],
+                                            mes: eventos_num_Mes[index]
+                                                ['mes_realizacao'],
+                                            numeroParticipantes:
+                                                numeroParticipantes,
+                                            imagePath: eventos_num_Mes[index]
+                                                ['caminho_imagem'],
+                                            imagem_topico: caminho_do_topico,
+                                          ),
+                                        );
+                                      }
+                                    } else {
+                                      return SizedBox
+                                          .shrink(); // Retorna um widget vazio enquanto aguarda
+                                    }
+                                  },
                                 );
                               }
                             } else {

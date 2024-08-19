@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_centros.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_usuarios.dart';
 import 'package:flutter/material.dart';
 import 'package:ficha3/usuario_provider.dart';
@@ -23,7 +26,7 @@ class _pagina_de_perfil_vistaState extends State<pagina_de_perfil_vista> {
   String foto = '';
   String fundo = '';
   String Sobremin = '';
-
+  String centro_id = '';
   @override
   void initState() {
     super.initState();
@@ -43,11 +46,17 @@ class _pagina_de_perfil_vistaState extends State<pagina_de_perfil_vista> {
             widget.idUsuario);
     String getsobremin =
         await Funcoes_Usuarios.obterSobreMimUsuarioPorId(widget.idUsuario);
+
+    int centro_idd =
+        await Funcoes_Usuarios.consultaCentroIdPorUsuarioId(widget.idUsuario);
+    String nomeCentro =
+        await Funcoes_Centros.consultaNomeCentroPorId(centro_idd);
     setState(() {
       nome = nomeCompleto;
       foto = caminhoFoto;
       fundo = camingofundo;
       Sobremin = getsobremin;
+      centro_id = nomeCentro;
     });
   }
 
@@ -106,8 +115,7 @@ class _pagina_de_perfil_vistaState extends State<pagina_de_perfil_vista> {
               height: 240,
               decoration: BoxDecoration(
                 image: DecorationImage(
-                  image: AssetImage(
-                      fundo ?? 'assets/images/default_background.jpg'),
+                  image: FileImage(File(fundo)),
                   fit: BoxFit.cover,
                 ),
               ),
@@ -155,22 +163,22 @@ class _pagina_de_perfil_vistaState extends State<pagina_de_perfil_vista> {
                       ),
                     ],
                   ),
-                  const Center(
+                   Center(
                     child: SizedBox(
                       height: 17.80,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.location_on,
                             color: Color(0xFF79747E),
                             size: 15.30,
                           ),
-                          SizedBox(width: 6),
+                          const SizedBox(width: 6),
                           Text(
-                            'Softinsa de Viseu',
+                            'Softinsa de $centro_id',
                             textAlign: TextAlign.center,
-                            style: TextStyle(
+                            style: const TextStyle(
                               color: Color(0xFF79747E),
                               fontSize: 15.30,
                               fontFamily: 'Roboto',
@@ -372,10 +380,15 @@ class _pagina_de_perfil_vistaState extends State<pagina_de_perfil_vista> {
                                       ),
                                   ],
                                 )
-                              : Center(
+                              : const Center(
                                   child: Text(
-                                    'Não tem interesses :( ',
-                                    style: TextStyle(fontSize: 16),
+                                    'Ainda não tem interesses :( ',
+                                    style: TextStyle(
+                                      color: Colors.black,
+                                      fontSize: 16,
+                                      fontFamily: 'Roboto',
+                                      fontWeight: FontWeight.w300,
+                                    ),
                                   ),
                                 ),
                         )
@@ -426,10 +439,15 @@ class _pagina_de_perfil_vistaState extends State<pagina_de_perfil_vista> {
                                     ],
                                   ),
                                 )
-                              : Center(
+                              : const Center(
                                   child: Text(
-                                    'Não participa em Grupos :( ',
-                                    style: TextStyle(fontSize: 16),
+                                    'Ainda não faz parte de Grupos :( ',
+                                    style: TextStyle(
+                                      color: Colors.black,
+                                      fontSize: 16,
+                                      fontFamily: 'Roboto',
+                                      fontWeight: FontWeight.w300,
+                                    ),
                                   ),
                                 ),
                         )
@@ -488,9 +506,7 @@ class _pagina_de_perfil_vistaState extends State<pagina_de_perfil_vista> {
                   ),
                   child: CircleAvatar(
                     radius: 73.47,
-                    backgroundImage: AssetImage(
-                      foto ?? 'assets/images/default_user_image.png',
-                    ),
+                    backgroundImage: FileImage(File(foto)),
                   ),
                 ),
               ),

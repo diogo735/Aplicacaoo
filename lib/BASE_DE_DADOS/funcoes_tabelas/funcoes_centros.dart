@@ -71,4 +71,21 @@ class Funcoes_Centros {
     Database db = await DatabaseHelper.basededados;
     return await db.rawQuery('SELECT * FROM centros');
   }
+
+  static Future<String> consultaNomeCentroPorId(int centroId) async {
+    Database db = await DatabaseHelper.basededados;
+
+    List<Map<String, dynamic>> resultado = await db.query(
+      'centros', // Nome da tabela
+      columns: ['nome'], // Colunas que você deseja retornar
+      where: 'id = ?', // Condição de filtro
+      whereArgs: [centroId], // Argumento da condição de filtro
+    );
+
+    if (resultado.isNotEmpty) {
+      return resultado.first['nome'] as String; // Retorna o nome do centro
+    } else {
+      return ''; // Retorna uma string vazia se não encontrar nenhum centro com o ID fornecido
+    }
+  }
 }

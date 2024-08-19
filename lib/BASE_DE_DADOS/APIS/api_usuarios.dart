@@ -34,6 +34,7 @@ class ApiUsuarios {
           'centro_id': usuario['centro_id'],
         });
       }
+      print("    ->Usuarios carregados com sucesso!");
     } else {
       throw Exception('Falha ao carregar os usuários');
     }

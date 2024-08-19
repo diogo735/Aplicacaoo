@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'login_facebook.dart';
 import 'login_google.dart';
-import 'registo.dart';
+import 'pagina_de_registo/registo.dart';
 import 'package:ficha3/PAGINA_loading_user.dart';
 import 'package:ficha3/MAIN.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -61,20 +61,19 @@ class _LoginEmailState extends State<LoginEmail> {
         }
         ScaffoldMessenger.of(context)
             .showSnackBar(
-              SnackBar(
-                content: Row(
-                  children: const [
-                    Icon(
-                      Icons.check_circle,
-                      color: Colors.white,
-                    ),
-                    SizedBox(width: 10),
-                    Text('Login correto'),
-                  ],
-                ),
-                backgroundColor: Colors.green,
-                duration: Duration(seconds: 1)
-              ),
+              const SnackBar(
+                  content: Row(
+                    children: [
+                      Icon(
+                        Icons.check_circle,
+                        color: Colors.white,
+                      ),
+                      SizedBox(width: 10),
+                      Text('Login correto'),
+                    ],
+                  ),
+                  backgroundColor: Colors.green,
+                  duration: Duration(seconds: 1)),
             )
             .closed
             .then((_) {
@@ -137,10 +136,10 @@ class _LoginEmailState extends State<LoginEmail> {
               ),
               // Login form
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
                 child: Container(
                   alignment: Alignment.centerLeft, // Alinha o texto à esquerda
-                  child: Text(
+                  child: const Text(
                     'Email',
                     style: TextStyle(fontSize: 16, color: Colors.black),
                   ),
@@ -163,10 +162,10 @@ class _LoginEmailState extends State<LoginEmail> {
                 ),
               ),
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
                 child: Container(
                   alignment: Alignment.centerLeft, // Alinha o texto à esquerda
-                  child: Text(
+                  child: const Text(
                     'Password',
                     style: TextStyle(fontSize: 16, color: Colors.black),
                   ),
@@ -226,14 +225,19 @@ class _LoginEmailState extends State<LoginEmail> {
                 height: (MediaQuery.of(context).size.height) / 36,
               ),
               if (isLoading)
-                Center(
+                const Center(
                   child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Color.fromARGB(255, 21, 101, 159)),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                        Color.fromARGB(255, 21, 101, 159)),
                   ),
                 )
               else
                 ElevatedButton(
-                  onPressed: _login,
+                  onPressed: () {
+                    FocusScope.of(context).unfocus();
+
+                    _login();
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color.fromARGB(255, 21, 101, 159),
                     padding: const EdgeInsets.symmetric(
@@ -326,7 +330,7 @@ class _LoginEmailState extends State<LoginEmail> {
                       padding: const EdgeInsets.all(8.0),
                       child: IconButton(
                         onPressed: () async {
-                          final loginGoogle = LoginGoogle();
+                          final loginGoogle = const LoginGoogle();
                           await loginGoogle.signIn(context);
                         },
                         icon: Image.asset(

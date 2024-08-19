@@ -1,0 +1,7 @@
+ final usuarioProvider =
+          Provider.of<Usuario_Provider>(context, listen: false);
+      final user_id = usuarioProvider.usuarioSelecionado!.id_user;
+
+
+
+      Color(0xFF15659F) cor do app

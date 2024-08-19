@@ -22,7 +22,7 @@ class ImageGallery extends StatelessWidget {
             pageController: PageController(initialPage: initialIndex),
             builder: (context, index) {
               return PhotoViewGalleryPageOptions(
-                imageProvider: AssetImage(imagePaths[index]),
+                imageProvider: FileImage(File(imagePaths[index])),
                 minScale: PhotoViewComputedScale.contained,
                 maxScale: PhotoViewComputedScale.covered * 2,
               );

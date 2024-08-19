@@ -2,12 +2,20 @@ import 'package:ficha3/PAGINA_DE_LOGIN/login_email.dart';
 import 'package:ficha3/PAGINA_DE_LOGIN/login_facebook.dart';
 import 'package:ficha3/PAGINA_DE_LOGIN/login_google.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class PaginaLogin extends StatelessWidget {
   const PaginaLogin({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      systemNavigationBarColor: Colors.white, // Cor padrão da barra de navegação
+      systemNavigationBarIconBrightness: Brightness.dark, 
+      // Ícones escuros na barra de status
+    ),
+  );
     return Scaffold(
       body: Center(
         child: Column(
@@ -85,9 +93,16 @@ class Botoes extends StatelessWidget {
                 minimumSize: const Size.fromHeight(50),
               ),
               onPressed: () {
-                Navigator.pushNamed(context, '/email');
-                //Navigator.push(context,
-                // MaterialPageRoute(builder: (context) => LoginEmail()));
+                //Navigator.pushNamed(context, '/email');
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => LoginEmail(),
+                    fullscreenDialog:
+                        true, 
+                  ),
+                );
+                
               },
               child: const Center(
                 child: Row(
@@ -128,8 +143,10 @@ class Botoes extends StatelessWidget {
                     children: [
                       Container(
                         padding: const EdgeInsets.only(right: 12),
-                        child: Image.asset('lib/PAGINA_DE_LOGIN/icons/google.png',
-                            height: 20, width: 20),
+                        child: Image.asset(
+                            'lib/PAGINA_DE_LOGIN/icons/google.png',
+                            height: 20,
+                            width: 20),
                       ),
                       const SizedBox(
                         child: Text('Continuar com o Google',
@@ -167,8 +184,10 @@ class Botoes extends StatelessWidget {
                     children: [
                       Container(
                         padding: const EdgeInsets.only(right: 12),
-                        child: Image.asset('lib/PAGINA_DE_LOGIN/icons/facebook.png',
-                            height: 20, width: 20),
+                        child: Image.asset(
+                            'lib/PAGINA_DE_LOGIN/icons/facebook.png',
+                            height: 20,
+                            width: 20),
                       ),
                       const SizedBox(
                         child: Text('Continuar com Facebook',

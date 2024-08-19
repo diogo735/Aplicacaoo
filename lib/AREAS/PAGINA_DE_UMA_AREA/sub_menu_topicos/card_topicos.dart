@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_topicos.dart';
 
@@ -27,22 +29,22 @@ Widget CARD_TOPICO({
         return const Text('Erro ao carregar os detalhes do topico');
       } else {
         return Container(
-          
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               SizedBox(
                 width: 55,
                 height: 55,
-                child: Image.asset(
-                  imagemDoTopico,
+                child: Image.file(
+                  File(
+                      imagemDoTopico), // imagemDoTopico deve ser um caminho válido para um arquivo local
                   fit: BoxFit.cover,
                 ),
               ),
-              const SizedBox(height:10),
+              const SizedBox(height: 10),
               Text(
                 nomeDoTopico,
-                style:  TextStyle(
+                style: TextStyle(
                   color: cor,
                   fontSize: 19,
                   fontFamily: 'Ubuntu',

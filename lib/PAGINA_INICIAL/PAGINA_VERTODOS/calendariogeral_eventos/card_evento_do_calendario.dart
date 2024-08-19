@@ -2,7 +2,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
-Widget CARD_EVENTO_DO_CALENDARIO({
+Widget CARD_EVENTO_DO_CALENDARIO2({
+  required BuildContext
+      context, // Passando o contexto para acessar o MediaQuery
   required String nomeEvento,
   required int dia,
   required int mes,
@@ -21,11 +23,13 @@ Widget CARD_EVENTO_DO_CALENDARIO({
     return '$dia de $nomeMes';
   }
 
+  
+  double containerHeight = MediaQuery.of(context).size.height / 8.3;
+
   return Padding(
-    padding: const EdgeInsets.only(left: 0.0),
+    padding: const EdgeInsets.only(left: .0),
     child: Container(
-      width: 340,
-      height: nomeEvento.length > 23 ? 95 : 80,
+      height: containerHeight, // Altura dinâmica
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
         color: Colors.white,
@@ -34,80 +38,81 @@ Widget CARD_EVENTO_DO_CALENDARIO({
             color: Colors.grey.withOpacity(0.5),
             spreadRadius: 1,
             blurRadius: 5,
-            offset: Offset(0, 3),
+            offset: const Offset(0, 3),
           ),
         ],
       ),
       child: Row(
         children: [
           Padding(
-            padding: EdgeInsets.only(
-                left: 4, right: 3), // Define o espaçamento à esquerda
+            padding: const EdgeInsets.only(
+                left: 5, right: 3), // Define o espaçamento à esquerda
             child: Container(
               height: 35,
               width: 35,
               child: ClipRRect(
-                borderRadius: BorderRadius.only(
+                borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(10),
                   bottomLeft: Radius.circular(10),
                 ),
-                child: Image.asset(
-                  imagem_topico,
+                child: Image.file(
+                  File(imagem_topico),
                   fit: BoxFit.cover,
                 ),
               ),
             ),
           ),
-          SizedBox(width: 10), // Espaçamento entre as imagens
+          const SizedBox(width: 10), // Espaçamento entre as imagens
           Expanded(
             flex: 3,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment:
+                  MainAxisAlignment.center, // Centraliza o conteúdo
               children: [
-                SizedBox(
-                  height: 5,
-                ),
                 Text(
                   nomeEvento,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                SizedBox(
+                const SizedBox(
                   height: 4,
                 ),
                 Row(
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.people_alt_rounded,
                       size: 17,
                       color: Colors.grey,
                     ),
-                    SizedBox(width: 5),
+                    const SizedBox(width: 5),
                     Text(
                       '$numeroParticipantes',
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: Color(0xFF79747E),
                         fontSize: 14,
                       ),
                     ),
                   ],
                 ),
-                SizedBox(
+                const SizedBox(
                   height: 5,
                 ),
                 Row(
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.calendar_month_rounded,
                       size: 14,
                       color: Color(0xFF15659F),
                     ),
-                    SizedBox(width: 5),
+                    const SizedBox(width: 5),
                     Text(
                       formatar_Data(dia, mes),
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: Color(0xFF15659F),
                         fontSize: 14,
                         fontFamily: 'Roboto',
@@ -122,10 +127,10 @@ Widget CARD_EVENTO_DO_CALENDARIO({
             ),
           ),
           Container(
-            height: nomeEvento.length > 23 ? 95 : 80,
+            height: containerHeight, // Altura dinâmica
             width: 85,
             child: ClipRRect(
-              borderRadius: BorderRadius.only(
+              borderRadius: const BorderRadius.only(
                 topRight: Radius.circular(10),
                 bottomRight: Radius.circular(10),
               ),

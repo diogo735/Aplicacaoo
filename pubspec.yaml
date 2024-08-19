@@ -41,6 +41,9 @@ dependencies:
   flutter_facebook_auth: ^7.0.0
   google_sign_in: ^6.2.1
   shared_preferences: ^2.2.3
+  flutter_map: ^7.0.2
+  device_calendar: ^4.3.2
+  timezone: ^0.9.4
 
 
 dev_dependencies:
@@ -115,7 +118,10 @@ flutter:
     - assets/images/icons_dos_topicos/topico_tenis.png
     - assets/images/icons_dos_topicos/topico_padel.png
     - assets/images/no_events.png
+    - assets/images/fundo_capa_criar_evento.png
     - assets/images/user_padrao.jpg
+    - assets/images/pendente.png
+    - assets/images/logo_sem_fundo.png
     - assets/images/fundo_susana.jpg
     - assets/images/fundo_rafa.jpg
     - assets/images/fav_alojamento.png
@@ -127,6 +133,7 @@ flutter:
     - assets/images/fav_transportes.png
     - assets/images/grupodofut.jpg
     - assets/images/grupo_tenis.jpg
+    - assets/images/icons_inscricao.png
     - assets/images/grupo_padel.png
     - assets/images/futebol2.jpeg
     - assets/images/grupo_ciclismo.jpeg
@@ -210,6 +217,24 @@ flutter:
     - assets/images/images_dos_topicos/voleibol_2.png
     - assets/images/images_dos_topicos/voleibol_3.png
     - assets/images/local_vermapa.png
+    - assets/images/icons_tipo_evento/conferencia.png
+    - assets/images/icons_tipo_evento/seminario.png
+    - assets/images/icons_tipo_evento/espetaculo.png
+    - assets/images/icons_tipo_evento/convencao.png
+    - assets/images/icons_tipo_evento/feira.png
+    - assets/images/icons_tipo_evento/concerto.png
+    - assets/images/icons_tipo_evento/sessao.png
+    - assets/images/icons_tipo_evento/jantarr.png
+    - assets/images/icons_tipo_evento/workshop.png
+    - assets/images/icons_tipo_evento/festa.png
+    - assets/images/icons_tipo_evento/corrida.png
+    - assets/images/icons_tipo_evento/torneio.png
+    - assets/images/icons_tipo_evento/jogo.png
+    - assets/images/icons_tipo_evento/correr.png
+    - assets/images/icons_tipo_evento/percurso.png
+    - assets/images/icons_tipo_evento/atracao.png
+    - assets/images/icons_tipo_evento/outro.png
+    - assets/images/increver_evento.png
 
 
 

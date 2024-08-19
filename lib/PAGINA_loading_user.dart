@@ -1,6 +1,9 @@
 import 'dart:io';
 import 'package:ficha3/BASE_DE_DADOS/APIS/TOKENJTW.dart';
+import 'package:ficha3/BASE_DE_DADOS/APIS/api_areas.dart';
+import 'package:ficha3/BASE_DE_DADOS/APIS/api_eventos.dart';
 import 'package:ficha3/BASE_DE_DADOS/APIS/api_partilhas.dart';
+import 'package:ficha3/BASE_DE_DADOS/APIS/api_topicos.dart';
 import 'package:ficha3/BASE_DE_DADOS/APIS/api_usuarios.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_centros.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_usuarios.dart';
@@ -82,22 +85,23 @@ class _LoadingScreenState extends State<LoadingScreen> {
         caminhoFoto = userDetails['caminho_foto'];
       });
 
-      print('Iniciando o carregamento dos dados dos centros...');
+      print(' 1->>Iniciando o carregamento dos dados dos CENTROS...');
       await ApiService().fetchAndStoreCentros();
-      print('Dados dos centros carregados com sucesso.');
+      
 
-      print('Iniciando o carregamento dos dados dos usuários...');
+      print('2->>Iniciando o carregamento dos dados dos USERS...');
       await ApiUsuarios().fetchAndStoreUsuarios();
-      print('Dados dos usuários carregados com sucesso.');
-
+      
       // Definir provedores
       await _definirProvedores(widget.userId);
 
-      // Carregar partilhas depois de definir os provedores
+      // Carregar partilhas,eventos,publicações depois de definir os provedores
       final centroProvider =
           Provider.of<Centro_Provider>(context, listen: false);
       final centroSelecionado = centroProvider.centroSelecionado;
       if (centroSelecionado != null) {
+
+/*
         print('Iniciando o carregamento dos dados das partilhas...');
         await ApiPartilhas().fetchAndStorePartilhas(centroSelecionado.id);
         print('Dados das partilhas carregados com sucesso.');
@@ -109,6 +113,30 @@ class _LoadingScreenState extends State<LoadingScreen> {
         print('Iniciando o carregamento dos likes das partilhas...');
         await ApiPartilhas().fetchAndStoreLikes(centroSelecionado.id);
         print('Dados dos likes das partilhas carregados com sucesso.');
+
+        */
+        print('2.1.1->>Iniciando o carregamento das AREAS...');
+        await ApiAreas().fetchAndStoreAreas();
+
+        print('2.1->>Iniciando o carregamento dos TÓPICOS...');
+        await ApiTopicos().fetchAndStoreTopicos();
+
+        print('3->>Iniciando o carregamento dos TIPOS DE EVENTOS...');
+        await ApiEventos().fetchAndStoreTiposDeEvento();
+
+        print('4->>Iniciando o carregamento dos EVENTOS...');
+        await ApiEventos().fetchAndStoreEventos(centroSelecionado.id,widget.userId);
+
+        print('5->>Iniciando o carregamento dos PARTICIPANTES DOS EVENTOS...');
+        await ApiEventos().fetchAndStoreParticipantes(centroSelecionado.id,widget.userId);
+
+        print('6->>Iniciando o carregamento dos IMAGENS DOS EVENTOS...');
+        await ApiEventos().fetchAndStoreImagensEvento(centroSelecionado.id,widget.userId);
+
+        print('7->>Iniciando o carregamento dos COMENTARIOS DOS EVENTOS...');
+        await ApiEventos().fetchAndStoreComentariosEvento(centroSelecionado.id,widget.userId);
+
+        print('     ----->TUDO CARREGADO COM SUSSESSO<------------');
       } else {
         print('Nenhum centro selecionado');
         throw Exception('Nenhum centro selecionado');
@@ -135,8 +163,8 @@ class _LoadingScreenState extends State<LoadingScreen> {
                 width: 120,
                 height: 120,
               ),
-              SizedBox(height: 5),
-              Text(
+              const SizedBox(height: 5),
+              const Text(
                 'Não foi possível carregar os dados !!!',
                 textAlign: TextAlign.center,
                 style: TextStyle(
@@ -144,8 +172,8 @@ class _LoadingScreenState extends State<LoadingScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              SizedBox(height: 10),
-              Text(
+              const SizedBox(height: 10),
+              const Text(
                 'Verifique sua conexão com a internet e tente novamente.',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 14),
@@ -158,7 +186,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
                 Navigator.of(context).pop();
                 _carregarDados();
               },
-              child: Text('Tentar Novamente',
+              child: const Text('Tentar Novamente',
                   style: TextStyle(color: Color(0xFF15659F))),
             ),
           ],
@@ -217,7 +245,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               'Bem vindo(a) ',
               textAlign: TextAlign.center,
               style: TextStyle(
@@ -234,15 +262,15 @@ class _LoadingScreenState extends State<LoadingScreen> {
               radius: 65,
               backgroundImage: caminhoFoto.isNotEmpty
                   ? NetworkImage(caminhoFoto)
-                  : AssetImage('assets/images/user_padrao.jpg')
+                  : const AssetImage('assets/images/user_padrao.jpg')
                       as ImageProvider,
               backgroundColor: Colors.transparent,
             ),
-            SizedBox(height: 15),
+            const SizedBox(height: 15),
             Text(
               '$nome $sobrenome',
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 color: Colors.black,
                 fontSize: 24,
                 fontFamily: 'Ubuntu',
@@ -250,10 +278,10 @@ class _LoadingScreenState extends State<LoadingScreen> {
                 height: 1,
               ),
             ),
-            Spacer(),
+            const Spacer(),
             customCircularProgress(),
-            SizedBox(height: 35),
-            Text(
+            const SizedBox(height: 35),
+            const Text(
               '... por favor aguarde alguns segundos',
               textAlign: TextAlign.center,
               style: TextStyle(
@@ -264,7 +292,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
                 height: 0.09,
               ),
             ),
-            SizedBox(
+            const SizedBox(
               height: 50,
             )
           ],
@@ -278,7 +306,7 @@ Widget customCircularProgress() {
   return Stack(
     alignment: Alignment.center,
     children: [
-      SizedBox(
+      const SizedBox(
         width: 60,
         height: 60,
         child: CircularProgressIndicator(

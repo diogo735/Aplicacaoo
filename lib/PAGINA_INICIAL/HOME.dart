@@ -2,22 +2,24 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:ficha3/AREAS/PAGINA_DE_UMA_AREA/sub_menu_eventos/pagina_De_um_evento/pagina_evento.dart';
 import 'package:ficha3/AREAS/PAGINA_DE_UMA_AREA/sub_menu_partilhas/Pagina_de_uma_partilha/pagina_de_uma_partilha.dart';
+import 'package:ficha3/BASE_DE_DADOS/APIS/api_eventos.dart';
+import 'package:ficha3/BASE_DE_DADOS/APIS/api_geolocaliza%C3%A7%C3%A3o.dart';
 import 'package:ficha3/BASE_DE_DADOS/APIS/api_partilhas.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_centros.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_eventos.dart';
+import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_listaparticipantes_evento.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_partilhasfotos.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_publicacoes.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_usuarios.dart';
 import 'package:ficha3/centro_provider.dart';
-import '../BASE_DE_DADOS/basededados.dart';
-import '../BASE_DE_DADOS/ver_estruturaBD.dart';
+
 import 'package:ficha3/usuario_provider.dart';
 import 'widget_cards/card_destaques_do_dia.dart';
 import 'widget_cards/card_evetos_HOME.dart';
 import 'widget_cards/card_publicacoes.dart';
 import 'widget_cards/card_partilhas.dart';
-import 'package:flare_flutter/flare_actor.dart';
 
 import 'package:ficha3/PAGINA_INICIAL/PAGINA_VERTODOS/vertodos_eventos.dart';
 import 'package:ficha3/PAGINA_INICIAL/PAGINA_VERTODOS/vertodos_partilhasfotos.dart';
@@ -25,7 +27,6 @@ import 'package:ficha3/PAGINA_INICIAL/PAGINA_VERTODOS/vertodos_publicacoes.dart'
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:carousel_slider/carousel_slider.dart';
-import 'package:sqflite/sqflite.dart';
 import 'package:ficha3/PAGINA_mudar_centro.dart';
 
 class InicioPage extends StatefulWidget {
@@ -36,56 +37,80 @@ class InicioPage extends StatefulWidget {
 class _InicioPageState extends State<InicioPage> {
   int _currentIndex = 0;
   List<Map<String, dynamic>> eventos = [];
+  Map<int, String> localPorEvento = {};
   List<Map<String, dynamic>> publicacoes = [];
   List<Map<String, dynamic>> partilhas = [];
   List<Map<String, dynamic>> centros = [];
   //late int centroId;
   Timer? _timerAPI;
   Timer? _timerDB;
-
+  Map<int, int> numeroParticipantesPorEvento = {};
+  
   @override
   void initState() {
     super.initState();
     _carregarCentros();
     _carregarEventos();
+    carregarNumeroDeParticipantes();
+    carregarLocais();
     _carregarPublicacoes();
     _carregarPartilhasfotos();
     _iniciarTimers();
   }
 
-  void _iniciarTimers() {
-    // Carregar partilhas da API a cada 30 segundos
+void _iniciarTimers() {
     _timerAPI = Timer.periodic(
-        Duration(seconds: 30), (Timer t) => _carregarPartilhasDaAPI());
+      Duration(seconds: 30),
+      (Timer t) {
+        if (mounted) {
+          _carregarPartilhasDaAPI();
+          _carregarEventosDaAPI();
+        }
+      },
+    );
 
-    // Carregar partilhas da base de dados a cada 15 segundos
-    _timerDB = Timer.periodic(
-        Duration(seconds: 15), (Timer t) => _carregarPartilhasfotos());
+    Timer(Duration(milliseconds: 300), () {
+      if (mounted) {
+        carregarNumeroDeParticipantes();
+        carregarLocais();
+      }
+    });
+
+
+    _timerDB = Timer.periodic(Duration(seconds: 15), (Timer t) {
+      if (mounted) {
+        _carregarPartilhasfotos();
+        _carregarEventos();
+        carregarNumeroDeParticipantes();
+        carregarLocais();
+      }
+    });
   }
 
-  Future<void> _carregarPartilhasDaAPI() async {
+ Future<void> _carregarPartilhasDaAPI() async {
     try {
       var connectivityResult = await (Connectivity().checkConnectivity());
+      if (!mounted) return;
       if (connectivityResult == ConnectivityResult.none) {
         print('Sem conexão com a internet');
         return;
       }
 
-      final centroProvider =
-          Provider.of<Centro_Provider>(context, listen: false);
+      final centroProvider = Provider.of<Centro_Provider>(context, listen: false);
       final centroSelecionado = centroProvider.centroSelecionado;
 
       if (centroSelecionado != null) {
         print('Iniciando o carregamento dos dados das partilhas da API...');
         await ApiPartilhas().fetchAndStorePartilhas(centroSelecionado.id);
+        if (!mounted) return;
         print('Dados das partilhas da API carregados com sucesso.');
 
-        print('Iniciando o carregamento dos comentários das partilhas...');
         await ApiPartilhas().fetchAndStoreComentarios();
+        if (!mounted) return;
         print('Dados dos comentários das partilhas carregados com sucesso.');
 
-        print('Iniciando o carregamento dos likes das partilhas...');
         await ApiPartilhas().fetchAndStoreLikes(centroSelecionado.id);
+        if (!mounted) return;
         print('Dados dos likes das partilhas carregados com sucesso.');
       } else {
         print('Nenhum centro selecionado');
@@ -97,51 +122,93 @@ class _InicioPageState extends State<InicioPage> {
     }
   }
 
+ Future<void> _carregarEventosDaAPI() async {
+    try {
+      var connectivityResult = await (Connectivity().checkConnectivity());
+      if (!mounted) return;
+      if (connectivityResult == ConnectivityResult.none) {
+        print('Sem conexão com a internet');
+        return;
+      }
+
+      final usuarioProvider = Provider.of<Usuario_Provider>(context, listen: false);
+      final user_id = usuarioProvider.usuarioSelecionado!.id_user;
+
+      final centroProvider = Provider.of<Centro_Provider>(context, listen: false);
+      final centroSelecionado = centroProvider.centroSelecionado;
+
+      if (centroSelecionado != null) {
+        print('1->>Iniciando o carregamento dos EVENTOS...');
+        await ApiEventos().fetchAndStoreEventos(centroSelecionado.id, user_id);
+        if (!mounted) return;
+
+        print('2->>Iniciando o carregamento dos PARTICIPANTES DOS EVENTOS...');
+        await ApiEventos().fetchAndStoreParticipantes(centroSelecionado.id, user_id);
+        if (!mounted) return;
+
+        print('3->>Iniciando o carregamento das IMAGENS DOS EVENTOS...');
+        await ApiEventos().fetchAndStoreImagensEvento(centroSelecionado.id, user_id);
+        if (!mounted) return;
+
+        print('4->>Iniciando o carregamento dos COMENTÁRIOS DOS EVENTOS...');
+        await ApiEventos().fetchAndStoreComentariosEvento(centroSelecionado.id, user_id);
+        if (!mounted) return;
+      } else {
+        print('Nenhum centro selecionado');
+      }
+    } on SocketException catch (e) {
+      print('Erro de rede: $e');
+    } catch (e) {
+      print('Erro: $e');
+    }
+  }
+
   ///Função para carregar os eventos da base de dados//////////////////////////////////////////////////
-  void _carregarEventos() async {
+ void _carregarEventos() async {
     Funcoes_Eventos funcoesEventos = Funcoes_Eventos();
     final centroProvider = Provider.of<Centro_Provider>(context, listen: false);
     final centroSelecionado = centroProvider.centroSelecionado;
     int centroId = centroSelecionado!.id;
-    //int centroId = 2; //////////////////
-    List<Map<String, dynamic>> eventosCarregados =
-        await funcoesEventos.consultaEventosPorCentroId(centroId);
+
+    List<Map<String, dynamic>> eventosCarregados = await funcoesEventos.consultaEventosPorCentroId(centroId);
+    if (!mounted) return;
     setState(() {
       eventos = eventosCarregados;
     });
   }
 
   /// Função para carregar os centros da base de dados
-  void _carregarCentros() async {
-    List<Map<String, dynamic>> centrosCarregados =
-        await Funcoes_Centros.consultaCentros();
+ void _carregarCentros() async {
+    List<Map<String, dynamic>> centrosCarregados = await Funcoes_Centros.consultaCentros();
+    if (!mounted) return;
     setState(() {
       centros = centrosCarregados;
     });
   }
 
   ///Função para carregar as PUBLICACOES da base de dados///////////////////////////////////////////////////////
-  void _carregarPublicacoes() async {
+   void _carregarPublicacoes() async {
     Funcoes_Publicacoes funcoespublicacoes = Funcoes_Publicacoes();
     final centroProvider = Provider.of<Centro_Provider>(context, listen: false);
     final centroSelecionado = centroProvider.centroSelecionado;
     int centroId = centroSelecionado!.id;
-    List<Map<String, dynamic>> publicacoesCarregadas =
-        await funcoespublicacoes.consultaPublicacoesPorCentroId(centroId);
+
+    List<Map<String, dynamic>> publicacoesCarregadas = await funcoespublicacoes.consultaPublicacoesPorCentroId(centroId);
+    if (!mounted) return;
     setState(() {
       publicacoes = publicacoesCarregadas;
     });
   }
 
-  void _carregarPartilhasfotos() async {
+ void _carregarPartilhasfotos() async {
     Funcoes_Partilhas funcoespartilhas = Funcoes_Partilhas();
     final centroProvider = Provider.of<Centro_Provider>(context, listen: false);
     final centroSelecionado = centroProvider.centroSelecionado;
     int centroId = centroSelecionado!.id;
 
     print('Iniciando o carregamento dos dados das partilhas da BDLOCALL...');
-    List<Map<String, dynamic>> partilhascarregadas =
-        await funcoespartilhas.consultaPartilhasComCentroId(centroId);
+    List<Map<String, dynamic>> partilhascarregadas = await funcoespartilhas.consultaPartilhasComCentroId(centroId);
+    if (!mounted) return;
     setState(() {
       partilhas = partilhascarregadas;
     });
@@ -291,12 +358,49 @@ class _InicioPageState extends State<InicioPage> {
     );
   }
 
-  @override
-  void dispose() {
-    _timerAPI?.cancel();
-    _timerDB?.cancel();
-    super.dispose();
+
+
+ Future<void> carregarNumeroDeParticipantes() async {
+    Map<int, int> participantes = {};
+
+    for (var evento in eventos) {
+      int eventoId = evento['id'];
+      int numeroDeParticipantes = await Funcoes_Participantes_Evento.getNumeroDeParticipantes(eventoId);
+      participantes[eventoId] = numeroDeParticipantes;
+    }
+
+    if (!mounted) return;
+    setState(() {
+      numeroParticipantesPorEvento = participantes;
+    });
   }
+
+Future<void> carregarLocais() async {
+    for (var evento in eventos) {
+      int eventoId = evento['id'];
+      double latitude = evento['latitude']; // Supondo que você tenha latitude
+      double longitude = evento['longitude']; // Supondo que você tenha longitude
+      String address = await _getAddressUsingOSM(latitude, longitude);
+       if (!mounted) return;
+      setState(() {
+        localPorEvento[eventoId] = address;
+      });
+    }
+  }
+    Future<String> _getAddressUsingOSM(double latitude, double longitude) async {
+    LocalizacaoOSM localizacaoOSM = LocalizacaoOSM();
+    return await localizacaoOSM.getEnderecoFromCoordinates(latitude, longitude);
+  }
+
+
+ @override
+void dispose() {
+  print("-----------------------------------------------------------------------dispose chamado");
+  _timerAPI?.cancel();
+  _timerDB?.cancel();
+  super.dispose();
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -524,22 +628,39 @@ class _InicioPageState extends State<InicioPage> {
                 ? SizedBox(
                     height: 227, // Altura da lista
                     child: ListView.builder(
-                      scrollDirection: Axis.horizontal, //  scroll horizontal
+                      scrollDirection: Axis.horizontal, // Scroll horizontal
                       itemCount: eventos.length,
                       itemBuilder: (context, index) {
-                        return Container(
-                          margin: const EdgeInsets.only(
-                              left: 4, right: 10, bottom: 10),
-                          child: CARD_EVENTO(
-                            nomeEvento: eventos[index]['nome'],
-                            dia: eventos[index]['dia_realizacao'],
-                            mes: eventos[index]['mes_realizacao'],
-                            ano: eventos[index]['ano_realizacao'],
-                            horas: eventos[index]['horas'],
-                            local: eventos[index]['local'],
-                            numeroParticipantes:
-                                eventos[index]['numero_inscritos'].toString(),
-                            imagePath: eventos[index]['caminho_imagem'],
+                        int eventoId = eventos[index]['id'];
+                       int numeroParticipantes = numeroParticipantesPorEvento[eventoId] ?? 0;
+                        String local = localPorEvento[eventoId] ?? 'Carregando...';
+                        return GestureDetector(
+                          onTap: () {
+                            // Navega para a página do evento ao tocar no card
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => PaginaEvento(
+                                  idEvento: eventos[index][
+                                      'id'], // Certifique-se de passar o ID correto
+                                ),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.only(
+                                left: 4, right: 10, bottom: 10),
+                            child: CARD_EVENTO(
+                              nomeEvento: eventos[index]['nome'],
+                              dia: eventos[index]['dia_realizacao'],
+                              mes: eventos[index]['mes_realizacao'],
+                              ano: eventos[index]['ano_realizacao'],
+                              horas: eventos[index]['horas'],
+                              local: local,
+                              numeroParticipantes:
+                                  numeroParticipantes.toString(),
+                              imagePath: eventos[index]['caminho_imagem'],
+                            ),
                           ),
                         );
                       },
@@ -811,7 +932,8 @@ class _InicioPageState extends State<InicioPage> {
                             Text(
                               'Infelizmente,\n'
                               'o centro de ${centroSelecionado!.nome} \n'
-                              'não tem partilhas ainda!',
+                              'não tem partilhas ainda!\n'
+                              'a api apagouse tenho que fazer de novo',
                               style:
                                   TextStyle(fontSize: 16, color: Colors.grey),
                               textAlign: TextAlign.center,

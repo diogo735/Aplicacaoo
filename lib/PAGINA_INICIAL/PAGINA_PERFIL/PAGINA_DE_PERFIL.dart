@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_eventos.dart';
+import 'package:ficha3/PAGINA_INICIAL/PAGINA_PERFIL/pagina_eventos_do_user/pagina_eventos_do_user.dart';
 import 'package:ficha3/centro_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:ficha3/usuario_provider.dart';
@@ -20,12 +22,39 @@ class pagina_de_perfil extends StatefulWidget {
 class _pagina_de_perfilState extends State<pagina_de_perfil> {
   List<int> areasFavoritas = [];
   List<int> gruposMembro = [];
+  int n_eventos = 0;
 
   @override
   void initState() {
     super.initState();
     _carregarAreasFavoritas();
     _carregarGruposDoUsuario();
+    //_atualizarNumeroDeEventos();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  void _atualizarNumeroDeEventos() async {
+    try {
+      final usuarioProvider =
+          Provider.of<Usuario_Provider>(context, listen: false);
+      final user_id = usuarioProvider.usuarioSelecionado!.id_user;
+
+      int numeroDeEventos =
+          await Funcoes_Eventos.contarEventosPorAutor(user_id);
+
+      // Verifique se o widget ainda está montado antes de chamar setState
+      if (!mounted) return;
+
+      setState(() {
+        n_eventos = numeroDeEventos;
+      });
+    } catch (e) {
+      print('Erro ao contar eventos: $e');
+    }
   }
 
   void _carregarAreasFavoritas() async {
@@ -37,6 +66,10 @@ class _pagina_de_perfilState extends State<pagina_de_perfil> {
       List<int> areasFavoritasCarregadas =
           await Funcoes_AreasFavoritas.obeter_areas_favoritas_do_userid(
               usuarioId);
+
+      // Verifique se o widget ainda está montado antes de chamar setState
+      if (!mounted) return;
+
       setState(() {
         areasFavoritas = areasFavoritasCarregadas;
       });
@@ -53,6 +86,9 @@ class _pagina_de_perfilState extends State<pagina_de_perfil> {
       int usuarioId = idUsuario ?? 0;
       List<int> gruposDoUsuario =
           await Funcoes_User_menbro_grupos.obterGruposDoUsuario(usuarioId);
+
+      if (!mounted) return;
+
       setState(() {
         gruposMembro = gruposDoUsuario;
       });
@@ -61,14 +97,13 @@ class _pagina_de_perfilState extends State<pagina_de_perfil> {
     }
   }
 
- Future<void> _logout() async {
+  Future<void> _logout() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.clear(); 
+    await prefs.clear();
     // Limpa os provedores
     Provider.of<Usuario_Provider>(context, listen: false).deslogarUsuario();
     Provider.of<Centro_Provider>(context, listen: false).deslogarCentro();
 
-    
     Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
   }
 
@@ -104,7 +139,6 @@ class _pagina_de_perfilState extends State<pagina_de_perfil> {
                 icon: const Icon(Icons.logout_rounded),
                 //const Icon(Icons.settings),
                 onPressed: () {
-                  
                   _logout();
                 },
               ),
@@ -125,7 +159,8 @@ class _pagina_de_perfilState extends State<pagina_de_perfil> {
                               Provider.of<Usuario_Provider>(context)
                                   .usuarioSelecionado!
                                   .fundo))
-                          : AssetImage('assets/images/default_background.jpg')
+                          : const AssetImage(
+                                  'assets/images/default_background.jpg')
                               as ImageProvider,
                       fit: BoxFit.cover,
                     ),
@@ -204,115 +239,178 @@ class _pagina_de_perfilState extends State<pagina_de_perfil> {
                       ),
                       const SizedBox(height: 15),
                       Container(
-                        ///eventos partilhas
                         padding: const EdgeInsets.all(16),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
-                            const Column(
-                              children: [
-                                Text(
-                                  '1',
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 20,
-                                    fontFamily: 'Roboto',
-                                    fontWeight: FontWeight.w900,
-                                    height: 0.06,
-                                    letterSpacing: 0.15,
-                                  ),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => Pag_meus_eventos()),
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(
+                                    15), // Adiciona um espaçamento interno
+                                decoration: BoxDecoration(
+                                  color:
+                                      const Color.fromARGB(0, 255, 255, 255), // Cor de fundo do container
+                                  borderRadius: BorderRadius.circular(
+                                      8), // Cantos arredondados
+                                  boxShadow: const [
+                                    BoxShadow(
+                                      color: Color.fromARGB(0, 158, 158, 158),
+                                      spreadRadius: 2,
+                                      blurRadius: 5,
+                                       // Sombra do container
+                                    ),
+                                  ],
                                 ),
-                                SizedBox(height: 25),
-                                Text(
-                                  'Eventos',
-                                  style: TextStyle(
-                                    color: Color(0xFF646464),
-                                    fontSize: 14,
-                                    fontFamily: 'Roboto',
-                                    fontWeight: FontWeight.w300,
-                                    height: 0.12,
-                                    letterSpacing: 0.15,
-                                  ),
+                                child: Column(
+                                  children: [
+                                    Text(
+                                      '$n_eventos', // Substitui '1' pelo valor de n_eventos
+                                      style: const TextStyle(
+                                        color: Colors.black,
+                                        fontSize: 20,
+                                        fontFamily: 'Roboto',
+                                        fontWeight: FontWeight.w900,
+                                        height: 0.06,
+                                        letterSpacing: 0.15,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 25),
+                                    const Text(
+                                      'Eventos',
+                                      style: TextStyle(
+                                        color: Color(0xFF646464),
+                                        fontSize: 14,
+                                        fontFamily: 'Roboto',
+                                        fontWeight: FontWeight.w300,
+                                        height: 0.12,
+                                        letterSpacing: 0.15,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ],
+                              ),
                             ),
-                            const SizedBox(width: 5),
                             Padding(
-                              padding: const EdgeInsets.only(bottom: 10),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 10.0),
                               child: Container(
                                 height: 39,
                                 width: 1,
                                 color: const Color(0xFF979797),
                               ),
                             ),
-                            const SizedBox(width: 5),
-                            const Column(
-                              children: [
-                                Text(
-                                  '2',
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 20,
-                                    fontFamily: 'Roboto',
-                                    fontWeight: FontWeight.w900,
-                                    height: 0.06,
-                                    letterSpacing: 0.15,
+                            Container(
+                              padding: const EdgeInsets.all(
+                                  15), // Adiciona um espaçamento interno
+                              decoration: BoxDecoration(
+                                color:
+                                    Colors.white, // Cor de fundo do container
+                                borderRadius: BorderRadius.circular(
+                                    8), // Cantos arredondados
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.withOpacity(0.3),
+                                    spreadRadius: 2,
+                                    blurRadius: 5,
+                                    offset: const Offset(
+                                        0, 3), // Sombra do container
                                   ),
-                                ),
-                                SizedBox(height: 25),
-                                Text(
-                                  'Partilhas',
-                                  style: TextStyle(
-                                    color: Color(0xFF646464),
-                                    fontSize: 14,
-                                    fontFamily: 'Roboto',
-                                    fontWeight: FontWeight.w300,
-                                    height: 0.12,
-                                    letterSpacing: 0.15,
+                                ],
+                              ),
+                              child: const Column(
+                                children: [
+                                  Text(
+                                    '2',
+                                    style: TextStyle(
+                                      color: Colors.black,
+                                      fontSize: 20,
+                                      fontFamily: 'Roboto',
+                                      fontWeight: FontWeight.w900,
+                                      height: 0.06,
+                                      letterSpacing: 0.15,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                  SizedBox(height: 25),
+                                  Text(
+                                    'Partilhas',
+                                    style: TextStyle(
+                                      color: Color(0xFF646464),
+                                      fontSize: 14,
+                                      fontFamily: 'Roboto',
+                                      fontWeight: FontWeight.w300,
+                                      height: 0.12,
+                                      letterSpacing: 0.15,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                            const SizedBox(width: 5),
                             Padding(
-                              padding: const EdgeInsets.only(bottom: 10),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 10.0),
                               child: Container(
                                 height: 39,
                                 width: 1,
                                 color: const Color(0xFF979797),
                               ),
                             ),
-                            const SizedBox(width: 5),
-                            const Column(
-                              children: [
-                                Text(
-                                  '3',
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 20,
-                                    fontFamily: 'Roboto',
-                                    fontWeight: FontWeight.w900,
-                                    height: 0.06,
-                                    letterSpacing: 0.15,
+                            Container(
+                              padding: const EdgeInsets.all(
+                                  15), // Adiciona um espaçamento interno
+                              decoration: BoxDecoration(
+                                color:
+                                    Colors.white, // Cor de fundo do container
+                                borderRadius: BorderRadius.circular(
+                                    8), // Cantos arredondados
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.withOpacity(0.3),
+                                    spreadRadius: 2,
+                                    blurRadius: 5,
+                                    offset: const Offset(
+                                        0, 3), // Sombra do container
                                   ),
-                                ),
-                                SizedBox(height: 25),
-                                Text(
-                                  'Publicações',
-                                  style: TextStyle(
-                                    color: Color(0xFF646464),
-                                    fontSize: 14,
-                                    fontFamily: 'Roboto',
-                                    fontWeight: FontWeight.w300,
-                                    height: 0.12,
-                                    letterSpacing: 0.15,
+                                ],
+                              ),
+                              child: const Column(
+                                children: [
+                                  Text(
+                                    '3',
+                                    style: TextStyle(
+                                      color: Colors.black,
+                                      fontSize: 20,
+                                      fontFamily: 'Roboto',
+                                      fontWeight: FontWeight.w900,
+                                      height: 0.06,
+                                      letterSpacing: 0.15,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                  SizedBox(height: 25),
+                                  Text(
+                                    'Publicações',
+                                    style: TextStyle(
+                                      color: Color(0xFF646464),
+                                      fontSize: 14,
+                                      fontFamily: 'Roboto',
+                                      fontWeight: FontWeight.w300,
+                                      height: 0.12,
+                                      letterSpacing: 0.15,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
                         ),
                       ),
+
                       Container(
                         ///sobre min
                         padding: const EdgeInsets.all(16),
@@ -500,7 +598,8 @@ class _pagina_de_perfilState extends State<pagina_de_perfil> {
                                 Provider.of<Usuario_Provider>(context)
                                     .usuarioSelecionado!
                                     .foto!))
-                            : AssetImage('assets/images/default_user_image.png')
+                            : const AssetImage(
+                                    'assets/images/default_user_image.png')
                                 as ImageProvider,
                       ),
                     ),
