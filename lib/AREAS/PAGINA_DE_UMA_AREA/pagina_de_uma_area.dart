@@ -1,10 +1,15 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:ficha3/BASE_DE_DADOS/APIS/api_usuarios.dart';
+import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_areafavoritas_douser.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_areas.dart';
+import 'package:ficha3/usuario_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:ficha3/AREAS/PAGINA_DE_UMA_AREA/sub_menu_eventos/sub_menu_eventos.dart';
 import 'package:ficha3/AREAS/PAGINA_DE_UMA_AREA/sub_menu_forum/sub_menu_forum.dart';
 import 'package:ficha3/AREAS/PAGINA_DE_UMA_AREA/sub_menu_grupos/sub_menu_grupos.dart';
 import 'package:ficha3/AREAS/PAGINA_DE_UMA_AREA/sub_menu_partilhas/sub_menu_partilhas.dart';
 import 'package:ficha3/AREAS/PAGINA_DE_UMA_AREA/sub_menu_topicos/sub_menu_topicos.dart';
+import 'package:provider/provider.dart';
 
 class Pag_de_uma_area extends StatefulWidget {
   final int id_area;
@@ -26,30 +31,131 @@ class _Pag_de_uma_areaState extends State<Pag_de_uma_area> {
   void initState() {
     super.initState();
     _carregarNomeArea();
+    _verificarSeFavorita();
   }
 
-  void toggleFavorite() {
+  void _verificarSeFavorita() async {
+    final usuarioProvider =
+        Provider.of<Usuario_Provider>(context, listen: false);
+    final user_id = usuarioProvider.usuarioSelecionado!.id_user;
+
+    List<int> areasFavoritas =
+        await Funcoes_AreasFavoritas.obeter_areas_favoritas_do_userid(user_id);
+
     setState(() {
-      isFavorited = !isFavorited;
-      // Exibir um aviso quando a área é marcada como favorita
-      if (isFavorited) {
+      isFavorited = areasFavoritas.contains(widget.id_area);
+    });
+  }
+
+void toggleFavorite() async {
+  // Verifica a conexão com a internet
+  var connectivityResult = await (Connectivity().checkConnectivity());
+  if (connectivityResult == ConnectivityResult.none) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: <Widget>[
+            Icon(Icons.wifi_off, color: Colors.white),
+            SizedBox(width: 8.0),
+            Text('Sem conexão com a internet.'),
+          ],
+        ),
+        duration: Duration(seconds: 2),
+        backgroundColor: Colors.red,
+      ),
+    );
+    return; // Sai da função se não houver conexão com a internet
+  }
+
+  print('Botão de estrela foi clicado');
+  final usuarioProvider = Provider.of<Usuario_Provider>(context, listen: false);
+  final user_id = usuarioProvider.usuarioSelecionado!.id_user;
+
+  // Primeiro, verifica se a área já está marcada como favorita
+  List<int> areasFavoritas = await Funcoes_AreasFavoritas.obeter_areas_favoritas_do_userid(user_id);
+  bool currentlyFavorited = areasFavoritas.contains(widget.id_area);
+
+  print('Estado atual: $currentlyFavorited');
+
+  setState(() {
+    isFavorited = !isFavorited;
+  });
+
+  print('Novo estado de isFavorited: $isFavorited');
+
+  try {
+    if (isFavorited) {
+      bool sucesso = await ApiUsuarios().inserirAreaFavorita(user_id, widget.id_area);
+      if (sucesso) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: <Widget>[
-                Icon(Icons.star_rounded, color: Colors.white),
-                SizedBox(width: 8.0), // Ajuste a largura conforme necessário
-                Text('"Desporto" marcada como area  favorita!'),
+                const Icon(Icons.star_rounded, color: Colors.white),
+                const SizedBox(width: 8.0),
+                Text('"$nome_Da_Area" marcada como área favorita!'),
               ],
             ),
-            duration: Duration(seconds: 2),
+            duration: const Duration(seconds: 2),
             backgroundColor: Colors.green,
           ),
         );
+      } else {
+        setState(() {
+          isFavorited = false;
+        });
       }
+    } else {
+      bool sucesso = await ApiUsuarios().removerAreaFavorita(user_id, widget.id_area);
+      if (sucesso) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: <Widget>[
+                const Icon(Icons.star_outline, color: Colors.white),
+                const SizedBox(width: 8.0),
+                Text('"$nome_Da_Area" removida das áreas favoritas.'),
+              ],
+            ),
+            duration: const Duration(seconds: 2),
+            backgroundColor: Colors.red,
+          ),
+        );
+      } else {
+        setState(() {
+          isFavorited = true;
+        });
+      }
+    }
+  } catch (e) {
+    // Tratamento de exceções relacionadas à rede
+    print('Erro ao tentar alterar a área favorita: $e');
+    setState(() {
+      isFavorited = !isFavorited; // Reverte a mudança no estado
     });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: <Widget>[
+            Icon(Icons.wifi_off, color: Colors.white),
+            SizedBox(width: 8.0),
+            
+            Text('Falha ao conectar ao servidor.'),
+          ],
+        ),
+        duration: Duration(seconds: 2),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
+}
+
+
+
 
   void _carregarNomeArea() async {
     Funcoes_Areas funcoesAreas = Funcoes_Areas();
@@ -92,16 +198,16 @@ class _Pag_de_uma_areaState extends State<Pag_de_uma_area> {
                     children: [
                       Text(
                         nome_Da_Area,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 30,
                           color: Color.fromARGB(255, 255, 255, 255),
                           fontWeight: FontWeight.w800,
                           fontFamily: 'Roboto',
                         ),
                       ),
-                      Row(
+                      const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
+                        children: [
                           CircleAvatar(
                             radius: 3,
                             backgroundColor: Color(0xFF23FF00),
@@ -152,8 +258,9 @@ class _Pag_de_uma_areaState extends State<Pag_de_uma_area> {
                             .min, // Para alinhar ícones e texto corretamente
                         children: [
                           Icon(Icons.forum, color: widget.cor_da_area),
-                          SizedBox(width: 8), // Espaço entre ícone e texto
-                          Text(
+                          const SizedBox(
+                              width: 8), // Espaço entre ícone e texto
+                          const Text(
                             "Fórum",
                             style: TextStyle(
                               fontSize: 16, // Aumenta o tamanho do texto
@@ -171,8 +278,9 @@ class _Pag_de_uma_areaState extends State<Pag_de_uma_area> {
                         children: [
                           Icon(Icons.group,
                               color: widget.cor_da_area), // Muda a cor do ícone
-                          SizedBox(width: 8), // Espaço entre ícone e texto
-                          Text(
+                          const SizedBox(
+                              width: 8), // Espaço entre ícone e texto
+                          const Text(
                             "Grupos",
                             style: TextStyle(
                               fontSize: 16, // Aumenta o tamanho do texto
@@ -190,8 +298,9 @@ class _Pag_de_uma_areaState extends State<Pag_de_uma_area> {
                         children: [
                           Icon(Icons.collections_outlined,
                               color: widget.cor_da_area), // Muda a cor do ícone
-                          SizedBox(width: 8), // Espaço entre ícone e texto
-                          Text(
+                          const SizedBox(
+                              width: 8), // Espaço entre ícone e texto
+                          const Text(
                             "Album de Partilhas",
                             style: TextStyle(
                               fontSize: 16, // Aumenta o tamanho do texto
@@ -209,8 +318,9 @@ class _Pag_de_uma_areaState extends State<Pag_de_uma_area> {
                         children: [
                           Icon(Icons.calendar_month,
                               color: widget.cor_da_area), // Muda a cor do ícone
-                          SizedBox(width: 8), // Espaço entre ícone e texto
-                          Text(
+                          const SizedBox(
+                              width: 8), // Espaço entre ícone e texto
+                          const Text(
                             "Eventos",
                             style: TextStyle(
                               fontSize: 16, // Aumenta o tamanho do texto

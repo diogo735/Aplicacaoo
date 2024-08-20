@@ -1,3 +1,7 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:ficha3/BASE_DE_DADOS/APIS/api_usuarios.dart';
+import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_topicosfavoritos_user.dart';
+import 'package:ficha3/usuario_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_publicacoes.dart';
@@ -6,6 +10,7 @@ import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_topicos_imgens.dart
 import 'package:ficha3/AREAS/PAGINA_DE_UMA_AREA/sub_menu_topicos/pagina_topico/card_publicacao.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:ficha3/AREAS/PAGINA_DE_UMA_AREA/sub_menu_topicos/pagina_topico/pagina_publicacao_local/pagnia_de_uma_publicacao.dart';
+import 'package:provider/provider.dart';
 
 class paginatopico extends StatefulWidget {
   final int idtopico;
@@ -22,6 +27,7 @@ class _paginatopicoState extends State<paginatopico> {
     super.initState();
     buscarDetalhesTopico(widget.idtopico);
     buscarImagensDoTopico(widget.idtopico);
+    _verificarSeFavorito();
     _carregarPublicacoes(widget.idtopico);
   }
 
@@ -54,27 +60,117 @@ class _paginatopicoState extends State<paginatopico> {
   }
 
   bool isFavorited = false;
-  void toggleFavorite() {
+// Função para verificar se o tópico é favorito
+  void _verificarSeFavorito() async {
+    final usuarioProvider = Provider.of<Usuario_Provider>(context, listen: false);
+    final user_id = usuarioProvider.usuarioSelecionado!.id_user;
+
+    List<int> topicosFavoritos = await Funcoes_TopicosFavoritos.obeter_topicos_favoritos_do_userid(user_id);
+
     setState(() {
-      isFavorited = !isFavorited;
-      if (isFavorited) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: <Widget>[
-                const Icon(Icons.star_rounded, color: Colors.white),
-                const SizedBox(width: 8.0),
-                Text('"$nomeDoTopico" marcada como tópico favorito!'),
-              ],
-            ),
-            duration: const Duration(seconds: 2),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
+      isFavorited = topicosFavoritos.contains(widget.idtopico);
     });
   }
+
+  void toggleFavorite() async {
+    final usuarioProvider = Provider.of<Usuario_Provider>(context, listen: false);
+    final user_id = usuarioProvider.usuarioSelecionado!.id_user;
+
+    // Verifica a conexão com a internet
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.none) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: <Widget>[
+              Icon(Icons.wifi_off, color: Colors.white),
+              SizedBox(width: 8.0),
+              Text('Sem conexão com a internet.'),
+            ],
+          ),
+          duration: Duration(seconds: 2),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return; // Sai da função se não houver conexão com a internet
+    }
+
+    print('Botão de estrela foi clicado');
+
+    setState(() {
+      isFavorited = !isFavorited;
+    });
+
+    try {
+      if (isFavorited) {
+        bool sucesso = await ApiUsuarios().inserirTopicoFavorito(user_id, widget.idtopico);
+        if (sucesso) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: <Widget>[
+                  const Icon(Icons.star_rounded, color: Colors.white),
+                  const SizedBox(width: 8.0),
+                  Text('"$nomeDoTopico" marcado como tópico favorito!'),
+                ],
+              ),
+              duration: const Duration(seconds: 2),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else {
+          setState(() {
+            isFavorited = false;
+          });
+        }
+      } else {
+        bool sucesso = await ApiUsuarios().removerTopicoFavorito(user_id, widget.idtopico);
+        if (sucesso) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: <Widget>[
+                  const Icon(Icons.star_outline, color: Colors.white),
+                  const SizedBox(width: 8.0),
+                  Text('"$nomeDoTopico" removido dos tópicos favoritos.'),
+                ],
+              ),
+              duration: const Duration(seconds: 2),
+              backgroundColor: Colors.red,
+            ),
+          );
+        } else {
+          setState(() {
+            isFavorited = true;
+          });
+        }
+      }
+    } catch (e) {
+      // Tratamento de exceções relacionadas à rede
+      print('Erro ao tentar alterar o tópico favorito: $e');
+      setState(() {
+        isFavorited = !isFavorited; // Reverte a mudança no estado
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: <Widget>[
+              Icon(Icons.wifi_off, color: Colors.white),
+              SizedBox(width: 8.0),
+              Text('Falha ao conectar ao servidor.'),
+            ],
+          ),
+          duration: Duration(seconds: 2),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
 
   double bottomMargin = 20.0;
   double rightMargin = 12.0;

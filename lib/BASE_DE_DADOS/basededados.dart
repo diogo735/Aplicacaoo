@@ -2,6 +2,7 @@
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_comentarios_eventos.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_imagens_eventos.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_listaparticipantes_evento.dart';
+import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_topicosfavoritos_user.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_eventos.dart';
@@ -64,12 +65,6 @@ class DatabaseHelper {
   await Funcoes_Topicos_imagens.createTopicosImagensTable(db);//IMAGENS DOS TOPICOS
   await Funcoes_Topicos_imagens.insertTopicosImagens(db);
 
-
-
-
-
-
-
 ///////////////////////////////
   await Funcoes_TipodeEvento.create_TipodeEVENTO_Table(db);//tipo de evento ->TA A BUSCAR DA API
   
@@ -90,19 +85,6 @@ class DatabaseHelper {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
   await Funcoes_Publicacoes.criarTabela_Publicacoes(db);//publicaçoes de locais
   await Funcoes_Publicacoes.insertPublicacoes(db);
 
@@ -116,9 +98,10 @@ class DatabaseHelper {
   await Funcoes_Publicacoes_Horario.insertPublicacoes_horario(db);
 
 
- await Funcoes_AreasFavoritas.createAreasFavoritas_douserTable(db);//inserir areas favoritas
-  await Funcoes_AreasFavoritas.insertAreasFavoritas(db);
+ await Funcoes_AreasFavoritas.createAreasFavoritas_douserTable(db);//TA A BUSCAR NA API
+  
 
+await Funcoes_TopicosFavoritos.createTopicosFavoritosUserTable(db);// TA A BUSCAR NA API
 
 
 

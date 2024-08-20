@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_centros.dart';
+import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_topicosfavoritos_user.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_usuarios.dart';
 import 'package:flutter/material.dart';
 import 'package:ficha3/usuario_provider.dart';
@@ -21,6 +22,7 @@ class pagina_de_perfil_vista extends StatefulWidget {
 // ignore: camel_case_types
 class _pagina_de_perfil_vistaState extends State<pagina_de_perfil_vista> {
   List<int> areasFavoritas = [];
+  List<int> topicosFavoritos = [];
   List<int> gruposMembro = [];
   String nome = '';
   String foto = '';
@@ -32,6 +34,7 @@ class _pagina_de_perfil_vistaState extends State<pagina_de_perfil_vista> {
     super.initState();
     _carregardadosuser();
     _carregarAreasFavoritas();
+    _carregarTopicosFavoritos();
     _carregarGruposDoUsuario();
   }
 
@@ -65,11 +68,33 @@ class _pagina_de_perfil_vistaState extends State<pagina_de_perfil_vista> {
       List<int> areasFavoritasCarregadas =
           await Funcoes_AreasFavoritas.obeter_areas_favoritas_do_userid(
               widget.idUsuario);
+
+      // Verifique se o widget ainda está montado antes de chamar setState
+      if (!mounted) return;
+
       setState(() {
         areasFavoritas = areasFavoritasCarregadas;
       });
     } catch (e) {
       print('Erro ao carregar áreas favoritas: $e');
+    }
+  }
+
+  void _carregarTopicosFavoritos() async {
+    try {
+      // Carregar os tópicos favoritos do usuário
+      List<int> topicosFavoritosCarregados =
+          await Funcoes_TopicosFavoritos.obeter_topicos_favoritos_do_userid(
+              widget.idUsuario);
+
+      // Verifique se o widget ainda está montado antes de chamar setState
+      if (!mounted) return;
+
+      setState(() {
+        topicosFavoritos = topicosFavoritosCarregados;
+      });
+    } catch (e) {
+      print('Erro ao carregar tópicos favoritos: $e');
     }
   }
 
@@ -163,7 +188,7 @@ class _pagina_de_perfil_vistaState extends State<pagina_de_perfil_vista> {
                       ),
                     ],
                   ),
-                   Center(
+                  Center(
                     child: SizedBox(
                       height: 17.80,
                       child: Row(
@@ -349,7 +374,7 @@ class _pagina_de_perfil_vistaState extends State<pagina_de_perfil_vista> {
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: [
                             Text(
-                              'Interesses (${areasFavoritas.length})',
+                              'Interesses (${areasFavoritas.length+topicosFavoritos.length})',
                               style: const TextStyle(
                                 color: Colors.black,
                                 fontSize: 18,
@@ -370,15 +395,26 @@ class _pagina_de_perfil_vistaState extends State<pagina_de_perfil_vista> {
                                   spacing: 5, // Espaçamento horizontal
                                   runSpacing: 0, // Espaçamento vertical
                                   children: [
-                                    for (int areaId in areasFavoritas)
-                                      Container(
-                                        margin: const EdgeInsets.only(
-                                            right: 10, bottom: 10),
-                                        child: CARD_AREA_INTERESSES(
-                                          area_id: areaId,
-                                        ),
+                                  // Exibir as áreas favoritas
+                                  for (int areaId in areasFavoritas)
+                                    Container(
+                                      margin: const EdgeInsets.only(
+                                          right: 10, bottom: 10),
+                                      child: CARD_AREA_INTERESSES(
+                                        area_id: areaId,
                                       ),
-                                  ],
+                                    ),
+
+                                  for (int topicoId in topicosFavoritos)
+                                    Container(
+                                      margin: const EdgeInsets.only(
+                                          right: 10, bottom: 10),
+                                      child: CARD_TOPICO_INTERESSES(
+                                        topico_id: topicoId,
+                                        
+                                      ),
+                                    ),
+                                ],
                                 )
                               : const Center(
                                   child: Text(

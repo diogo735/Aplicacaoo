@@ -121,6 +121,12 @@ class _LoadingScreenState extends State<LoadingScreen> {
         print('2.1->>Iniciando o carregamento dos TÓPICOS...');
         await ApiTopicos().fetchAndStoreTopicos();
 
+        print('2.2->>Iniciando o carregamento das AREAS FAVORITAS...');
+        await ApiUsuarios().fetchAndStoreAreasFavoritas();
+
+        print('2.3->>Iniciando o carregamento das TOPICOS FAVORITOS...');
+        await ApiUsuarios().fetchAndStoreTopicosFavoritos();
+
         print('3->>Iniciando o carregamento dos TIPOS DE EVENTOS...');
         await ApiEventos().fetchAndStoreTiposDeEvento();
 

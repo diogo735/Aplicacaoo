@@ -139,4 +139,29 @@ static Future<Map<String, String>> obterDadosTopico(int idTopico) async {
       };
     }
   }
+  static Future<Map<String, dynamic>> obterDadosTopicoEid(int idTopico) async {
+  Database db = await DatabaseHelper.basededados;
+  List<Map<String, dynamic>> resultado = await db.query(
+    'topicos',
+    where: 'id = ?',
+    whereArgs: [idTopico],
+  );
+  
+  if (resultado.isNotEmpty) {
+    return {
+      'id': resultado.first['id'].toString(),
+      'nome': resultado.first['nome_topico'],
+      'imagem': resultado.first['topico_imagem'],
+      'area_id': resultado.first['area_id'].toString(),
+    };
+  } else {
+    return {
+      'id': '0',
+      'nome': 'Desconhecido',
+      'imagem': 'assets/images/sem_resultados.png',
+      'area_id': '0',
+    };
+  }
+}
+
 }

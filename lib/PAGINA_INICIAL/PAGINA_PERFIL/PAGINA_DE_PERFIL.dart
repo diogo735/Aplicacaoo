@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_eventos.dart';
+import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_topicosfavoritos_user.dart';
 import 'package:ficha3/PAGINA_INICIAL/PAGINA_PERFIL/pagina_eventos_do_user/pagina_eventos_do_user.dart';
 import 'package:ficha3/centro_provider.dart';
 import 'package:flutter/material.dart';
@@ -22,6 +23,7 @@ class pagina_de_perfil extends StatefulWidget {
 class _pagina_de_perfilState extends State<pagina_de_perfil> {
   List<int> areasFavoritas = [];
   List<int> gruposMembro = [];
+  List<int> topicosFavoritos = [];
   int n_eventos = 0;
 
   @override
@@ -29,7 +31,8 @@ class _pagina_de_perfilState extends State<pagina_de_perfil> {
     super.initState();
     _carregarAreasFavoritas();
     _carregarGruposDoUsuario();
-    //_atualizarNumeroDeEventos();
+    _atualizarNumeroDeEventos();
+    _carregarTopicosFavoritos();
   }
 
   @override
@@ -59,13 +62,13 @@ class _pagina_de_perfilState extends State<pagina_de_perfil> {
 
   void _carregarAreasFavoritas() async {
     try {
-      int? idUsuario = Provider.of<Usuario_Provider>(context, listen: false)
-          .usuarioSelecionado
-          ?.id_user;
-      int usuarioId = idUsuario ?? 0;
+      final usuarioProvider =
+          Provider.of<Usuario_Provider>(context, listen: false);
+      final user_id = usuarioProvider.usuarioSelecionado!.id_user;
+
       List<int> areasFavoritasCarregadas =
           await Funcoes_AreasFavoritas.obeter_areas_favoritas_do_userid(
-              usuarioId);
+              user_id);
 
       // Verifique se o widget ainda está montado antes de chamar setState
       if (!mounted) return;
@@ -75,6 +78,28 @@ class _pagina_de_perfilState extends State<pagina_de_perfil> {
       });
     } catch (e) {
       print('Erro ao carregar áreas favoritas: $e');
+    }
+  }
+
+  void _carregarTopicosFavoritos() async {
+    try {
+      final usuarioProvider =
+          Provider.of<Usuario_Provider>(context, listen: false);
+      final user_id = usuarioProvider.usuarioSelecionado!.id_user;
+
+      // Carregar os tópicos favoritos do usuário
+      List<int> topicosFavoritosCarregados =
+          await Funcoes_TopicosFavoritos.obeter_topicos_favoritos_do_userid(
+              user_id);
+
+      // Verifique se o widget ainda está montado antes de chamar setState
+      if (!mounted) return;
+
+      setState(() {
+        topicosFavoritos = topicosFavoritosCarregados;
+      });
+    } catch (e) {
+      print('Erro ao carregar tópicos favoritos: $e');
     }
   }
 
@@ -255,8 +280,8 @@ class _pagina_de_perfilState extends State<pagina_de_perfil> {
                                 padding: const EdgeInsets.all(
                                     15), // Adiciona um espaçamento interno
                                 decoration: BoxDecoration(
-                                  color:
-                                      const Color.fromARGB(0, 255, 255, 255), // Cor de fundo do container
+                                  color: const Color.fromARGB(0, 255, 255,
+                                      255), // Cor de fundo do container
                                   borderRadius: BorderRadius.circular(
                                       8), // Cantos arredondados
                                   boxShadow: const [
@@ -264,7 +289,7 @@ class _pagina_de_perfilState extends State<pagina_de_perfil> {
                                       color: Color.fromARGB(0, 158, 158, 158),
                                       spreadRadius: 2,
                                       blurRadius: 5,
-                                       // Sombra do container
+                                      // Sombra do container
                                     ),
                                   ],
                                 ),
@@ -461,7 +486,7 @@ class _pagina_de_perfilState extends State<pagina_de_perfil> {
                               mainAxisAlignment: MainAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Interesses (${areasFavoritas.length})',
+                                  'Interesses (${areasFavoritas.length + topicosFavoritos.length})',
                                   style: const TextStyle(
                                     color: Colors.black,
                                     fontSize: 18,
@@ -481,12 +506,23 @@ class _pagina_de_perfilState extends State<pagina_de_perfil> {
                                 spacing: 5, // Espaçamento horizontal
                                 runSpacing: 0, // Espaçamento vertical
                                 children: [
+                                  // Exibir as áreas favoritas
                                   for (int areaId in areasFavoritas)
                                     Container(
                                       margin: const EdgeInsets.only(
                                           right: 10, bottom: 10),
                                       child: CARD_AREA_INTERESSES(
                                         area_id: areaId,
+                                      ),
+                                    ),
+
+                                  for (int topicoId in topicosFavoritos)
+                                    Container(
+                                      margin: const EdgeInsets.only(
+                                          right: 10, bottom: 10),
+                                      child: CARD_TOPICO_INTERESSES(
+                                        topico_id: topicoId,
+                                        
                                       ),
                                     ),
                                 ],

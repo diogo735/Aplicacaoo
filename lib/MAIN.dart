@@ -114,7 +114,7 @@ class _MinhaPaginaInicialState extends State<MinhaPaginaInicial> {
       InicioPage(),
       const Pag_Areas(),
       const Pag_Grupos(),
-      EventosScreen(),
+      Pag_Notificacoes(),
     ];
 
     _loadCentros();
