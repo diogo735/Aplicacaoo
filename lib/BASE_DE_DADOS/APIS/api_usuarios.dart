@@ -58,7 +58,6 @@ class ApiUsuarios {
       throw Exception('Falha ao carregar os usuários');
     }
   }
-
 Future<void> fetchAndStoreAreasFavoritas() async {
   var connectivityResult = await (Connectivity().checkConnectivity());
   if (connectivityResult == ConnectivityResult.none) {
@@ -79,34 +78,50 @@ Future<void> fetchAndStoreAreasFavoritas() async {
     await Funcoes_AreasFavoritas.clearTable();
 
     // Decodifica o JSON da resposta
-    final Map<String, dynamic> responseData = json.decode(response.body);
-    
-    // Verifica se a lista de áreas favoritas existe e não está vazia
-    if (responseData.containsKey('areas_favoritas') && responseData['areas_favoritas'] is List) {
-      final List<dynamic> areasList = responseData['areas_favoritas'];
+    final decodedResponse = json.decode(response.body);
 
-      if (areasList.isNotEmpty) {
-        for (var area in areasList) {
+    if (decodedResponse is List) {
+      // Se a resposta for uma lista diretamente
+      if (decodedResponse.isNotEmpty) {
+        for (var area in decodedResponse) {
           await Funcoes_AreasFavoritas.insertAreaFavorita({
             'id': area['id'],
             'usuario_id': area['usuario_id'],
             'area_id': area['area_id'],
           });
         }
-
-        // Mostra mensagem de sucesso
         print("      >Áreas favoritas carregadas com sucesso!");
       } else {
         print("Nenhuma área favorita encontrada.");
       }
+    } else if (decodedResponse is Map<String, dynamic>) {
+      // Se a resposta for um mapa contendo a chave 'areas_favoritas'
+      if (decodedResponse.containsKey('areas_favoritas') && decodedResponse['areas_favoritas'] is List) {
+        final List<dynamic> areasList = decodedResponse['areas_favoritas'];
+
+        if (areasList.isNotEmpty) {
+          for (var area in areasList) {
+            await Funcoes_AreasFavoritas.insertAreaFavorita({
+              'id': area['id'],
+              'usuario_id': area['usuario_id'],
+              'area_id': area['area_id'],
+            });
+          }
+          print("      >Áreas favoritas carregadas com sucesso!");
+        } else {
+          print("Nenhuma área favorita encontrada.");
+        }
+      } else {
+        print("Nenhuma área favorita encontrada ou chave 'areas_favoritas' não está presente.");
+      }
     } else {
-      print("Nenhuma área favorita encontrada ou chave 'areas_favoritas' não está presente.");
+      print("Formato inesperado de resposta.");
     }
   } else {
     print("Falha ao carregar as áreas favoritas");
-    //throw Exception('Falha ao carregar as áreas favoritas');
   }
 }
+
 Future<void> fetchAndStoreTopicosFavoritos() async {
   var connectivityResult = await (Connectivity().checkConnectivity());
   if (connectivityResult == ConnectivityResult.none) {
