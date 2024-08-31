@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:ficha3/BASE_DE_DADOS/APIS/TOKENJTW.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_areafavoritas_douser.dart';
+import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_notificacoes.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_topicosfavoritos_user.dart';
 import 'package:http/http.dart' as http;
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -25,6 +26,11 @@ class ApiUsuarios {
   final String apiUrlInserirTopicoFavorito='https://backend-teste-q43r.onrender.com/topicosfavoritos/topicos_favoritos/create';
 
   final String apiUrlRemoverTopicoFavorito='https://backend-teste-q43r.onrender.com/topicosfavoritos/topicos_favoritos/delete';
+
+final String apiUrlNotificacoes =
+      'https://backend-teste-q43r.onrender.com/notificacoes/usuario/'; 
+
+     final String apiUrlBaseNotificacoes = 'https://backend-teste-q43r.onrender.com/notificacoes/delete/';
 
 
   Future<void> fetchAndStoreUsuarios() async {
@@ -348,5 +354,84 @@ Future<bool> removerTopicoFavorito(int usuarioId, int topicoId) async {
     return false;
   }
 }
+
+Future<void> fetchAndStoreNotificacoes(int usuarioId) async {
+  var connectivityResult = await (Connectivity().checkConnectivity());
+  if (connectivityResult == ConnectivityResult.none) {
+    throw Exception('Sem conexão com a internet');
+  }
+
+  String? jwtToken = TokenService().getToken();
+  if (jwtToken == null) {
+    throw Exception('JWT Token não está definido.');
+  }
+
+  final apiUrlNotificacoes2 = 'https://backend-teste-q43r.onrender.com/notificacoes/usuario/$usuarioId';
+
+  final response = await http.get(Uri.parse(apiUrlNotificacoes2), headers: {
+    'Authorization': 'Bearer $jwtToken',
+  });
+
+  if (response.statusCode == 200) {
+    List<dynamic> notificacoesList = json.decode(response.body);
+    for (var notificacaoJson in notificacoesList) {
+      // Tenta buscar o valor de `ja_mostrei_notificacao` já existente no banco de dados
+      List<Map<String, dynamic>> notificacaoExistente = await Funcoes_Notificacoes.consultaNotificacaoPorId(notificacaoJson['id']);
+
+      int jaMostreiNotificacao = 0; // Valor padrão
+
+      // Se a notificação já existir no banco, mantenha o valor de `ja_mostrei_notificacao`
+      if (notificacaoExistente.isNotEmpty) {
+        jaMostreiNotificacao = notificacaoExistente.first['ja_mostrei_notificacao'];
+      }
+
+      // Cria um mapa para a notificação
+      Map<String, dynamic> notificacaoMap = {
+        'id': notificacaoJson['id'],
+        'usuario_id': notificacaoJson['usuario_id'],
+        'tipo': notificacaoJson['tipo'],
+        'mensagem': notificacaoJson['mensagem'],
+        'lida': notificacaoJson['lida'] ? 1 : 0, 
+        'ja_mostrei_notificacao': jaMostreiNotificacao,  // Mantém o valor existente
+      };
+
+      // Insere ou atualiza a notificação no banco de dados local
+      await Funcoes_Notificacoes.insertNotificacao(notificacaoMap);
+    }
+    print("Notificações carregadas com sucesso!");
+  } else {
+    throw Exception('Falha ao carregar as notificações');
+  }
+}
+
+
+Future<void> deleteNotificacao(int notificacaoId) async {
+  var connectivityResult = await (Connectivity().checkConnectivity());
+  if (connectivityResult == ConnectivityResult.none) {
+    throw Exception('Sem conexão com a internet');
+  }
+
+  String? jwtToken = TokenService().getToken();
+  if (jwtToken == null) {
+    throw Exception('JWT Token não está definido.');
+  }
+
+ 
+  final apiUrlDeleteNotificacao = '$apiUrlBaseNotificacoes$notificacaoId';
+
+
+  final response = await http.delete(Uri.parse(apiUrlDeleteNotificacao), headers: {
+    'Authorization': 'Bearer $jwtToken',
+  });
+
+  if (response.statusCode == 200 || response.statusCode == 204) {
+
+    await Funcoes_Notificacoes.deleteNotificacao(notificacaoId);
+    print("Notificação excluída com sucesso!");
+  } else {
+    throw Exception('Falha ao excluir a notificação no servidor');
+  }
+}
+
 
 }

@@ -2,7 +2,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:ficha3/BASE_DE_DADOS/APIS/api_usuarios.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_areafavoritas_douser.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_areas.dart';
-import 'package:ficha3/usuario_provider.dart';
+import 'package:ficha3/PROVIDERS_GLOBAL_NA_APP/usuario_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:ficha3/AREAS/PAGINA_DE_UMA_AREA/sub_menu_eventos/sub_menu_eventos.dart';
 import 'package:ficha3/AREAS/PAGINA_DE_UMA_AREA/sub_menu_forum/sub_menu_forum.dart';

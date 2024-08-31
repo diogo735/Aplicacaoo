@@ -3,7 +3,7 @@ import 'package:ficha3/AREAS/PAGINA_DE_UMA_AREA/sub_menu_eventos/calendario_area
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_eventos.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_topicos.dart';
 import 'package:path/path.dart' as p; // Use an alias to avoid conflicts
-import 'package:ficha3/centro_provider.dart';
+import 'package:ficha3/PROVIDERS_GLOBAL_NA_APP/centro_provider.dart';
 import 'package:ficha3/AREAS/PAGINA_DE_UMA_AREA/sub_menu_eventos/pagina_De_um_evento/pagina_evento.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_listaparticipantes_evento.dart';
 import 'package:flutter/material.dart';

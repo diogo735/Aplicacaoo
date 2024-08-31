@@ -9,7 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
-import 'package:ficha3/usuario_provider.dart';
+import 'package:ficha3/PROVIDERS_GLOBAL_NA_APP/usuario_provider.dart';
 import 'package:provider/provider.dart';
 
 // ignore: camel_case_types

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_mensagens_do_forum.dart';
 import 'package:ficha3/AREAS/PAGINA_DE_UMA_AREA/sub_menu_forum/card_mensagem_forum.dart';
 
-import 'package:ficha3/usuario_provider.dart';
+import 'package:ficha3/PROVIDERS_GLOBAL_NA_APP/usuario_provider.dart';
 import 'package:provider/provider.dart';
 
 class SubmenuForum extends StatefulWidget {

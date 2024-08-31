@@ -37,7 +37,7 @@ class ApiEventos {
   final String apiUrlCriarDenunciaEvento =
       'https://backend-teste-q43r.onrender.com/denuncias_de_eventos/criar';
   final String apiUrlAdicionarParticipanteEvento =
-      'https://backend-teste-q43r.onrender.com/listaparticipantes_evento/adiconar_participante';
+      'https://backend-teste-q43r.onrender.com/listaparticipantes_evento/adicionar_participante';
 
   final String apiUrlCriarEvento =
       'https://backend-teste-q43r.onrender.com/eventos/create';

@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:ficha3/centro_provider.dart';
+import 'package:ficha3/PROVIDERS_GLOBAL_NA_APP/centro_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart';

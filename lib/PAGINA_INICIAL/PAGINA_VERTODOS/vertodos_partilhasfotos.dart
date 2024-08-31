@@ -1,4 +1,4 @@
-import 'package:ficha3/centro_provider.dart';
+import 'package:ficha3/PROVIDERS_GLOBAL_NA_APP/centro_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_eventos.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_partilhasfotos.dart';

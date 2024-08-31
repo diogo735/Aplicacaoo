@@ -7,13 +7,13 @@ import 'package:ficha3/BASE_DE_DADOS/APIS/api_topicos.dart';
 import 'package:ficha3/BASE_DE_DADOS/APIS/api_usuarios.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_centros.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_usuarios.dart';
-import 'package:ficha3/centro_provider.dart';
+import 'package:ficha3/PROVIDERS_GLOBAL_NA_APP/centro_provider.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:ficha3/MAIN.dart';
 
 import 'package:flutter/material.dart';
 import 'package:ficha3/BASE_DE_DADOS/APIS/api_centro.dart';
-import 'package:ficha3/usuario_provider.dart';
+import 'package:ficha3/PROVIDERS_GLOBAL_NA_APP/usuario_provider.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:permission_handler/permission_handler.dart';

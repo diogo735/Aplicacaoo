@@ -2,6 +2,7 @@
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_comentarios_eventos.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_imagens_eventos.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_listaparticipantes_evento.dart';
+import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_notificacoes.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_topicosfavoritos_user.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
@@ -55,6 +56,7 @@ class DatabaseHelper {
 
   await Funcoes_Usuarios.createUsuariosTable(db);//users //TA A BUSCAR NA API
   
+  await Funcoes_Notificacoes.createNotificacoesTable(db);
 
   await Funcoes_Areas.createAreasTable(db);//areas ta a buscar a api
   //await Funcoes_Areas.insertAreas(db);

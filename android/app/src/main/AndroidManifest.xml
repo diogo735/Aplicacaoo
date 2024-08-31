@@ -3,7 +3,7 @@
     <application
         android:label="SoftShares"
         android:name="${applicationName}"
-        android:icon="@mipmap/logo">
+        android:icon="@mipmap/ic_launcher">
         <meta-data android:name="com.google.android.geo.API_KEY"
                android:value="AIzaSyC6d4W1bxeX8v1G6mmLFCTzao3BrXOTa7s"/>
                 <meta-data

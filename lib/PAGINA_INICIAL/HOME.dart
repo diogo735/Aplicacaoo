@@ -13,9 +13,9 @@ import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_listaparticipantes_
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_partilhasfotos.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_publicacoes.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_usuarios.dart';
-import 'package:ficha3/centro_provider.dart';
+import 'package:ficha3/PROVIDERS_GLOBAL_NA_APP/centro_provider.dart';
 
-import 'package:ficha3/usuario_provider.dart';
+import 'package:ficha3/PROVIDERS_GLOBAL_NA_APP/usuario_provider.dart';
 import 'widget_cards/card_destaques_do_dia.dart';
 import 'widget_cards/card_evetos_HOME.dart';
 import 'widget_cards/card_publicacoes.dart';

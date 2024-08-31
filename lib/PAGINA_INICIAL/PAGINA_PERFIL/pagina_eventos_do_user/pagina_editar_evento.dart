@@ -17,8 +17,8 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:provider/provider.dart';
-import 'package:ficha3/usuario_provider.dart';
-import 'package:ficha3/centro_provider.dart';
+import 'package:ficha3/PROVIDERS_GLOBAL_NA_APP/usuario_provider.dart';
+import 'package:ficha3/PROVIDERS_GLOBAL_NA_APP/centro_provider.dart';
 
 class Pag_EditarEvento extends StatefulWidget {
   final int idArea;

@@ -4,7 +4,7 @@ import 'package:ficha3/AREAS/PAGINA_DE_UMA_AREA/pagina_de_uma_area.dart';
 import 'package:flutter/material.dart';
 
 import 'package:provider/provider.dart';
-import 'package:ficha3/usuario_provider.dart';
+import 'package:ficha3/PROVIDERS_GLOBAL_NA_APP/usuario_provider.dart';
 
 class Pag_Areas extends StatelessWidget {
   const Pag_Areas({super.key});

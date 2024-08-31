@@ -3,6 +3,7 @@ import 'package:ficha3/AREAS/PAGINA_DE_UMA_AREA/sub_menu_partilhas/carregar_part
 import 'package:ficha3/BASE_DE_DADOS/APIS/TOKENJTW.dart';
 import 'package:ficha3/BASE_DE_DADOS/APIS/api_centro.dart';
 import 'package:ficha3/BASE_DE_DADOS/APIS/api_login.dart';
+import 'package:ficha3/BASE_DE_DADOS/APIS/api_usuarios.dart';
 import 'package:ficha3/BASE_DE_DADOS/basededados.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_centros.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_usuarios.dart';
@@ -14,7 +15,8 @@ import 'package:ficha3/PAGINA_DE_LOGIN/pagina_de_registo/registo.dart';
 import 'package:ficha3/PAGINA_INICIAL/PAGINA_PERFIL/PAGINA_DE_PERFIL.dart';
 import 'package:ficha3/PAGINA_INICIAL/PAGINA_VERTODOS/vertodos_eventos.dart';
 import 'package:ficha3/PAGINA_loading_user.dart';
-import 'package:ficha3/centro_provider.dart';
+import 'package:ficha3/PROVIDERS_GLOBAL_NA_APP/centro_provider.dart';
+import 'package:ficha3/PROVIDERS_GLOBAL_NA_APP/notificacao_provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -26,9 +28,8 @@ import 'package:ficha3/GRUPOS/grupos.dart';
 
 import 'package:ficha3/PAGINA_INICIAL/HOME.dart';
 
-
 import 'package:ficha3/NOTIFICAÇÕES/NOTIFICACOES.dart';
-import 'package:ficha3/usuario_provider.dart';
+import 'package:ficha3/PROVIDERS_GLOBAL_NA_APP/usuario_provider.dart';
 
 import 'dart:async';
 
@@ -47,6 +48,7 @@ void main() async {
         ChangeNotifierProvider<Usuario_Provider>(
           create: (context) => Usuario_Provider(),
         ),
+        ChangeNotifierProvider(create: (_) => NotificacaoService()),
         ChangeNotifierProvider<Centro_Provider>(
           create: (context) => Centro_Provider(),
         ),
@@ -104,6 +106,8 @@ class _MinhaPaginaInicialState extends State<MinhaPaginaInicial> {
   int _indiceSelecionado = 0;
   List<Widget> _opcoes = [];
 
+
+
   @override
   void initState() {
     super.initState();
@@ -118,7 +122,17 @@ class _MinhaPaginaInicialState extends State<MinhaPaginaInicial> {
     ];
 
     _loadCentros();
+    
+    int? userId = widget.userId != null ? int.tryParse(widget.userId!) : null;
+ final notificacaoService = Provider.of<NotificacaoService>(context, listen: false);
+
+    if (userId != null) {
+      notificacaoService.startFetchingNotificacoesPeriodicamente(userId);
+    } else {
+      print('Erro: userId não é um número válido.');
+    }
   }
+ 
 
   Future<void> _definirProvedores(int userId) async {
     var usuarioSelecionado =
@@ -167,15 +181,16 @@ class _MinhaPaginaInicialState extends State<MinhaPaginaInicial> {
     });
   }
 
+
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      systemNavigationBarColor: Colors.white, 
-      systemNavigationBarIconBrightness: Brightness.dark, 
-       // Ícones escuros na barra de status
-    ),
-  );
+      const SystemUiOverlayStyle(
+        systemNavigationBarColor: Colors.white,
+        systemNavigationBarIconBrightness: Brightness.dark,
+        // Ícones escuros na barra de status
+      ),
+    );
     return Scaffold(
       body: Center(
         child: _opcoes.elementAt(_indiceSelecionado),
@@ -250,42 +265,40 @@ class _PAGINA_ICNICO_APENAS_LOGOState extends State<PAGINA_ICNICO_APENAS_LOGO> {
             const Color(0xFF15659F), // Define a cor transparente
         systemNavigationBarIconBrightness:
             Brightness.light, // Deixa os ícones da barra de navegação claros
-         // Deixa os ícones da barra de status claros
+        // Deixa os ícones da barra de status claros
       ),
     );
     return Scaffold(
-  backgroundColor: const Color(0xFF15659F),
-  body: Container(
-    width: double.infinity,
-    height: double.infinity,
-    child: Column(
-      children: [
-        SizedBox(height: MediaQuery.of(context).size.height /3),
-        Image.asset(
-          'assets/images/logo_sem_fundo.png',
-          width: 125,
-          height: 125,
+      backgroundColor: const Color(0xFF15659F),
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        child: Column(
+          children: [
+            SizedBox(height: MediaQuery.of(context).size.height / 3),
+            Image.asset(
+              'assets/images/logo_sem_fundo.png',
+              width: 125,
+              height: 125,
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'SoftShares',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.5,
+              ),
+            ),
+            SizedBox(height: MediaQuery.of(context).size.height / 4),
+            const CupertinoActivityIndicator(
+              color: Colors.white,
+              radius: 21.0,
+            ),
+          ],
         ),
-        const SizedBox(height: 20),
-        const Text(
-          'SoftShares',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.5,
-          ),
-        ),
-        SizedBox(height: MediaQuery.of(context).size.height /4),
-        const CupertinoActivityIndicator(
-          color: Colors.white,
-          radius: 21.0,
-        ),
-       
-      ],
-    ),
-  ),
-);
-
+      ),
+    );
   }
 }
