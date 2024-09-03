@@ -1,5 +1,4 @@
 import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart';
 import 'package:ficha3/BASE_DE_DADOS/basededados.dart';
 
 class Funcoes_Areas{

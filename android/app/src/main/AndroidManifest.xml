@@ -38,6 +38,9 @@
               <!-- Meta-dados do Facebook (se necessário) -->
         <meta-data android:name="com.facebook.sdk.ApplicationId" android:value="@string/facebook_app_id"/>
         <meta-data android:name="com.facebook.sdk.ClientToken" android:value="@string/facebook_client_token"/>
+        <meta-data android:name="com.google.android.gms.client.id"
+        android:value="936778576248-kns4d127mgvb6lr17517eds350675bg1.apps.googleusercontent.com"/>
+
 
     </application>
     <!-- Required to query activities that can process text, see:

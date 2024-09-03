@@ -1,6 +1,6 @@
 import 'package:ficha3/PAGINA_DE_LOGIN/login_email.dart';
 import 'package:ficha3/PAGINA_DE_LOGIN/login_facebook.dart';
-import 'package:ficha3/PAGINA_DE_LOGIN/login_google.dart';
+import 'package:ficha3/BASE_DE_DADOS/APIS/api_googleAuth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -134,8 +134,8 @@ class Botoes extends StatelessWidget {
                   side: const BorderSide(color: Colors.blue, width: 2),
                 ),
                 onPressed: () async {
-                  final loginGoogle = const LoginGoogle();
-                  await loginGoogle.signIn(context);
+                  //final loginGoogle = const LoginGoogle();
+                  await GoogleApiAuth().signIn(context);
                 },
                 child: Center(
                   child: Row(

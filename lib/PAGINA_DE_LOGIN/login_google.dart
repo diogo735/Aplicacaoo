@@ -1,6 +1,4 @@
-import 'package:ficha3/BASE_DE_DADOS/APIS/TOKENJTW.dart';
 import 'package:ficha3/BASE_DE_DADOS/APIS/api_login.dart';
-import 'package:ficha3/PAGINA_DE_LOGIN/login_email.dart';
 import 'package:ficha3/PAGINA_loading_user.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -28,9 +26,9 @@ class LoginGoogle extends StatelessWidget {
          await GoogleSignInApi.logout();
           ScaffoldMessenger.of(context)
               .showSnackBar(
-                SnackBar(
+                const SnackBar(
                   content: Row(
-                    children: const [
+                    children: [
                       Icon(
                         Icons.check_circle,
                         color: Colors.white,

@@ -1,12 +1,8 @@
 import 'package:ficha3/AREAS/PAGINA_DE_UMA_AREA/sub_menu_eventos/pagina_De_um_evento/pagina_evento.dart';
-import 'package:ficha3/AREAS/PAGINA_DE_UMA_AREA/sub_menu_partilhas/carregar_partilha.dart';
 import 'package:ficha3/BASE_DE_DADOS/APIS/TOKENJTW.dart';
-import 'package:ficha3/BASE_DE_DADOS/APIS/api_centro.dart';
-import 'package:ficha3/BASE_DE_DADOS/APIS/api_login.dart';
 import 'package:ficha3/BASE_DE_DADOS/basededados.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_centros.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_usuarios.dart';
-
 import 'package:ficha3/PAGINA_DE_LOGIN/PaginaLogin.dart';
 import 'package:ficha3/PAGINA_DE_LOGIN/login_email.dart';
 import 'package:ficha3/PAGINA_DE_LOGIN/login_google.dart';
@@ -21,15 +17,10 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'AREAS/Pagina_Das_areas_todas.dart';
-
 import 'package:ficha3/GRUPOS/grupos.dart';
-
 import 'package:ficha3/PAGINA_INICIAL/HOME.dart';
-
-
 import 'package:ficha3/NOTIFICAÇÕES/NOTIFICACOES.dart';
 import 'package:ficha3/usuario_provider.dart';
-
 import 'dart:async';
 
 void main() async {

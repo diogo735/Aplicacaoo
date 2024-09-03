@@ -4,7 +4,6 @@ import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart';
 import 'package:ficha3/BASE_DE_DADOS/basededados.dart';
 
 class Funcoes_Usuarios {
@@ -17,24 +16,25 @@ class Funcoes_Usuarios {
         'caminho_foto TEXT,'
         'caminho_fundo TEXT,'
         'sobre_min TEXT,'
-        'centro_id INTEGRER,'
+        'centro_id INTEGER,'
         'FOREIGN KEY (centro_id) REFERENCES centros(id)'
         ')');
   }
-   static Future<int> consultaCentroIdPorUsuarioId(int idUsuario) async {
+
+  static Future<int> consultaCentroIdPorUsuarioId(int idUsuario) async {
     Database db = await DatabaseHelper.basededados;
 
     List<Map<String, dynamic>> resultado = await db.query(
       'usuario',
-      columns: ['centro_id'],  
-      where: 'id = ?',         
-      whereArgs: [idUsuario],  
+      columns: ['centro_id'],
+      where: 'id = ?',
+      whereArgs: [idUsuario],
     );
 
     if (resultado.isNotEmpty) {
-      return resultado.first['centro_id'] ?? 0;  
+      return resultado.first['centro_id'] ?? 0;
     } else {
-      return 0;  
+      return 0;
     }
   }
 
@@ -51,8 +51,8 @@ class Funcoes_Usuarios {
             'Para mim, a neve não é apenas um clima, é uma paixão que aquece meu coração gelado! ❄️⛷️🏂 #AmoNeve #InvernoÉVida'
       },
     );
-   
-     /*
+
+    /*
      await db.insert(
       'usuario',
       {
@@ -230,4 +230,8 @@ class Funcoes_Usuarios {
       return ' ';
     }
   }
+
+  
+
 }
+

@@ -1,12 +1,10 @@
 import 'package:ficha3/BASE_DE_DADOS/APIS/api_login.dart';
+import 'package:ficha3/BASE_DE_DADOS/APIS/api_recuperar_passe.dart';
 import 'package:flutter/material.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'login_facebook.dart';
 import 'login_google.dart';
 import 'pagina_de_registo/registo.dart';
-import 'package:ficha3/PAGINA_loading_user.dart';
-import 'package:ficha3/MAIN.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
 
 class LoginEmail extends StatefulWidget {
   const LoginEmail({Key? key}) : super(key: key);
@@ -23,6 +21,7 @@ class _LoginEmailState extends State<LoginEmail> {
   String errorMessage = '';
 
   final apiLogin = ApiLogin(baseUrl: 'https://backend-teste-q43r.onrender.com');
+  final ApiRecuperarSenha = ApiRecuperarPasse();
 
   @override
   void initState() {
@@ -39,73 +38,32 @@ class _LoginEmailState extends State<LoginEmail> {
   }
 
   Future<void> _login() async {
+  setState(() {
+    isLoading = true;
+    errorMessage = '';
+  });
+
+  final email = _emailController.text.trim();
+  final password = _passwordController.text.trim();
+
+  try {
+    // Call the modified loginUser method
+    await apiLogin.loginUser(context, email, password, apiLogin);
+  } catch (error) {
+    print('Login Error: $error');
     setState(() {
-      isLoading = true;
-      errorMessage = '';
+      errorMessage = 'Erro ao fazer login. Tente novamente mais tarde.';
     });
-
-    final email = _emailController.text.trim();
-    final password = _passwordController.text.trim();
-
-    //print('Email: $email');
-    //print('Password: $password');
-
-    try {
-      final result = await apiLogin.login(email, password);
-      print('Login Result: $result');
-      if (result['message'] == 'Email e senha corretos') {
-        if (isChecked) {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setBool('isLoggedIn', true);
-          await prefs.setString('userId', result['userId'].toString());
-        }
-        ScaffoldMessenger.of(context)
-            .showSnackBar(
-              const SnackBar(
-                  content: Row(
-                    children: [
-                      Icon(
-                        Icons.check_circle,
-                        color: Colors.white,
-                      ),
-                      SizedBox(width: 10),
-                      Text('Login correto'),
-                    ],
-                  ),
-                  backgroundColor: Colors.green,
-                  duration: Duration(seconds: 1)),
-            )
-            .closed
-            .then((_) {
-          Navigator.of(context).pop();
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-                builder: (context) => LoadingScreen(userId: result['userId'])),
-          );
-        });
-      } else {
-        setState(() {
-          errorMessage = result['message'];
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage)),
-        );
-      }
-    } catch (error) {
-      print('Login Error: $error'); // Adiciona log do erro
-      setState(() {
-        errorMessage = 'Erro ao fazer login. Tente novamente mais tarde.';
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(errorMessage)),
-      );
-    }
-
-    setState(() {
-      isLoading = false;
-    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(errorMessage)),
+    );
   }
+
+  setState(() {
+    isLoading = false;
+  });
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -136,7 +94,8 @@ class _LoginEmailState extends State<LoginEmail> {
               ),
               // Login form
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
                 child: Container(
                   alignment: Alignment.centerLeft, // Alinha o texto à esquerda
                   child: const Text(
@@ -162,7 +121,8 @@ class _LoginEmailState extends State<LoginEmail> {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
                 child: Container(
                   alignment: Alignment.centerLeft, // Alinha o texto à esquerda
                   child: const Text(
@@ -211,13 +171,13 @@ class _LoginEmailState extends State<LoginEmail> {
                       ],
                     ),
                     const Spacer(),
-                    const Text(
-                      'Recuperar Password',
-                      style: TextStyle(
-                        color: Color(0xFF15659F),
-                        fontWeight: FontWeight.bold,
-                      ),
+                    TextButton(
+                      onPressed: () {
+                        ApiRecuperarSenha.sendVerificationCode(context);
+                      },
+                      child: const Text('Recuperar Password'),
                     ),
+                    
                   ],
                 ),
               ),
@@ -330,7 +290,7 @@ class _LoginEmailState extends State<LoginEmail> {
                       padding: const EdgeInsets.all(8.0),
                       child: IconButton(
                         onPressed: () async {
-                          final loginGoogle = const LoginGoogle();
+                          const loginGoogle = LoginGoogle();
                           await loginGoogle.signIn(context);
                         },
                         icon: Image.asset(

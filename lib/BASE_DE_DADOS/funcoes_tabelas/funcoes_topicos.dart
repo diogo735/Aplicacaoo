@@ -4,7 +4,6 @@ import 'dart:typed_data';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart';
 import 'package:ficha3/BASE_DE_DADOS/basededados.dart';
 import 'package:http/http.dart' as http;
 

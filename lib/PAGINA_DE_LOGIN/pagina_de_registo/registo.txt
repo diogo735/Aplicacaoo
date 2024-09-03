@@ -1,0 +1,544 @@
+/*import 'dart:io';
+import 'dart:developer' as dev;
+import 'package:ficha3/BASE_DE_DADOS/APIS/api_usuarios.dart';
+import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_centros.dart';
+import 'package:ficha3/PAGINA_DE_LOGIN/login_email.dart';
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+
+class Registo extends StatefulWidget {
+  @override
+  _RegistoState createState() => _RegistoState();
+}
+
+class _RegistoState extends State<Registo> {
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _nomeController = TextEditingController();
+  final TextEditingController _sobrenomeController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _sobreMinController = TextEditingController();
+  final TextEditingController _caminhoFotoController = TextEditingController();
+  final TextEditingController _caminhoFundoController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  String? _selectedCentro;
+  final List<Map<String, dynamic>> _centros = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _listarCentros();
+  }
+
+  Future<void> _listarCentros() async {
+    dev.log("Carregando centros...", name: '_listarCentros');
+    final centrosList = await Funcoes_Centros.consultaCentros();
+    setState(() {
+      _centros.addAll(centrosList);
+    });
+  }
+
+  Future<void> _pickImage({required bool isBackground}) async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+    if (image != null) {
+      dev.log("Imagem selecionada: ${image.path}", name: '_pickImage');
+      setState(() {
+        if (isBackground) {
+          _caminhoFundoController.text = image.path;
+        } else {
+          _caminhoFotoController.text = image.path;
+        }
+      });
+    } else {
+      dev.log("Nenhuma imagem selecionada", name: '_pickImage');
+    }
+  }
+
+  Future<void> _uploadImagesIfAvailable(ApiUsuarios apiUsuarios) async {
+    if (_caminhoFotoController.text.isNotEmpty) {
+      File imagemFoto = File(_caminhoFotoController.text);
+      await apiUsuarios.uploadImage(imagemFoto);
+    }
+
+    if (_caminhoFundoController.text.isNotEmpty) {
+      File imagemFundo = File(_caminhoFundoController.text);
+      await apiUsuarios.uploadImage(imagemFundo);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Registro de Usuário'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                TextFormField(
+                  controller: _nomeController,
+                  decoration: const InputDecoration(labelText: 'Nome'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Por favor, insira seu nome';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _sobrenomeController,
+                  decoration: const InputDecoration(labelText: 'Sobrenome'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Por favor, insira seu sobrenome';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _emailController,
+                  decoration: const InputDecoration(labelText: 'Email'),
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Por favor, insira seu email';
+                    }
+                    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                      return 'Por favor, insira um email válido';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _sobreMinController,
+                  decoration: const InputDecoration(labelText: 'Sobre mim'),
+                  maxLines: 3,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Por favor, insira uma descrição sobre você';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  decoration: const InputDecoration(labelText: 'Centro'),
+                  value: _selectedCentro,
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      _selectedCentro = newValue;
+                      dev.log("Centro selecionado: $_selectedCentro",
+                          name: 'DropdownButtonFormField');
+                    });
+                  },
+                  items: _centros.map<DropdownMenuItem<String>>(
+                      (Map<String, dynamic> centro) {
+                    return DropdownMenuItem<String>(
+                      value: centro['id'].toString(),
+                      child: Text(centro['nome']),
+                    );
+                  }).toList(),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Por favor, selecione um centro';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _caminhoFotoController,
+                  decoration: InputDecoration(
+                    labelText: 'Caminho da Foto (Opcional)',
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.photo_library),
+                      onPressed: () => _pickImage(isBackground: false),
+                    ),
+                  ),
+                  readOnly: true,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _caminhoFundoController,
+                  decoration: InputDecoration(
+                    labelText: 'Caminho do Fundo (Opcional)',
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.photo_library),
+                      onPressed: () => _pickImage(isBackground: true),
+                    ),
+                  ),
+                  readOnly: true,
+                ),
+                TextFormField(
+                  controller: _passwordController,
+                  decoration: const InputDecoration(
+                    labelText: 'Senha',
+                  ),
+                ),
+                const SizedBox(height: 32),
+                ElevatedButton(
+                  onPressed: () async {
+                    dev.log("Iniciando processo de registro",
+                        name: 'ElevatedButton');
+
+                    if (_formKey.currentState!.validate()) {
+                      final nome = _nomeController.text;
+                      final sobrenome = _sobrenomeController.text;
+                      final email = _emailController.text;
+                      final passe = _passwordController.text;
+                      final sobreMin = _sobreMinController.text;
+                      final centroId = _selectedCentro;
+                      final caminhoFoto = _caminhoFotoController.text.isEmpty
+                          ? null
+                          : _caminhoFotoController.text;
+                      final caminhoFundo = _caminhoFundoController.text.isEmpty
+                          ? null
+                          : _caminhoFundoController.text;
+
+                      final novoUsuario = {
+                        'nome': nome,
+                        'sobrenome': sobrenome,
+                        'email': email,
+                        'password': passe,
+                        'sobre_min': sobreMin,
+                        'centro_id': int.parse(centroId!),
+                        'caminho_foto': caminhoFoto,
+                        'caminho_fundo': caminhoFundo,
+                      };
+/*
+                      final novoUsuario = {
+                        "nome": "João",
+                        "sobrenome": "Silva",
+                        "caminho_foto": "/images/joao.jpg",
+                        "caminho_fundo": "/images/fundo_joao.jpg",
+                        "sobre_min": "Sobre o João",
+                        "centro_id": 1,
+                        "imagem": "/images/joao_imagem.jpg",
+                        "email": "joao.silva@example.com",
+                        "pass": "senha123"
+                      };*/
+
+                      dev.log("Novo usuário criado: $novoUsuario",
+                          name: 'ElevatedButton.onPressed');
+
+                      try {
+                        final ApiUsuarios apiUsuarios = ApiUsuarios();
+
+                        // Primeiro, enviar as imagens (se houver)
+                        await _uploadImagesIfAvailable(apiUsuarios);
+
+                        // Depois, registrar o usuário
+                        await apiUsuarios.criarUsuario(novoUsuario);
+
+                        dev.log("Usuário registrado com sucesso",
+                            name: 'ElevatedButton.onPressed');
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text('Registrado com sucesso!')),
+                        );
+
+                        await Future.delayed(const Duration(seconds: 2));
+
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const LoginEmail()));
+
+                        _formKey.currentState!.reset();
+                        setState(() {
+                          _selectedCentro = null;
+                          _caminhoFotoController.clear();
+                          _caminhoFundoController.clear();
+                        });
+                      } catch (e) {
+                        dev.log('Erro ao registrar usuário: $e',
+                            error: e, name: 'ElevatedButton.onPressed');
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                              content: Text('Erro ao registrar usuário: $e')),
+                        );
+                      }
+                    } else {
+                      dev.log('Formulário de registro inválido',
+                          name: 'ElevatedButton.onPressed');
+                    }
+                  },
+                  child: const Text('Registrar'),
+                )
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}*/
+
+import 'package:ficha3/BASE_DE_DADOS/APIS/api_recuperar_passe.dart';
+import 'package:ficha3/BASE_DE_DADOS/APIS/api_usuarios.dart';
+import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_centros.dart';
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+
+class Registo extends StatefulWidget {
+  @override
+  _RegistoState createState() => _RegistoState();
+}
+
+class _RegistoState extends State<Registo> {
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _nomeController = TextEditingController();
+  final TextEditingController _sobrenomeController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _sobreMinController = TextEditingController();
+  final TextEditingController _caminhoFotoController = TextEditingController();
+  final TextEditingController _caminhoFundoController = TextEditingController();
+  final apiuser = ApiUsuarios();
+
+  String? _selectedCentro;
+  final List<Map<String, dynamic>> _centros = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _listarCentros();
+  }
+
+  Future<void> _listarCentros() async {
+    final centrosList = await Funcoes_Centros.consultaCentros();
+    setState(() {
+      _centros.addAll(centrosList);
+    });
+  }
+
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+    if (image != null) {
+      setState(() {
+        _caminhoFotoController.text = image.path;
+      });
+    }
+  }
+  
+  Future<String> _senhaTemp() async {
+  var tempPass = await ApiRecuperarPasse.generateTemporaryPassword();
+  return tempPass;
+}
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Registro de Usuário'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                TextFormField(
+                  controller: _nomeController,
+                  decoration: InputDecoration(labelText: 'Nome'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Por favor, insira seu nome';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _sobrenomeController,
+                  decoration: InputDecoration(labelText: 'Sobrenome'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Por favor, insira seu sobrenome';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _emailController,
+                  decoration: InputDecoration(labelText: 'Email'),
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Por favor, insira seu email';
+                    }
+                    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                      return 'Por favor, insira um email válido';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _passwordController,
+                  decoration: InputDecoration(labelText: 'Senha'),
+                  obscureText: true,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Por favor, insira sua senha';
+                    }
+                    if (value.length < 6) {
+                      return 'A senha deve ter pelo menos 6 caracteres';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _sobreMinController,
+                  decoration: InputDecoration(labelText: 'Sobre mim'),
+                  maxLines: 3,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Por favor, insira uma descrição sobre você';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  decoration: InputDecoration(labelText: 'Centro'),
+                  value: _selectedCentro,
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      _selectedCentro = newValue;
+                    });
+                  },
+                  items: _centros.map<DropdownMenuItem<String>>(
+                      (Map<String, dynamic> centro) {
+                    return DropdownMenuItem<String>(
+                      value: centro['id'].toString(),
+                      child: Text(centro['nome']),
+                    );
+                  }).toList(),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Por favor, selecione um centro';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _caminhoFotoController,
+                  decoration: InputDecoration(
+                    labelText: 'Caminho da Foto (Opcional)',
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.photo_library),
+                      onPressed: _pickImage,
+                    ),
+                  ),
+                  readOnly: true,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _caminhoFundoController,
+                  decoration: InputDecoration(
+                    labelText: 'Caminho do Fundo  (Opcional)',
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.photo_library),
+                      onPressed: _pickImage,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 32),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (_formKey.currentState!.validate()) {
+                      // Capturar os dados do formulário
+                      final nome = _nomeController.text;
+                      final sobrenome = _sobrenomeController.text;
+                      final email = _emailController.text;
+                      final senha = _passwordController.text;
+                      final senhaTemporaria = await _senhaTemp();
+                      final sobreMin = _sobreMinController.text;
+                      final centroId = _selectedCentro;
+                      final caminhoFoto = _caminhoFotoController.text.isEmpty
+                          ? null
+                          : _caminhoFotoController.text;
+                      final caminhoFundo = _caminhoFundoController.text.isEmpty
+                          ? null
+                          : _caminhoFundoController.text;
+/*
+                      // Inserir os dados do usuário no banco de dados
+                      Map<String, dynamic> novoUsuario = {
+                        "nome": nome,
+                        "sobrenome": sobrenome,
+                        "email": email,
+                        "pass": senhaTemporaria,
+                        "sobre_min": sobreMin,
+                        "centro_id": int.parse(centroId!),
+                        //"caminho_foto": caminhoFoto,
+                        //"caminho_fundo": caminhoFundo,
+                      };
+
+                      if (caminhoFoto != null) {
+                        novoUsuario['caminho_foto'] = caminhoFoto;
+                      }
+
+                      if (caminhoFundo != null) {
+                        novoUsuario['caminho_fundo'] = caminhoFundo;
+                      }
+*/
+                      
+                      Map<String, dynamic> novoUsuario = {
+                        "nome": "Joãaao",
+                        "sobrenome": "Silvaaa",
+                        "caminho_foto": "/images/joao.jpg",
+                        "caminho_fundo": "/images/fundo_joao.jpg",
+                        "sobre_min": "Sobre o João",
+                        "centro_id": 1,
+                        "imagem": "/images/joao_imagem.jpg",
+                        "email": "joaoww.silva@example.com",
+                        "pass": "senha123"
+                      };
+
+                      print('Dados enviados para o servidor: $novoUsuario');
+
+                      await apiuser.criarUsuario(novoUsuario);
+
+                      // Mostrar uma mensagem de sucesso
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text('Registrado com sucesso!')),
+                      );
+
+                      // Limpar o formulário
+                      _formKey.currentState!.reset();
+                      setState(() {
+                        _selectedCentro = null;
+                        _caminhoFotoController.clear();
+                        _caminhoFundoController.clear();
+                      });
+                    }
+                  },
+                  child: const Text('Registrar'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
