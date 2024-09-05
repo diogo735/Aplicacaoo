@@ -138,57 +138,65 @@ class _CriarPartilhaState extends State<CriarPartilha> {
     final DateFormat formatter = DateFormat('dd/MM/yyyy');
     return formatter.format(data);
   }
+Future<void> _salvarPartilha() async {
+  if (_formKey.currentState!.validate()) {
+    if (_imagemSelecionada != null) {
+      try {
+        // Carregar a imagem e obter a URL
+        final imageUrl = await _uploadImage(_imagemSelecionada!);
 
-  Future<void> _salvarPartilha() async {
-    if (_formKey.currentState!.validate()) {
-      if (_imagemSelecionada != null) {
-        try {
-          final imageUrl = await _uploadImage(_imagemSelecionada!);
+        // Obter os dados do usuário e do centro
+        final userProvider = Provider.of<Usuario_Provider>(context, listen: false);
+        final centroProvider = Provider.of<Centro_Provider>(context, listen: false);
 
-          final userProvider =
-              Provider.of<Usuario_Provider>(context, listen: false);
-          final centroProvider =
-              Provider.of<Centro_Provider>(context, listen: false);
+        String datafomatada = formatarData(DateTime.now());
 
-          String datafomatada = formatarData(DateTime.now());
+        // Adaptar os dados da partilha para o formato esperado pelo backend (álbum)
+        Map<String, dynamic> album = {
+          'nome': _tituloController.text, // Título da partilha -> nome do álbum
+          'descricao': _descricaoController.text,
+          'capa_imagem_album': imageUrl, // Caminho da imagem
+          'centro_id': centroProvider.centroSelecionado?.id ?? 1,
+          'area_id': widget.idArea,
+          'autor_id': userProvider.usuarioSelecionado?.id_user ?? 1, // Usuário (autor)
+          'estado': 'Ativa', // Opcional, pode ser "Ativa" por padrão
+        };
 
-          Map<String, dynamic> partilha = {
-            'titulo': _tituloController.text,
-            'descricao': _descricaoController.text,
-            'caminho_imagem': imageUrl,
-            'data': datafomatada,
-            'hora': TimeOfDay.now().format(context),
-            'id_usuario': userProvider.usuarioSelecionado?.id_user ?? 1,
-            'area_id': widget.idArea,
-            'centro_id': centroProvider.centroSelecionado?.id ?? 1,
-          };
+        // Enviar os dados para a API
+        await ApiPartilhas().criarPartilha(album);
 
-          await ApiPartilhas().criarPartilha(partilha);
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Partilha criada com sucesso!'),
-            backgroundColor: Colors.green,),
-          );
-
-          _tituloController.clear();
-          _descricaoController.clear();
-          setState(() {
-            _imagemSelecionada = null;
-          });
-
-          Navigator.pop(context);
-        } catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Falha ao criar a partilha: $e')),
-          );
-        }
-      } else {
+        // Exibir feedback de sucesso
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Por favor, selecione uma imagem.')),
+          SnackBar(
+            content: Text('Partilha criada com sucesso!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        // Limpar os campos do formulário
+        _tituloController.clear();
+        _descricaoController.clear();
+        setState(() {
+          _imagemSelecionada = null;
+        });
+
+        // Retornar para a página anterior
+        Navigator.pop(context);
+      } catch (e) {
+        // Exibir mensagem de erro
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Falha ao criar a partilha: $e')),
         );
       }
+    } else {
+      // Caso a imagem não tenha sido selecionada
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Por favor, selecione uma imagem.')),
+      );
     }
   }
+}
+
 
   @override
   void initState() {

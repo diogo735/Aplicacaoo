@@ -47,7 +47,7 @@ class _submenupartilhasState extends State<submenupartilhas> {
     super.initState();
     _carregarPartilhasDaAPI();
     _carregarPartilhas();
-    // _iniciarTimers();
+     _iniciarTimers();
   }
 
   void _iniciarTimers() {
@@ -79,9 +79,7 @@ class _submenupartilhasState extends State<submenupartilhas> {
         print('Iniciando o carregamento dos comentários das partilhas...');
         await ApiPartilhas().fetchAndStoreComentarios();
         print('Dados dos comentários das partilhas carregados com sucesso.');
-        print('Iniciando o carregamento dos likes das partilhas...');
-        await ApiPartilhas().fetchAndStoreLikes(centroSelecionado.id);
-        print('Dados dos likes das partilhas carregados com sucesso.');
+        
         if (mounted) {
         setState(() {
           // Atualize seu estado aqui, se necessário

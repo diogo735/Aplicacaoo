@@ -6,18 +6,18 @@ import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_partilhasfotos.dart
 import 'package:http/http.dart' as http;
 import 'package:connectivity_plus/connectivity_plus.dart';
 
-
 class ApiPartilhas {
   final String apiUrlPartilhas =
-      'https://backend-teste-q43r.onrender.com/partilhas/partilhasde1centro/';
+      'https://backend-teste-q43r.onrender.com/albuns/partilhasde1centro/';
+
   final String apiUrlCriarPartilha =
-      'https://backend-teste-q43r.onrender.com/partilhas/criarpartilha';
+      'https://backend-teste-q43r.onrender.com/albuns/create';
 
   final String apiUrlComentarios =
-      'https://backend-teste-q43r.onrender.com/comentarios_partilhas/comentairosde1partilha/';
+      'https://backend-teste-q43r.onrender.com/comentarios_albuns/todoscomentarios/';
 
   final String apiUrlCriarComentario =
-      'https://backend-teste-q43r.onrender.com/comentarios_partilhas/criarcomentario/';
+      'https://backend-teste-q43r.onrender.com/comentarios_albuns/criarcomentario';
 
   final String apiUrlLikesDeUmCentro =
       'https://backend-teste-q43r.onrender.com/likepartilhas/likesde1centro/';
@@ -26,46 +26,76 @@ class ApiPartilhas {
       'https://backend-teste-q43r.onrender.com/likepartilhas/darlike1partilha';
   final String apiUrlDeletarLike =
       'https://backend-teste-q43r.onrender.com/likepartilhas/apagar1like1parilha';
-
-  Future<void> fetchAndStorePartilhas(int centroId) async {
+Future<void> fetchAndStorePartilhas(int centroId) async {
+  // Verificar conectividade
+  try {
     await _checkConnectivity();
+  } catch (e) {
+    print('Erro de conectividade: $e');
+    return;
+  }
 
-    String? jwtToken = TokenService().getToken();
-    if (jwtToken == null) {
-      throw Exception('JWT Token is not set.');
-    }
+  // Buscar o JWT Token para autenticação
+  String? jwtToken = TokenService().getToken();
+  if (jwtToken == null) {
+    throw Exception('JWT Token is not set.');
+  }
 
+  // Gerar a URL completa e verificar se está correta
+  String fullUrl = '$apiUrlPartilhas$centroId';
+  print('URL gerada: $fullUrl');
+
+  try {
+    // Verifique se a URL está correta
+    Uri uri = Uri.parse(fullUrl);
+    print('URI válida: $uri');
+
+    // Fazer a requisição GET para a API de "álbuns" (backend)
     final response = await http.get(
-      Uri.parse('$apiUrlPartilhas$centroId'),
+      uri,
       headers: {
         'Authorization': 'Bearer $jwtToken',
       },
     );
 
+    // Verificar o status da resposta
+    print('Status da resposta: ${response.statusCode}');
     if (response.statusCode == 200) {
-      List<dynamic> partilhasList = json.decode(response.body);
+      List<dynamic> albunsList = json.decode(response.body);
+
+      if (albunsList.isEmpty) {
+        print('Nenhuma partilha encontrada para o centro $centroId.');
+        return;  // Se não houver partilhas, não faz mais nada
+      }
 
       await Funcoes_Partilhas.deleteAllPartilhas();
 
-      for (var partilha in partilhasList) {
+      for (var album in albunsList) {
         await Funcoes_Partilhas.insertPartilha({
-          'id': partilha['id'],
-          'titulo': partilha['titulo'],
-          'descricao': partilha['descricao'],
-          'caminho_imagem': partilha['caminho_imagem'],
-          'data': partilha['data'],
-          'hora': partilha['hora'],
-          'id_usuario': partilha['id_usuario'],
-          //'id_evento': partilha['id_evento'],
-          //'id_local': partilha['id_local'],
-          'area_id': partilha['area_id'],
-          'centro_id': partilha['centro_id'],
+          'id': album['id'], // ID do álbum (partilha)
+          'titulo': album['nome'], // Título do álbum
+          'descricao': album['descricao'], // Descrição do álbum
+          'caminho_imagem': album['capa_imagem_album'], // Capa do álbum (imagem)
+          'data': album['createdAt'], // Data de criação
+          'hora': album['createdAt'], // Hora de criação (se aplicável)
+          'id_usuario': album['autor_id'], // ID do autor do álbum
+          'area_id': album['area_id'], // Área onde o álbum foi criado
+          'centro_id': album['centro_id'], // Centro relacionado ao álbum
         });
       }
+
+      print('Dados das partilhas carregados com sucesso.');
+    } else if (response.statusCode == 404) {
+      print('Nenhuma partilha encontrada para o centro $centroId.');
     } else {
-      print('Falha ao carregar as partilhas');
+      print('Falha ao carregar as partilhas (álbuns) para o centro $centroId.');
     }
+  } catch (e) {
+    print('Erro ao carregar os dados: $e');
   }
+}
+
+
 
   Future<void> criarPartilha(Map<String, dynamic> partilha) async {
     await _checkConnectivity();
@@ -115,22 +145,37 @@ class ApiPartilhas {
             partilha['id']);
 
         for (var comentario in comentariosList) {
+          // Separar a data e a hora
+          String dataComentario = comentario['data_comentario']
+              .split('T')[0]; // Extrai a parte da data
+          String horaComentario = comentario['data_comentario']
+              .split('T')[1]
+              .split('.')[0]; // Extrai a parte da hora
+
           await Funcoes_Comentarios_das_Partilhas.insertComentario({
-            'id': comentario['id'],
-            'texto_comentario': comentario['texto_comentario'],
-            'data_comentario': comentario['data_comentario'],
-            'hora_comentario': comentario['hora_comentario'],
-            'id_usuario': comentario['id_usuario'],
-            'partilha_id': partilha['id'],
+            'id': comentario['id'], // ID do comentário
+            'texto_comentario':
+                comentario['texto_comentario'], // Texto do comentário
+            'data_comentario':
+                dataComentario, // Data extraída do campo 'data_comentario'
+            'hora_comentario':
+                horaComentario, // Hora extraída do campo 'data_comentario'
+            'id_usuario':
+                comentario['user_id'], // ID do usuário que fez o comentário
+            'partilha_id': partilha['id'], // ID da partilha (álbum no backend)
           });
         }
+        print(
+            '    ->>>>Dados dos comentários das partilhas carregados com SUCESSO.');
       } else {
-        print('Falha ao carregar os comentários para a partilha ${partilha['id']}');
+        print(
+            'Falha ao carregar os comentários para a partilha ${partilha['id']}');
       }
     }
   }
 
-  Future<bool> criarComentario(int partilhaId, Map<String, dynamic> comentario) async {
+  Future<bool> criarComentario(
+      int partilhaId, Map<String, dynamic> comentario) async {
     await _checkConnectivity();
 
     String? jwtToken = TokenService().getToken();
@@ -139,7 +184,7 @@ class ApiPartilhas {
     }
 
     final response = await http.post(
-      Uri.parse('$apiUrlCriarComentario$partilhaId'),
+      Uri.parse(apiUrlCriarComentario),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $jwtToken',

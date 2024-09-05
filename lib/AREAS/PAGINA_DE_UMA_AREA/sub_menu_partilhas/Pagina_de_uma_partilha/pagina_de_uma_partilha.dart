@@ -6,7 +6,7 @@ import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_comentarios_partilh
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_eventos.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_publicacoes.dart';
 import 'package:flutter/material.dart';
-
+import 'package:intl/intl.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_partilhasfotos.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_usuarios.dart';
 import 'dart:async';
@@ -72,6 +72,25 @@ class _PaginaDaPartilhaState extends State<PaginaDaPartilha> {
   void dispose() {
     _timer.cancel();
     super.dispose();
+  }
+
+  String formatarDataHora(String dataHora) {
+    // Substituir o espaço entre a data e a hora por 'T', para que DateTime.parse funcione corretamente
+    String dataHoraFormatada = dataHora.replaceFirst(' ', 'T');
+
+    try {
+      // Converter a string para um objeto DateTime
+      DateTime dateTime = DateTime.parse(dataHoraFormatada);
+
+      // Formatar a data e hora como "dd/MM/yyyy às HH:mm"
+      String dataFormatada = DateFormat('dd/MM/yyyy').format(dateTime);
+      String horaFormatada = DateFormat('HH:mm').format(dateTime);
+
+      return '$dataFormatada às $horaFormatada';
+    } catch (e) {
+      print('Erro ao formatar a data: $e');
+      return 'Data inválida';
+    }
   }
 
   DateTime _converterDataHora(String data, String hora) {
@@ -257,7 +276,7 @@ class _PaginaDaPartilhaState extends State<PaginaDaPartilha> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '$data às $hora',
+                      formatarDataHora(data),
                       style: TextStyle(
                         color: const Color.fromARGB(170, 255, 255, 255)
                             .withOpacity(0.699999988079071),
@@ -475,7 +494,7 @@ class _PaginaDaPartilhaState extends State<PaginaDaPartilha> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
+                        /*    Row(
                           children: [
                             IconButton(
                               onPressed: () async {
@@ -581,6 +600,11 @@ class _PaginaDaPartilhaState extends State<PaginaDaPartilha> {
                               ),
                             ),
                           ],
+                        ),
+                      */
+                        Expanded(
+                          child:
+                              Container(), // Um Container vazio que ocupa o espaço à esquerda
                         ),
                         Row(
                           children: [
@@ -713,32 +737,33 @@ class _PaginaDaPartilhaState extends State<PaginaDaPartilha> {
                               String mensagemTexto = controller.text.trim();
                               if (mensagemTexto.isNotEmpty) {
                                 try {
-                                  String dataComentario =
-                                      DateFormat('dd/MM/yyyy')
-                                          .format(DateTime.now());
-                                  // Dados do comentário
+                                  // Dados do comentário a serem enviados para a API
                                   Map<String, dynamic> comentario = {
-                                    'id_usuario': user_id,
-                                    'texto_comentario': mensagemTexto,
-                                    'data_comentario': dataComentario,
-                                    'hora_comentario':
-                                        TimeOfDay.now().format(context),
+                                    'user_id': user_id, // ID do usuário
+                                    'texto_comentario':
+                                        mensagemTexto, // Texto do comentário
+                                    'album_id': widget
+                                        .idpartilha, // ID do álbum ou partilha
                                   };
 
+                                  // Enviar o comentário para a API
                                   bool sucesso = await ApiPartilhas()
                                       .criarComentario(
                                           widget.idpartilha, comentario);
 
                                   if (sucesso) {
+                                    // Se o comentário foi salvo com sucesso na API
                                     await Funcoes_Comentarios_das_Partilhas
                                         .criarComentario(
                                             user_id,
                                             widget.idpartilha,
                                             mensagemTexto,
                                             context);
+
+                                    // Limpar o campo de texto e fechar o teclado
                                     controller.clear();
-                                    FocusScope.of(context)
-                                        .unfocus(); // Fecha o teclado virtual
+                                    FocusScope.of(context).unfocus();
+
                                     print('Comentário enviado com sucesso!');
                                   } else {
                                     print(

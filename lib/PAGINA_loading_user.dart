@@ -102,15 +102,15 @@ class _LoadingScreenState extends State<LoadingScreen> {
       final centroSelecionado = centroProvider.centroSelecionado;
       if (centroSelecionado != null) {
 
-/*
-        print('Iniciando o carregamento dos dados das partilhas...');
+
+        print('2.0->>Iniciando o carregamento das PARTILHAS...');
         await ApiPartilhas().fetchAndStorePartilhas(centroSelecionado.id);
-        print('Dados das partilhas carregados com sucesso.');
+        
 
-        print('Iniciando o carregamento dos comentários das partilhas...');
+        print('2.0.1->>Iniciando o carregamento dos COMENTARIOS DAS PARTILHAS...');
         await ApiPartilhas().fetchAndStoreComentarios();
-        print('Dados dos comentários das partilhas carregados com sucesso.');
-
+       
+/*
         print('Iniciando o carregamento dos likes das partilhas...');
         await ApiPartilhas().fetchAndStoreLikes(centroSelecionado.id);
         print('Dados dos likes das partilhas carregados com sucesso.');
@@ -248,6 +248,21 @@ class _LoadingScreenState extends State<LoadingScreen> {
           'Centro selecionado: id=${centroAssociado['id']}, nome=${centroAssociado['nome']}');
     }
   }
+// Função auxiliar para verificar o tipo de caminho e retornar o ImageProvider correto
+ImageProvider _getImageProvider(String caminhoFoto) {
+  if (caminhoFoto.isNotEmpty) {
+    // Verifica se é um caminho local
+    if (caminhoFoto.startsWith('file://')) {
+      return FileImage(File(caminhoFoto)); // Trata o caminho local como imagem local
+    }
+    // Verifica se é uma URL válida
+    if (Uri.tryParse(caminhoFoto)?.isAbsolute ?? false) {
+      return NetworkImage(caminhoFoto); // Trata URLs como imagem da rede
+    }
+  }
+  // Fallback para uma imagem padrão em caso de erro ou caminho vazio
+  return const AssetImage('assets/images/user_padrao.jpg');
+}
 
   @override
   Widget build(BuildContext context) {
@@ -276,10 +291,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
             SizedBox(height: MediaQuery.of(context).size.height / 5),
             CircleAvatar(
               radius: 65,
-              backgroundImage: caminhoFoto.isNotEmpty
-                  ? NetworkImage(caminhoFoto)
-                  : const AssetImage('assets/images/user_padrao.jpg')
-                      as ImageProvider,
+             backgroundImage: _getImageProvider(caminhoFoto),
               backgroundColor: Colors.transparent,
             ),
             const SizedBox(height: 15),

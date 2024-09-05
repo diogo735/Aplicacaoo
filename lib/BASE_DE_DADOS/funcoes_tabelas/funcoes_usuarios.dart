@@ -59,78 +59,97 @@ class Funcoes_Usuarios {
       print('Permissão negada.');
     }
   }
+  
+static Future<String?> _downloadAndSaveImage(String url, String filePath, {String? fallbackUrl}) async {
+  try {
+    // Verifique se o caminho é um arquivo local
+    if (url.startsWith('file:///')) {
+      print('Caminho local detectado: $url');
+      return url;
+    }
 
-   static Future<String?> _downloadAndSaveImage(String url, String filePath, {String? fallbackUrl}) async {
-    try {
-      final response = await http.get(Uri.parse(url));
-      if (response.statusCode == 200) {
-        final Uint8List bytes = response.bodyBytes;
-        final File file = File(filePath);
-
-        if (!await file.parent.exists()) {
-          await file.parent.create(recursive: true);
-        }
-
-        await file.writeAsBytes(bytes);
-        print('Imagem baixada e salva em: $filePath');
-        return filePath;
+    // Verifique se a URL é válida
+    if (url.isEmpty || !Uri.parse(url).isAbsolute) {
+      print('URL inválida: $url');
+      if (fallbackUrl != null && Uri.parse(fallbackUrl).isAbsolute) {
+        print('Tentando baixar imagem da URL padrão...');
+        return await _downloadAndSaveImage(fallbackUrl, filePath);
       } else {
-       // print('Falha ao baixar imagem da URL principal: $url');
-        if (fallbackUrl != null) {
-         // print('Tentando baixar imagem da URL padrão...');
-          return await _downloadAndSaveImage(fallbackUrl, filePath);
-        }
+        print('Nenhuma URL válida fornecida.');
+        return null;
       }
-    } catch (e) {
-     // print('Erro ao baixar imagem: $e');
-      if (fallbackUrl != null) {
-       // print('Tentando baixar imagem da URL padrão...');
+    }
+
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode == 200) {
+      final Uint8List bytes = response.bodyBytes;
+      final File file = File(filePath);
+
+      if (!await file.parent.exists()) {
+        await file.parent.create(recursive: true);
+      }
+
+      await file.writeAsBytes(bytes);
+      print('Imagem baixada e salva em: $filePath');
+      return filePath;
+    } else {
+      print('Falha ao baixar imagem da URL principal: $url');
+      if (fallbackUrl != null && Uri.parse(fallbackUrl).isAbsolute) {
+        print('Tentando baixar imagem da URL padrão...');
         return await _downloadAndSaveImage(fallbackUrl, filePath);
       }
     }
-    print('Não foi possível baixar a imagem após tentar ambas as URLs.');
-    return null;
-  }
-
-  static Future<void> insertUsuario(Map<String, dynamic> usuario) async {
-    Database db = await DatabaseHelper.basededados;
-
-    // Verifica e cria o diretório de imagens, se necessário
-    final directory = await getExternalStorageDirectory();
-    final imagesFolder = Directory('${directory!.path}/ALL_IMAGES/usuarios');
-
-    if (!await imagesFolder.exists()) {
-      await imagesFolder.create(recursive: true);
-      print('Pasta de imagens de usuários criada em: ${imagesFolder.path}');
+  } catch (e) {
+    print('Erro ao baixar imagem: $e');
+    if (fallbackUrl != null && Uri.parse(fallbackUrl).isAbsolute) {
+      print('Tentando baixar imagem da URL padrão...');
+      return await _downloadAndSaveImage(fallbackUrl, filePath);
     }
-
-    // Define os caminhos locais para as imagens
-    final String caminhoFotoLocal = '${imagesFolder.path}/fotodeperfil_user${usuario['id']}.jpg';
-    final String caminhoFundoLocal = '${imagesFolder.path}/fundoperfil_user${usuario['id']}.jpg';
-
-    // Baixa e salva a imagem de perfil
-    usuario['caminho_foto'] = await _downloadAndSaveImage(
-      usuario['caminho_foto'] ?? '',
-      caminhoFotoLocal,
-      fallbackUrl: Funcoes_Usuarios.fotoPadraoUrl,
-    ) ?? Funcoes_Usuarios.fotoPadraoUrl;
-
-    // Baixa e salva a imagem de fundo
-    usuario['caminho_fundo'] = await _downloadAndSaveImage(
-      usuario['caminho_fundo'] ?? '',
-      caminhoFundoLocal,
-      fallbackUrl: Funcoes_Usuarios.fundoPadraoUrl,
-    ) ?? Funcoes_Usuarios.fundoPadraoUrl;
-
-    // Insere o usuário no banco de dados
-    await db.insert(
-      'usuario',
-      usuario,
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
-
-    print('Usuário ${usuario['id']} inserido com sucesso no banco de dados.');
   }
+  print('Não foi possível baixar a imagem após tentar ambas as URLs.');
+  return null;
+}
+
+
+static Future<void> insertUsuario(Map<String, dynamic> usuario) async {
+  Database db = await DatabaseHelper.basededados;
+
+  // Verifica e cria o diretório de imagens, se necessário
+  final directory = await getExternalStorageDirectory();
+  final imagesFolder = Directory('${directory!.path}/ALL_IMAGES/usuarios');
+
+  if (!await imagesFolder.exists()) {
+    await imagesFolder.create(recursive: true);
+    print('Pasta de imagens de usuários criada em: ${imagesFolder.path}');
+  }
+
+  // Define os caminhos locais para as imagens
+  final String caminhoFotoLocal = '${imagesFolder.path}/fotodeperfil_user${usuario['id']}.jpg';
+  final String caminhoFundoLocal = '${imagesFolder.path}/fundoperfil_user${usuario['id']}.jpg';
+
+  // Baixa e salva a imagem de perfil
+  usuario['caminho_foto'] = await _downloadAndSaveImage(
+    usuario['caminho_foto'] ?? '',
+    caminhoFotoLocal,
+    fallbackUrl: Funcoes_Usuarios.fotoPadraoUrl,
+  ) ?? Funcoes_Usuarios.fotoPadraoUrl;
+
+  // Baixa e salva a imagem de fundo
+  usuario['caminho_fundo'] = await _downloadAndSaveImage(
+    usuario['caminho_fundo'] ?? '',
+    caminhoFundoLocal,
+    fallbackUrl: Funcoes_Usuarios.fundoPadraoUrl,
+  ) ?? Funcoes_Usuarios.fundoPadraoUrl;
+
+  // Insere o usuário no banco de dados
+  await db.insert(
+    'usuario',
+    usuario,
+    conflictAlgorithm: ConflictAlgorithm.replace,
+  );
+
+  print('Usuário ${usuario['id']} inserido com sucesso no banco de dados.');
+}
 
   Future<List<Map<String, dynamic>>> consultaUsuarios() async {
     //FAZ A CONSULTO DOS EVENTOS DA TABELA

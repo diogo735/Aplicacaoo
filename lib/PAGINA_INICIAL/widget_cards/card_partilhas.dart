@@ -122,7 +122,7 @@ Widget CARD_PARTILHA({
                                           ),
                                         ),
                                         SizedBox(width: 8),
-                                        Text(
+                                        /*Text(
                                           'esteve em',
                                           style: TextStyle(
                                             color: Color(0xFF79747E),
@@ -132,12 +132,12 @@ Widget CARD_PARTILHA({
                                             height: 0.11,
                                             letterSpacing: 0.10,
                                           ),
-                                        ),
+                                        ),*/
                                       ],
                                     ),
                                     // Nome do evento
                                     SizedBox(height: 3),
-                                    Text(
+                                 /*   Text(
                                       nomeEvento_OU_Local,
                                       style: TextStyle(
                                         color: const Color(0xFF15659F),
@@ -149,7 +149,7 @@ Widget CARD_PARTILHA({
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
                                     ),
-                                    
+                                    */
                                   ],
                                 ),
                               ),

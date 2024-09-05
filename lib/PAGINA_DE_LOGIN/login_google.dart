@@ -15,8 +15,6 @@ class LoginGoogle extends StatelessWidget {
     try {
       final user = await GoogleSignInApi.login();
       if (user != null) {
-
-       
         final result = await apiLogin.loginByGoogle(user.email);
         print('Login Result com o google: $result');
 
@@ -25,7 +23,7 @@ class LoginGoogle extends StatelessWidget {
           await prefs.setBool('isLoggedIn', true);
           await prefs.setString(
               'userId', result['userId'].toString()); // Use user.id do Google
-         await GoogleSignInApi.logout();
+          await GoogleSignInApi.logout();
           ScaffoldMessenger.of(context)
               .showSnackBar(
                 SnackBar(

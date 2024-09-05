@@ -272,7 +272,7 @@ class _pagina_de_perfilState extends State<pagina_de_perfil> {
                               ),
                               SizedBox(width: 6),
                               Text(
-                                'Softinsa de Viseu',
+                                'Softinsa ',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   color: Color(0xFF79747E),
@@ -364,20 +364,12 @@ class _pagina_de_perfilState extends State<pagina_de_perfil> {
                                     Colors.white, // Cor de fundo do container
                                 borderRadius: BorderRadius.circular(
                                     8), // Cantos arredondados
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.grey.withOpacity(0.3),
-                                    spreadRadius: 2,
-                                    blurRadius: 5,
-                                    offset: const Offset(
-                                        0, 3), // Sombra do container
-                                  ),
-                                ],
+                                
                               ),
                               child: const Column(
                                 children: [
                                   Text(
-                                    '2',
+                                    '0',
                                     style: TextStyle(
                                       color: Colors.black,
                                       fontSize: 20,

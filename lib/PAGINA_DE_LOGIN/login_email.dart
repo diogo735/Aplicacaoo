@@ -1,4 +1,5 @@
 import 'package:ficha3/BASE_DE_DADOS/APIS/api_login.dart';
+import 'package:ficha3/BASE_DE_DADOS/APIS/api_recuperar_passe.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'login_facebook.dart';
@@ -23,7 +24,8 @@ class _LoginEmailState extends State<LoginEmail> {
   String errorMessage = '';
 
   final apiLogin = ApiLogin(baseUrl: 'https://backend-teste-q43r.onrender.com');
-
+  final ApiRecuperarSenha = ApiRecuperarPasse();
+  
   @override
   void initState() {
     super.initState();
@@ -211,12 +213,11 @@ class _LoginEmailState extends State<LoginEmail> {
                       ],
                     ),
                     const Spacer(),
-                    const Text(
-                      'Recuperar Password',
-                      style: TextStyle(
-                        color: Color(0xFF15659F),
-                        fontWeight: FontWeight.bold,
-                      ),
+                   TextButton(
+                      onPressed: () {
+                        ApiRecuperarSenha.sendVerificationCode(context);
+                      },
+                      child: const Text('Recuperar Password'),
                     ),
                   ],
                 ),

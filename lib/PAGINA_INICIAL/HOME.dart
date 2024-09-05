@@ -56,6 +56,7 @@ class _InicioPageState extends State<InicioPage> {
   Map<int, List<Map<String, dynamic>>> comentariosPorPublicacao = {};
  bool _isLoadingPublicacoes = true;
   @override
+
   void initState() {
     super.initState();
     _getLocation();
@@ -68,35 +69,40 @@ class _InicioPageState extends State<InicioPage> {
     _iniciarTimers();
   }
 
-  void _iniciarTimers() {
-    _timerAPI = Timer.periodic(
-      Duration(seconds: 30),
-      (Timer t) {
-        if (mounted) {
-          //_carregarPartilhasDaAPI();
-          _carregarEventosDaAPI();
-          _carregarPublicacoesDaAPI();
-        }
-      },
-    );
-
-    Timer(Duration(milliseconds: 300), () {
+ void _iniciarTimers() {
+  _timerAPI = Timer.periodic(
+    Duration(seconds: 30),
+    (Timer t) {
       if (mounted) {
-        carregarNumeroDeParticipantes();
-        carregarLocais();
+        _carregarEventosDaAPI();
+        _carregarPublicacoesDaAPI();
+        _carregarPartilhasDaAPI();
+      } else {
+        t.cancel(); // Cancela o timer se o widget não estiver mais montado
       }
-    });
+    },
+  );
 
-    _timerDB = Timer.periodic(Duration(seconds: 15), (Timer t) {
-      if (mounted) {
-        // _carregarPartilhasfotos();
-        _carregarEventos();
-        _carregarPublicacoes();
-        carregarNumeroDeParticipantes();
-        carregarLocais();
-      }
-    });
-  }
+  Timer(Duration(milliseconds: 300), () {
+    if (mounted) {
+      carregarNumeroDeParticipantes();
+      carregarLocais();
+    }
+  });
+
+  _timerDB = Timer.periodic(Duration(seconds: 15), (Timer t) {
+    if (mounted) {
+      _carregarEventos();
+      _carregarPublicacoes();
+      carregarNumeroDeParticipantes();
+      _carregarPartilhasfotos();
+      carregarLocais();
+    } else {
+      t.cancel(); // Cancela o timer se o widget não estiver mais montado
+    }
+  });
+}
+
 
   Future<void> _carregarComentariosPublicacoesLocal() async {
     Funcoes_Comentarios_Publicacoes funcoesComentarios =
@@ -148,15 +154,13 @@ class _InicioPageState extends State<InicioPage> {
         print('Iniciando o carregamento dos dados das partilhas da API...');
         await ApiPartilhas().fetchAndStorePartilhas(centroSelecionado.id);
         if (!mounted) return;
-        print('Dados das partilhas da API carregados com sucesso.');
+    
 
         await ApiPartilhas().fetchAndStoreComentarios();
         if (!mounted) return;
         print('Dados dos comentários das partilhas carregados com sucesso.');
 
-        await ApiPartilhas().fetchAndStoreLikes(centroSelecionado.id);
-        if (!mounted) return;
-        print('Dados dos likes das partilhas carregados com sucesso.');
+       
       } else {
         print('Nenhum centro selecionado');
       }
@@ -521,19 +525,28 @@ class _InicioPageState extends State<InicioPage> {
     });
   }
 
-  Future<void> carregarLocais() async {
-    for (var evento in eventos) {
-      int eventoId = evento['id'];
-      double latitude = evento['latitude']; // Supondo que você tenha latitude
-      double longitude =
-          evento['longitude']; // Supondo que você tenha longitude
+Future<void> carregarLocais() async {
+  for (var evento in eventos) {
+    if (!mounted) return; // Verificação antes de realizar qualquer operação
+
+    int eventoId = evento['id'];
+    double latitude = evento['latitude']; // Supondo que você tenha latitude
+    double longitude = evento['longitude']; // Supondo que você tenha longitude
+
+    try {
       String address = await _getAddressUsingOSM(latitude, longitude);
-      if (!mounted) return;
+
+      if (!mounted) return; // Verificação após a operação assíncrona
       setState(() {
         localPorEvento[eventoId] = address;
       });
+    } catch (e) {
+      // Trate o erro, caso ocorra
+      print('Erro ao obter o endereço: $e');
     }
   }
+}
+
 
   Future<String> _getAddressUsingOSM(double latitude, double longitude) async {
     LocalizacaoOSM localizacaoOSM = LocalizacaoOSM();
