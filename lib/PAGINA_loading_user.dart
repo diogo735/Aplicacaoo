@@ -3,6 +3,7 @@ import 'package:ficha3/BASE_DE_DADOS/APIS/TOKENJTW.dart';
 import 'package:ficha3/BASE_DE_DADOS/APIS/api_areas.dart';
 import 'package:ficha3/BASE_DE_DADOS/APIS/api_eventos.dart';
 import 'package:ficha3/BASE_DE_DADOS/APIS/api_partilhas.dart';
+import 'package:ficha3/BASE_DE_DADOS/APIS/api_publicacoes.dart';
 import 'package:ficha3/BASE_DE_DADOS/APIS/api_topicos.dart';
 import 'package:ficha3/BASE_DE_DADOS/APIS/api_usuarios.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_centros.dart';
@@ -141,6 +142,15 @@ class _LoadingScreenState extends State<LoadingScreen> {
 
         print('7->>Iniciando o carregamento dos COMENTARIOS DOS EVENTOS...');
         await ApiEventos().fetchAndStoreComentariosEvento(centroSelecionado.id,widget.userId);
+
+        print('8->>Iniciando o carregamento das PUBLICAÇÕES...');
+        await ApiPublicacoes().fetchAndStorePublicacoes(centroSelecionado.id);
+
+        print('9->>Iniciando o carregamento das COMENTARIOS PUBLICAÇÕES...');
+        await ApiPublicacoes().fetchAndStoreComentarios(centroSelecionado.id,widget.userId);
+
+
+
 
         print('     ----->TUDO CARREGADO COM SUSSESSO<------------');
       } else {

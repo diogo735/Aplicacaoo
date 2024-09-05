@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:ficha3/BASE_DE_DADOS/ver_estruturaBD.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:provider/provider.dart';
@@ -170,19 +171,23 @@ class _Pag_GruposState extends State<Pag_Grupos> {
           ),
         ),
         Positioned(
-          bottom: 16.0,
-          right: 16.0,
-          child: SpeedDial(
-            icon: Icons.add,
-            backgroundColor: const Color(0xFF15659F),
-            foregroundColor: const Color.fromARGB(255, 255, 255, 255),
-            curve: Curves.bounceIn,
-            overlayColor: null,
-            overlayOpacity: 0.0,
-            buttonSize: const Size(150, 60),
-            childrenButtonSize: const Size(150, 60),
-          ),
+        bottom: 16.0,
+        right: 16.0,
+        child: SpeedDial(
+          icon: Icons.add,
+          backgroundColor: const Color(0xFF15659F),
+          foregroundColor: const Color.fromARGB(255, 255, 255, 255),
+          curve: Curves.bounceIn,
+          overlayColor: null,
+          overlayOpacity: 0.0,
+          buttonSize: const Size(150, 60),
+          childrenButtonSize: const Size(150, 60),
+          onPress: () {
+            
+            mostrarEstruturaEdadosBancoDados();
+          },
         ),
+      ),
       ],
     );
   }

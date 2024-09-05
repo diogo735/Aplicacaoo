@@ -1,5 +1,8 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:ficha3/AREAS/PAGINA_DE_UMA_AREA/sub_menu_topicos/pagina_criar_publicacaO/pagina_criar_publicacao.dart';
+import 'package:ficha3/BASE_DE_DADOS/APIS/api_geolocaliza%C3%A7%C3%A3o.dart';
 import 'package:ficha3/BASE_DE_DADOS/APIS/api_usuarios.dart';
+import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_imagens_de_publicacoes.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_topicosfavoritos_user.dart';
 import 'package:ficha3/PROVIDERS_GLOBAL_NA_APP/usuario_provider.dart';
 import 'package:flutter/material.dart';
@@ -10,21 +13,28 @@ import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_topicos_imgens.dart
 import 'package:ficha3/AREAS/PAGINA_DE_UMA_AREA/sub_menu_topicos/pagina_topico/card_publicacao.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:ficha3/AREAS/PAGINA_DE_UMA_AREA/sub_menu_topicos/pagina_topico/pagina_publicacao_local/pagnia_de_uma_publicacao.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 
 class paginatopico extends StatefulWidget {
   final int idtopico;
   final Color cor;
 
-  paginatopico({required this.idtopico,required this.cor});
+  paginatopico({required this.idtopico, required this.cor});
   @override
   _paginatopicoState createState() => _paginatopicoState();
 }
 
 class _paginatopicoState extends State<paginatopico> {
+  double _latitude = 0;
+  double _longitude = 0;
+  Map<int, String> imagemPaths = {};
+  bool isLoading = true;
+  int? areaId;
   @override
   void initState() {
     super.initState();
+    carregarAreaId(widget.idtopico);
     buscarDetalhesTopico(widget.idtopico);
     buscarImagensDoTopico(widget.idtopico);
     _verificarSeFavorito();
@@ -42,11 +52,88 @@ class _paginatopicoState extends State<paginatopico> {
     });
   }
 
+  Future<void> carregarAreaId(int idTopico) async {
+    // Chama a função para obter os dados do tópico
+    Map<String, dynamic> dadosTopico =
+        await Funcoes_Topicos.obterDadosTopicoEid(idTopico);
+
+    setState(() {
+      areaId = int.tryParse(dadosTopico['area_id']);
+    });
+  }
+
+  Future<void> _getLocation() async {
+    Localizacao localizacao = Localizacao();
+    try {
+      // Obter a posição atual do dispositivo
+      Position position = await localizacao.determinaposicao();
+
+      // Atualizar o estado com as coordenadas obtidas
+      setState(() {
+        _latitude = position.latitude;
+        _longitude = position.longitude;
+      });
+    } catch (e) {
+      print("Erro ao obter a localização: $e");
+    }
+  }
+
+  double calculateDistance(double startLatitude, double startLongitude,
+      double endLatitude, double endLongitude) {
+    print(
+        'Latitude IIInicial: $startLatitude, Longitude inicial: $startLongitude');
+    print('Latitude FFFinal: $endLatitude, Longitude final: $endLongitude');
+    // Calcula a distância em metros
+    double distanceInMeters = Geolocator.distanceBetween(
+        startLatitude, startLongitude, endLatitude, endLongitude);
+    // Converte para quilômetros e arredonda para uma casa decimal
+    double distanceInKilometers =
+        double.parse((distanceInMeters / 1000).toStringAsFixed(1));
+    return distanceInKilometers;
+  }
+
   void _carregarPublicacoes(int idtopico) async {
+    await _getLocation();
+
+    Funcoes_Publicacoes_Imagens funcoesPublicacoesImagens =
+        Funcoes_Publicacoes_Imagens();
+
+    // Crie uma lista mutável a partir da lista retornada
     List<Map<String, dynamic>> publicacoesCarregadas =
-        await Funcoes_Publicacoes.consultarPublicacoesPorIdTopico(idtopico);
+        (await Funcoes_Publicacoes.consultarPublicacoesPorIdTopico(idtopico))
+            .map((publicacao) => Map<String, dynamic>.from(publicacao))
+            .toList();
+
+    for (var publicacao in publicacoesCarregadas) {
+      Map<String, dynamic>? primeiraImagem = await funcoesPublicacoesImagens
+          .retorna_primeira_imagem(publicacao['id']);
+      imagemPaths[publicacao['id']] = primeiraImagem != null
+          ? primeiraImagem['caminho_imagem']
+          : 'assets/images/sem_imagem.png';
+
+      String local = publicacao['local'];
+
+      // Obter coordenadas do local da publicação
+      Map<String, double> coordenadas =
+          await LocalizacaoOSM().getCoordinatesFromName(local);
+
+      // Salvar as coordenadas na publicação
+      publicacao['latitude'] = coordenadas['latitude'];
+      publicacao['longitude'] = coordenadas['longitude'];
+
+      // Calcular a distância entre o usuário e o local da publicação
+      double distance = calculateDistance(_latitude, _longitude,
+          coordenadas['latitude']!, coordenadas['longitude']!);
+
+      // Armazenar a distância formatada como string na publicação
+      publicacao['distance'] =
+          "${distance.toStringAsFixed(1)} Km"; // Certifique-se de que a distância é armazenada como String
+    }
+
+    if (!mounted) return;
     setState(() {
       publicacoes = publicacoesCarregadas;
+      isLoading = false;
     });
   }
 
@@ -62,10 +149,13 @@ class _paginatopicoState extends State<paginatopico> {
   bool isFavorited = false;
 // Função para verificar se o tópico é favorito
   void _verificarSeFavorito() async {
-    final usuarioProvider = Provider.of<Usuario_Provider>(context, listen: false);
+    final usuarioProvider =
+        Provider.of<Usuario_Provider>(context, listen: false);
     final user_id = usuarioProvider.usuarioSelecionado!.id_user;
 
-    List<int> topicosFavoritos = await Funcoes_TopicosFavoritos.obeter_topicos_favoritos_do_userid(user_id);
+    List<int> topicosFavoritos =
+        await Funcoes_TopicosFavoritos.obeter_topicos_favoritos_do_userid(
+            user_id);
 
     setState(() {
       isFavorited = topicosFavoritos.contains(widget.idtopico);
@@ -73,7 +163,8 @@ class _paginatopicoState extends State<paginatopico> {
   }
 
   void toggleFavorite() async {
-    final usuarioProvider = Provider.of<Usuario_Provider>(context, listen: false);
+    final usuarioProvider =
+        Provider.of<Usuario_Provider>(context, listen: false);
     final user_id = usuarioProvider.usuarioSelecionado!.id_user;
 
     // Verifica a conexão com a internet
@@ -104,7 +195,8 @@ class _paginatopicoState extends State<paginatopico> {
 
     try {
       if (isFavorited) {
-        bool sucesso = await ApiUsuarios().inserirTopicoFavorito(user_id, widget.idtopico);
+        bool sucesso =
+            await ApiUsuarios().inserirTopicoFavorito(user_id, widget.idtopico);
         if (sucesso) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -126,7 +218,8 @@ class _paginatopicoState extends State<paginatopico> {
           });
         }
       } else {
-        bool sucesso = await ApiUsuarios().removerTopicoFavorito(user_id, widget.idtopico);
+        bool sucesso =
+            await ApiUsuarios().removerTopicoFavorito(user_id, widget.idtopico);
         if (sucesso) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -171,7 +264,6 @@ class _paginatopicoState extends State<paginatopico> {
     }
   }
 
-
   double bottomMargin = 20.0;
   double rightMargin = 12.0;
   double appBarHeight = 250.0;
@@ -204,7 +296,7 @@ class _paginatopicoState extends State<paginatopico> {
               SpeedDialChild(
                 child: Material(
                   shape: RoundedRectangleBorder(
-                    side:  BorderSide(width: 1, color: widget.cor),
+                    side: BorderSide(width: 1, color: widget.cor),
                     borderRadius: BorderRadius.circular(15),
                   ),
                   color: widget.cor, // Cor de fundo do botão
@@ -230,78 +322,88 @@ class _paginatopicoState extends State<paginatopico> {
                   ),
                 ),
                 backgroundColor: widget.cor,
-                onTap: () {},
-              ),
-              if(publicacoes.isNotEmpty)
-              SpeedDialChild(
-                child: Material(
-                  shape: RoundedRectangleBorder(
-                    side:  BorderSide(width: 1, color: widget.cor),
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  color: const Color.fromARGB(
-                      255, 255, 255, 255), // Cor de fundo do botão
-                  child: Container(
-                    alignment: Alignment.center, // Alinhamento do texto
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.sort,
-                            color: widget.cor), // Adiciona o ícone aqui
-                        SizedBox(width: 8),
-                        Text(
-                          'Ordenar por',
-                          style: TextStyle(
-                            color: widget.cor, // Cor do texto
-                            fontSize: 16,
-                            fontWeight:
-                                FontWeight.bold, // Peso da fonte do texto
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                backgroundColor: widget.cor,
                 onTap: () {
-                  _abrirOrdenarPor();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => PaginaCriarPublicacao(
+                        idArea: areaId!,
+                        cor: widget.cor,
+                      ),
+                    ),
+                  );
                 },
               ),
-              if(publicacoes.isNotEmpty)
-              SpeedDialChild(
-                child: Material(
-                  shape: RoundedRectangleBorder(
-                    side: BorderSide(width: 1, color: widget.cor),
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  color: const Color.fromARGB(255, 255, 255, 255),
-                  child: Container(
-                    alignment: Alignment.center,
-                    child:  Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.search_rounded, color: widget.cor),
-                        SizedBox(width: 8),
-                        Text(
-                          'Procurar por',
-                          style: TextStyle(
-                            color: widget.cor,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+              if (publicacoes.isNotEmpty)
+                SpeedDialChild(
+                  child: Material(
+                    shape: RoundedRectangleBorder(
+                      side: BorderSide(width: 1, color: widget.cor),
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    color: const Color.fromARGB(
+                        255, 255, 255, 255), // Cor de fundo do botão
+                    child: Container(
+                      alignment: Alignment.center, // Alinhamento do texto
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.sort,
+                              color: widget.cor), // Adiciona o ícone aqui
+                          SizedBox(width: 8),
+                          Text(
+                            'Ordenar por',
+                            style: TextStyle(
+                              color: widget.cor, // Cor do texto
+                              fontSize: 16,
+                              fontWeight:
+                                  FontWeight.bold, // Peso da fonte do texto
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
+                  backgroundColor: widget.cor,
+                  onTap: () {
+                    _abrirOrdenarPor();
+                  },
                 ),
-                backgroundColor: widget.cor,
-                onTap: () {
-                  setState(() {
-                    clicouporcurar = true;
-                    floating_botao = false;
-                  });
-                },
-              ),
+              if (publicacoes.isNotEmpty)
+                SpeedDialChild(
+                  child: Material(
+                    shape: RoundedRectangleBorder(
+                      side: BorderSide(width: 1, color: widget.cor),
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    color: const Color.fromARGB(255, 255, 255, 255),
+                    child: Container(
+                      alignment: Alignment.center,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.search_rounded, color: widget.cor),
+                          SizedBox(width: 8),
+                          Text(
+                            'Procurar por',
+                            style: TextStyle(
+                              color: widget.cor,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  backgroundColor: widget.cor,
+                  onTap: () {
+                    setState(() {
+                      clicouporcurar = true;
+                      floating_botao = false;
+                    });
+                  },
+                ),
 
               // Adicione mais botões conforme necessário
             ],
@@ -316,7 +418,7 @@ class _paginatopicoState extends State<paginatopico> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          nomeDoTopico,
+          nomeDoTopico ?? 'Tópico',
           style: const TextStyle(
             fontSize: 20,
             color: Color.fromARGB(255, 255, 255, 255),
@@ -366,16 +468,14 @@ class _paginatopicoState extends State<paginatopico> {
                     decoration: InputDecoration(
                       hintText: 'Procurar por ...',
                       focusedBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(
-                            color: widget.cor),
+                        borderSide: BorderSide(color: widget.cor),
                       ),
                     ),
                     cursorColor: widget.cor,
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.search,
-                      color: widget.cor),
+                  icon: Icon(Icons.search, color: widget.cor),
                   onPressed: () {
                     FocusScope.of(context).unfocus();
                     setState(() {
@@ -388,36 +488,79 @@ class _paginatopicoState extends State<paginatopico> {
             Visibility(
               visible: exibirResultadosPesquisa,
               child: Expanded(
-                  child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: publicacoes
-                    .where((publication) => publication['nome']
-                        .toLowerCase()
-                        .contains(pesquisa.toLowerCase()))
-                    .length,
-                itemBuilder: (context, index) {
-                  var resultados = publicacoes
-                      .where((publication) => publication['nome']
-                          .toLowerCase()
-                          .contains(pesquisa.toLowerCase()))
-                      .toList();
-                  // Print dos resultados
-                  var publication = resultados[index];
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: publicacoes
+                      .where((publication) =>
+                          publication['nome']
+                              ?.toLowerCase()
+                              ?.contains(pesquisa.toLowerCase()) ??
+                          false)
+                      .length,
+                  itemBuilder: (context, index) {
+                    var resultados = publicacoes
+                        .where((publication) =>
+                            publication['nome']
+                                ?.toLowerCase()
+                                ?.contains(pesquisa.toLowerCase()) ??
+                            false)
+                        .toList();
 
-                  return Container(
-                    margin: const EdgeInsets.only(
-                        top: 10, bottom: 10, left: 5, right: 5),
-                    child: CARD_PUBLICACAO(
-                      context: context,
-                      nomePublicacao: publication['nome'],
-                      local: publication['local'],
-                      classificacao_media:
-                          publication['classificacao_media'].toString(),
-                      imagePath: publication['caminho_imagem'],
-                    ),
-                  );
-                },
-              )),
+                    var publication = resultados[index];
+
+                    return FutureBuilder<Map<String, dynamic>?>(
+                      future: Funcoes_Publicacoes_Imagens()
+                          .retorna_primeira_imagem(publication['id']),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return Center(child: CircularProgressIndicator());
+                        } else if (snapshot.hasError) {
+                          return Text('Erro ao carregar imagem');
+                        } else {
+                          // Se não houver imagem, define um caminho de imagem padrão
+                          String imagePath = snapshot.data?['caminho_imagem'] ??
+                              'assets/images/imagem_padrao.png';
+
+                          // Verificando outros dados que podem ser null
+                          String nomePublicacao =
+                              publication['nome'] ?? 'Nome não disponível';
+                          String local =
+                              publication['local'] ?? 'Local não disponível';
+
+                          return InkWell(
+                            onTap: () {
+                              // Aqui você pode navegar para a página do evento
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => pagina_publicacao(
+                                    idPublicacao: publication['id'],
+                                    cor: widget.cor,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              margin: const EdgeInsets.only(
+                                  top: 10, bottom: 10, left: 5, right: 5),
+                              child: CARD_PUBLICACAO(
+                                context: context,
+                                nomePublicacao: nomePublicacao,
+                                local: local,
+                                classificacao_media:
+                                    '0', // Pode ser ajustado conforme necessário
+                                imagePath:
+                                    imagePath, // Caminho correto da imagem ou imagem padrão
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                    );
+                  },
+                ),
+              ),
             ),
           ],
         ),
@@ -739,7 +882,7 @@ class _paginatopicoState extends State<paginatopico> {
           ),
           SliverPersistentHeader(
             delegate: _SliverAppBarDelegate(
-               TabBar(
+              TabBar(
                 tabs: [
                   Tab(
                     child: Row(
@@ -783,61 +926,83 @@ class _paginatopicoState extends State<paginatopico> {
           ),
         ];
       },
-      body: TabBarView(
-        children: [
-          Container(
-              child: publicacoes.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Image.asset(
-                            'assets/images/sem_resultados.png',
-                            width: 85,
-                            height: 85,
-                            fit: BoxFit.contain,
-                          ),
-                          const Text(
-                          'Sem locais !',
-                          style: TextStyle(fontSize: 16, color: Color.fromARGB(255, 156, 156, 156)),
-                        )
-                        ],
+      body:
+          isLoading // Exibe o indicador de carregamento enquanto as publicações estão sendo carregadas
+              ? Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(widget.cor),
+                  ),
+                )
+              : TabBarView(
+                  children: [
+                    Container(
+                        child: publicacoes.isEmpty
+                            ? Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Image.asset(
+                                      'assets/images/sem_resultados.png',
+                                      width: 85,
+                                      height: 85,
+                                      fit: BoxFit.contain,
+                                    ),
+                                    const Text(
+                                      'Sem locais !',
+                                      style: TextStyle(
+                                          fontSize: 16,
+                                          color: Color.fromARGB(
+                                              255, 156, 156, 156)),
+                                    )
+                                  ],
+                                ),
+                              )
+                            : SingleChildScrollView(
+                                child: Column(
+                                  children: publicacoes.map((publication) {
+                                    // Aqui, obtém o path da imagem associada ao id da publicação
+                                    String imagePath =
+                                        imagemPaths[publication['id']] ??
+                                            'assets/images/sem_imagem.png';
+
+                                    return GestureDetector(
+                                      onTap: () {
+                                        Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (context) =>
+                                                    pagina_publicacao(
+                                                      idPublicacao:
+                                                          publication['id'],
+                                                      cor: widget.cor,
+                                                    )));
+                                      },
+                                      child: Container(
+                                        margin: const EdgeInsets.only(
+                                            top: 10,
+                                            bottom: 10,
+                                            left: 5,
+                                            right: 5),
+                                        child: CARD_PUBLICACAO(
+                                          context: context,
+                                          nomePublicacao: publication['nome'],
+                                          local: publication['local'],
+                                          classificacao_media: 5.toString(),
+                                          imagePath:
+                                              imagePath, // Passando o caminho correto da imagem
+                                        ),
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                              )),
+                    Container(
+                      child: const Center(
+                        child: Text('Função ainda não disponível!'),
                       ),
-                    )
-                  : SingleChildScrollView(
-                      child: Column(
-                        children: publicacoes.map((publication) {
-                          return GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => pagina_publicacao(idPublicacao: publication['id'],cor: widget.cor,)));
-                            },
-                            child: Container(
-                              margin: const EdgeInsets.only(
-                                  top: 10, bottom: 10, left: 5, right: 5),
-                              child: CARD_PUBLICACAO(
-                                context: context,
-                                nomePublicacao: publication['nome'],
-                                local: publication['local'],
-                                classificacao_media:
-                                    publication['classificacao_media']
-                                        .toString(),
-                                imagePath: publication['caminho_imagem'],
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    )),
-          Container(
-            child: const Center(
-              child: Text('Função ainda não disponível!'),
-            ),
-          ),
-        ],
-      ),
+                    ),
+                  ],
+                ),
     );
   }
 }

@@ -4,11 +4,15 @@ import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:ficha3/AREAS/PAGINA_DE_UMA_AREA/sub_menu_eventos/pagina_De_um_evento/pagina_evento.dart';
 import 'package:ficha3/AREAS/PAGINA_DE_UMA_AREA/sub_menu_partilhas/Pagina_de_uma_partilha/pagina_de_uma_partilha.dart';
+import 'package:ficha3/AREAS/PAGINA_DE_UMA_AREA/sub_menu_topicos/pagina_topico/pagina_publicacao_local/pagnia_de_uma_publicacao.dart';
 import 'package:ficha3/BASE_DE_DADOS/APIS/api_eventos.dart';
 import 'package:ficha3/BASE_DE_DADOS/APIS/api_geolocaliza%C3%A7%C3%A3o.dart';
 import 'package:ficha3/BASE_DE_DADOS/APIS/api_partilhas.dart';
+import 'package:ficha3/BASE_DE_DADOS/APIS/api_publicacoes.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_centros.dart';
+import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_comentarios_de_publicacoes.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_eventos.dart';
+import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_imagens_de_publicacoes.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_listaparticipantes_evento.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_partilhasfotos.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_publicacoes.dart';
@@ -16,6 +20,7 @@ import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_usuarios.dart';
 import 'package:ficha3/PROVIDERS_GLOBAL_NA_APP/centro_provider.dart';
 
 import 'package:ficha3/PROVIDERS_GLOBAL_NA_APP/usuario_provider.dart';
+import 'package:geolocator/geolocator.dart';
 import 'widget_cards/card_destaques_do_dia.dart';
 import 'widget_cards/card_evetos_HOME.dart';
 import 'widget_cards/card_publicacoes.dart';
@@ -39,16 +44,21 @@ class _InicioPageState extends State<InicioPage> {
   List<Map<String, dynamic>> eventos = [];
   Map<int, String> localPorEvento = {};
   List<Map<String, dynamic>> publicacoes = [];
+  Map<int, String> imagemPaths = {};
   List<Map<String, dynamic>> partilhas = [];
   List<Map<String, dynamic>> centros = [];
+  double _latitude = 0;
+  double _longitude = 0;
   //late int centroId;
   Timer? _timerAPI;
   Timer? _timerDB;
   Map<int, int> numeroParticipantesPorEvento = {};
-  
+  Map<int, List<Map<String, dynamic>>> comentariosPorPublicacao = {};
+ bool _isLoadingPublicacoes = true;
   @override
   void initState() {
     super.initState();
+    _getLocation();
     _carregarCentros();
     _carregarEventos();
     carregarNumeroDeParticipantes();
@@ -58,13 +68,14 @@ class _InicioPageState extends State<InicioPage> {
     _iniciarTimers();
   }
 
-void _iniciarTimers() {
+  void _iniciarTimers() {
     _timerAPI = Timer.periodic(
       Duration(seconds: 30),
       (Timer t) {
         if (mounted) {
-          _carregarPartilhasDaAPI();
+          //_carregarPartilhasDaAPI();
           _carregarEventosDaAPI();
+          _carregarPublicacoesDaAPI();
         }
       },
     );
@@ -76,18 +87,51 @@ void _iniciarTimers() {
       }
     });
 
-
     _timerDB = Timer.periodic(Duration(seconds: 15), (Timer t) {
       if (mounted) {
-        _carregarPartilhasfotos();
+        // _carregarPartilhasfotos();
         _carregarEventos();
+        _carregarPublicacoes();
         carregarNumeroDeParticipantes();
         carregarLocais();
       }
     });
   }
 
- Future<void> _carregarPartilhasDaAPI() async {
+  Future<void> _carregarComentariosPublicacoesLocal() async {
+    Funcoes_Comentarios_Publicacoes funcoesComentarios =
+        Funcoes_Comentarios_Publicacoes();
+
+    for (var publicacao in publicacoes) {
+      int publicacaoId = publicacao['id'];
+
+      // Consultar os comentários para esta publicação
+      List<Map<String, dynamic>> comentariosCarregados =
+          await funcoesComentarios
+              .consultaComentariosPorPublicacao(publicacaoId);
+
+      // Adiciona os comentários no mapa de comentários por publicação
+      comentariosPorPublicacao[publicacaoId] = comentariosCarregados;
+    }
+  }
+
+  Future<void> _getLocation() async {
+    Localizacao localizacao = Localizacao();
+    try {
+      // Obter a posição atual do dispositivo
+      Position position = await localizacao.determinaposicao();
+
+      // Atualizar o estado com as coordenadas obtidas
+      setState(() {
+        _latitude = position.latitude;
+        _longitude = position.longitude;
+      });
+    } catch (e) {
+      print("Erro ao obter a localização: $e");
+    }
+  }
+
+  Future<void> _carregarPartilhasDaAPI() async {
     try {
       var connectivityResult = await (Connectivity().checkConnectivity());
       if (!mounted) return;
@@ -96,7 +140,8 @@ void _iniciarTimers() {
         return;
       }
 
-      final centroProvider = Provider.of<Centro_Provider>(context, listen: false);
+      final centroProvider =
+          Provider.of<Centro_Provider>(context, listen: false);
       final centroSelecionado = centroProvider.centroSelecionado;
 
       if (centroSelecionado != null) {
@@ -122,7 +167,7 @@ void _iniciarTimers() {
     }
   }
 
- Future<void> _carregarEventosDaAPI() async {
+  Future<void> _carregarEventosDaAPI() async {
     try {
       var connectivityResult = await (Connectivity().checkConnectivity());
       if (!mounted) return;
@@ -131,10 +176,12 @@ void _iniciarTimers() {
         return;
       }
 
-      final usuarioProvider = Provider.of<Usuario_Provider>(context, listen: false);
+      final usuarioProvider =
+          Provider.of<Usuario_Provider>(context, listen: false);
       final user_id = usuarioProvider.usuarioSelecionado!.id_user;
 
-      final centroProvider = Provider.of<Centro_Provider>(context, listen: false);
+      final centroProvider =
+          Provider.of<Centro_Provider>(context, listen: false);
       final centroSelecionado = centroProvider.centroSelecionado;
 
       if (centroSelecionado != null) {
@@ -143,15 +190,54 @@ void _iniciarTimers() {
         if (!mounted) return;
 
         print('2->>Iniciando o carregamento dos PARTICIPANTES DOS EVENTOS...');
-        await ApiEventos().fetchAndStoreParticipantes(centroSelecionado.id, user_id);
+        await ApiEventos()
+            .fetchAndStoreParticipantes(centroSelecionado.id, user_id);
         if (!mounted) return;
 
         print('3->>Iniciando o carregamento das IMAGENS DOS EVENTOS...');
-        await ApiEventos().fetchAndStoreImagensEvento(centroSelecionado.id, user_id);
+        await ApiEventos()
+            .fetchAndStoreImagensEvento(centroSelecionado.id, user_id);
         if (!mounted) return;
 
         print('4->>Iniciando o carregamento dos COMENTÁRIOS DOS EVENTOS...');
-        await ApiEventos().fetchAndStoreComentariosEvento(centroSelecionado.id, user_id);
+        await ApiEventos()
+            .fetchAndStoreComentariosEvento(centroSelecionado.id, user_id);
+        if (!mounted) return;
+      } else {
+        print('Nenhum centro selecionado');
+      }
+    } on SocketException catch (e) {
+      print('Erro de rede: $e');
+    } catch (e) {
+      print('Erro: $e');
+    }
+  }
+
+  Future<void> _carregarPublicacoesDaAPI() async {
+    try {
+      var connectivityResult = await (Connectivity().checkConnectivity());
+      if (!mounted) return;
+      if (connectivityResult == ConnectivityResult.none) {
+        print('Sem conexão com a internet');
+        return;
+      }
+
+      final usuarioProvider =
+          Provider.of<Usuario_Provider>(context, listen: false);
+      final user_id = usuarioProvider.usuarioSelecionado!.id_user;
+
+      final centroProvider =
+          Provider.of<Centro_Provider>(context, listen: false);
+      final centroSelecionado = centroProvider.centroSelecionado;
+
+      if (centroSelecionado != null) {
+        print('1->>Iniciando o carregamento das PUBLICAÇÕES...');
+        await ApiPublicacoes().fetchAndStorePublicacoes(centroSelecionado.id);
+
+        print('2->>Iniciando o carregamento das COMENTARIOS PUBLICAÇÕES...');
+        await ApiPublicacoes()
+            .fetchAndStoreComentarios(centroSelecionado.id, user_id);
+
         if (!mounted) return;
       } else {
         print('Nenhum centro selecionado');
@@ -164,13 +250,14 @@ void _iniciarTimers() {
   }
 
   ///Função para carregar os eventos da base de dados//////////////////////////////////////////////////
- void _carregarEventos() async {
+  void _carregarEventos() async {
     Funcoes_Eventos funcoesEventos = Funcoes_Eventos();
     final centroProvider = Provider.of<Centro_Provider>(context, listen: false);
     final centroSelecionado = centroProvider.centroSelecionado;
     int centroId = centroSelecionado!.id;
 
-    List<Map<String, dynamic>> eventosCarregados = await funcoesEventos.consultaEventosPorCentroId(centroId);
+    List<Map<String, dynamic>> eventosCarregados =
+        await funcoesEventos.consultaEventosPorCentroId(centroId);
     if (!mounted) return;
     setState(() {
       eventos = eventosCarregados;
@@ -178,36 +265,96 @@ void _iniciarTimers() {
   }
 
   /// Função para carregar os centros da base de dados
- void _carregarCentros() async {
-    List<Map<String, dynamic>> centrosCarregados = await Funcoes_Centros.consultaCentros();
+  void _carregarCentros() async {
+    List<Map<String, dynamic>> centrosCarregados =
+        await Funcoes_Centros.consultaCentros();
     if (!mounted) return;
     setState(() {
       centros = centrosCarregados;
     });
   }
 
-  ///Função para carregar as PUBLICACOES da base de dados///////////////////////////////////////////////////////
-   void _carregarPublicacoes() async {
-    Funcoes_Publicacoes funcoespublicacoes = Funcoes_Publicacoes();
-    final centroProvider = Provider.of<Centro_Provider>(context, listen: false);
-    final centroSelecionado = centroProvider.centroSelecionado;
-    int centroId = centroSelecionado!.id;
-
-    List<Map<String, dynamic>> publicacoesCarregadas = await funcoespublicacoes.consultaPublicacoesPorCentroId(centroId);
-    if (!mounted) return;
-    setState(() {
-      publicacoes = publicacoesCarregadas;
-    });
+  double calculateDistance(double startLatitude, double startLongitude,
+      double endLatitude, double endLongitude) {
+    print(
+        'Latitude IIInicial: $startLatitude, Longitude inicial: $startLongitude');
+    print('Latitude FFFinal: $endLatitude, Longitude final: $endLongitude');
+    // Calcula a distância em metros
+    double distanceInMeters = Geolocator.distanceBetween(
+        startLatitude, startLongitude, endLatitude, endLongitude);
+    // Converte para quilômetros e arredonda para uma casa decimal
+    double distanceInKilometers =
+        double.parse((distanceInMeters / 1000).toStringAsFixed(1));
+    return distanceInKilometers;
   }
 
- void _carregarPartilhasfotos() async {
+  ///Função para carregar as PUBLICACOES da base de dados///////////////////////////////////////////////////////
+  void _carregarPublicacoes() async {
+  setState(() {
+    _isLoadingPublicacoes = true; // Iniciar o carregamento
+  });
+
+  await _getLocation();
+
+  Funcoes_Publicacoes funcoesPublicacoes = Funcoes_Publicacoes();
+  Funcoes_Publicacoes_Imagens funcoesPublicacoesImagens =
+      Funcoes_Publicacoes_Imagens();
+  final centroProvider = Provider.of<Centro_Provider>(context, listen: false);
+  final centroSelecionado = centroProvider.centroSelecionado;
+  int centroId = centroSelecionado!.id;
+
+  List<Map<String, dynamic>> publicacoesCarregadas =
+      (await funcoesPublicacoes.consultaPublicacoesPorCentroId(centroId))
+          .map((publicacao) => Map<String, dynamic>.from(publicacao))
+          .toList();
+
+  for (var publicacao in publicacoesCarregadas) {
+    Map<String, dynamic>? primeiraImagem = await funcoesPublicacoesImagens
+        .retorna_primeira_imagem(publicacao['id']);
+    imagemPaths[publicacao['id']] = primeiraImagem != null
+        ? primeiraImagem['caminho_imagem']
+        : 'assets/images/sem_imagem.png';
+
+    String local = publicacao['local'];
+
+    Map<String, double> coordenadas =
+        await LocalizacaoOSM().getCoordinatesFromName(local);
+
+    List<Map<String, dynamic>> comentariosCarregados =
+        await Funcoes_Comentarios_Publicacoes()
+            .consultaComentariosPorPublicacao(publicacao['id']);
+    comentariosPorPublicacao[publicacao['id']] = comentariosCarregados;
+
+    double mediaClassificacao =
+        calcular_media_classificacao(comentariosCarregados);
+
+    publicacao['mediaClassificacao'] = mediaClassificacao;
+
+    publicacao['latitude'] = coordenadas['latitude'];
+    publicacao['longitude'] = coordenadas['longitude'];
+
+    double distance = calculateDistance(
+        _latitude, _longitude, coordenadas['latitude']!, coordenadas['longitude']!);
+
+    publicacao['distance'] = "${distance.toStringAsFixed(1)} Km";
+  }
+
+  if (!mounted) return;
+  setState(() {
+    publicacoes = publicacoesCarregadas;
+    _isLoadingPublicacoes = false; // Finaliza o carregamento
+  });
+}
+
+  void _carregarPartilhasfotos() async {
     Funcoes_Partilhas funcoespartilhas = Funcoes_Partilhas();
     final centroProvider = Provider.of<Centro_Provider>(context, listen: false);
     final centroSelecionado = centroProvider.centroSelecionado;
     int centroId = centroSelecionado!.id;
 
     print('Iniciando o carregamento dos dados das partilhas da BDLOCALL...');
-    List<Map<String, dynamic>> partilhascarregadas = await funcoespartilhas.consultaPartilhasComCentroId(centroId);
+    List<Map<String, dynamic>> partilhascarregadas =
+        await funcoespartilhas.consultaPartilhasComCentroId(centroId);
     if (!mounted) return;
     setState(() {
       partilhas = partilhascarregadas;
@@ -358,14 +505,13 @@ void _iniciarTimers() {
     );
   }
 
-
-
- Future<void> carregarNumeroDeParticipantes() async {
+  Future<void> carregarNumeroDeParticipantes() async {
     Map<int, int> participantes = {};
 
     for (var evento in eventos) {
       int eventoId = evento['id'];
-      int numeroDeParticipantes = await Funcoes_Participantes_Evento.getNumeroDeParticipantes(eventoId);
+      int numeroDeParticipantes =
+          await Funcoes_Participantes_Evento.getNumeroDeParticipantes(eventoId);
       participantes[eventoId] = numeroDeParticipantes;
     }
 
@@ -375,32 +521,67 @@ void _iniciarTimers() {
     });
   }
 
-Future<void> carregarLocais() async {
+  Future<void> carregarLocais() async {
     for (var evento in eventos) {
       int eventoId = evento['id'];
       double latitude = evento['latitude']; // Supondo que você tenha latitude
-      double longitude = evento['longitude']; // Supondo que você tenha longitude
+      double longitude =
+          evento['longitude']; // Supondo que você tenha longitude
       String address = await _getAddressUsingOSM(latitude, longitude);
-       if (!mounted) return;
+      if (!mounted) return;
       setState(() {
         localPorEvento[eventoId] = address;
       });
     }
   }
-    Future<String> _getAddressUsingOSM(double latitude, double longitude) async {
+
+  Future<String> _getAddressUsingOSM(double latitude, double longitude) async {
     LocalizacaoOSM localizacaoOSM = LocalizacaoOSM();
     return await localizacaoOSM.getEnderecoFromCoordinates(latitude, longitude);
   }
 
+  @override
+  void dispose() {
+    print(
+        "-----------------------------------------------------------------------dispose chamado");
+    _timerAPI?.cancel();
+    _timerDB?.cancel();
+    super.dispose();
+  }
 
- @override
-void dispose() {
-  print("-----------------------------------------------------------------------dispose chamado");
-  _timerAPI?.cancel();
-  _timerDB?.cancel();
-  super.dispose();
-}
+  Color getColorForArea(int areaId) {
+    switch (areaId) {
+      case 1:
+        return const Color(0xFF53981D); // Desporto
+      case 2:
+        return const Color(0xFF8F3023); // Saúde
+      case 3:
+        return const Color(0xFFA91C7A); // Gastronomia
+      case 4:
+        return const Color(0xFF3779C6); // Formação
+      case 5:
+        return const Color(0xFF25ABAB); // Lazer
+      case 6:
+        return const Color(0xFFB7BB06); // Transportes
+      case 7:
+        return const Color(0xFF815520); // Alojamento
+      case 0:
+        return const Color.fromARGB(255, 255, 255, 255); // Ver Info
+      default:
+        return Colors.grey; // Cor padrão para IDs não reconhecidos
+    }
+  }
 
+  double calcular_media_classificacao(List comentarios) {
+    if (comentarios.isEmpty) {
+      return 0.0;
+    }
+    double somaClassificacoes = 0;
+    for (var comentario in comentarios) {
+      somaClassificacoes += comentario['classificacao'];
+    }
+    return somaClassificacoes / comentarios.length;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -632,8 +813,10 @@ void dispose() {
                       itemCount: eventos.length,
                       itemBuilder: (context, index) {
                         int eventoId = eventos[index]['id'];
-                       int numeroParticipantes = numeroParticipantesPorEvento[eventoId] ?? 0;
-                        String local = localPorEvento[eventoId] ?? 'Carregando...';
+                        int numeroParticipantes =
+                            numeroParticipantesPorEvento[eventoId] ?? 0;
+                        String local =
+                            localPorEvento[eventoId] ?? 'Carregando...';
                         return GestureDetector(
                           onTap: () {
                             // Navega para a página do evento ao tocar no card
@@ -746,19 +929,44 @@ void dispose() {
                 ? SizedBox(
                     height: 227,
                     child: ListView.builder(
-                      scrollDirection: Axis.horizontal, //  scroll horizontal
+                      scrollDirection: Axis.horizontal, // scroll horizontal
                       itemCount: publicacoes.length,
                       itemBuilder: (context, index) {
-                        return Container(
-                          margin: const EdgeInsets.only(
-                              left: 4, right: 10, bottom: 10),
-                          child: CARD_PUBLICACAO(
-                            nomePublicacao: publicacoes[index]['nome'],
-                            local: publicacoes[index]['local'],
-                            classificacao_media: publicacoes[index]
-                                    ['classificacao_media']
-                                .toString(),
-                            imagePath: publicacoes[index]['caminho_imagem'],
+                        int publicacaoId = publicacoes[index]['id'];
+                        String imagePath = imagemPaths[publicacaoId] ??
+                            'assets/images/sem_imagem.png';
+// Supondo que você tem um mapa ou lista com os comentários por publicação
+                        List comentarios =
+                            comentariosPorPublicacao[publicacaoId] ?? [];
+
+                        // Calcular a média de classificação da publicação
+                        double mediaClassificacao =
+                            calcular_media_classificacao(comentarios);
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => pagina_publicacao(
+                                  idPublicacao: publicacaoId,
+                                  cor: getColorForArea(publicacoes[index]
+                                      ['area_id']), // ou outra cor apropriada
+                                ),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.only(
+                                left: 4, right: 10, bottom: 10),
+                            child: CARD_PUBLICACAO(
+                              nomePublicacao: publicacoes[index]['nome'],
+                              local: publicacoes[index]['local'],
+                              classificacao_media: mediaClassificacao.toStringAsFixed(1),
+                              publicacaoId: publicacaoId,
+                              imagePath: imagePath,
+                              distancia:
+                                  publicacoes[index]['distance'] as String,
+                            ),
                           ),
                         );
                       },
@@ -789,7 +997,8 @@ void dispose() {
                           ],
                         ),
                       ),
-                    )),
+                    ),
+                  ),
 
             /// L I S T A DE  PARTILHAS //////
             Padding(

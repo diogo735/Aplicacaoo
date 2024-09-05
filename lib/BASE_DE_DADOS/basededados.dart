@@ -87,17 +87,20 @@ class DatabaseHelper {
 
 
 
-  await Funcoes_Publicacoes.criarTabela_Publicacoes(db);//publicaçoes de locais
-  await Funcoes_Publicacoes.insertPublicacoes(db);
+  await Funcoes_Publicacoes.criarTabela_Publicacoes(db);//publicaçoes de locais ->TA A BUSCAR A API
+ 
+  await Funcoes_Comentarios_Publicacoes.criarTabela_Publicacoes_comentarios(db);//comentarios dos locais ->TA A BUSCAR A API
+  
 
-  await Funcoes_Comentarios_Publicacoes.criarTabela_Publicacoes_comentarios(db);//comentarios dos locais
-  await Funcoes_Comentarios_Publicacoes.insertComentarios(db);
+  await Funcoes_Publicacoes_Imagens.criarTabela_Publicacoes_imagens(db);//imagens das publicacoes de locais //->TÁ A BUACAR A API
 
-  await Funcoes_Publicacoes_Imagens.criarTabela_Publicacoes_imagens(db);//imagens das publicacoes de locais
-  await Funcoes_Publicacoes_Imagens.insertPublicacoes_imagens(db);
 
-  await Funcoes_Publicacoes_Horario.criarTabela_Publicacoes_horario(db);//tabela do horario publicacao
-  await Funcoes_Publicacoes_Horario.insertPublicacoes_horario(db);
+  await Funcoes_Publicacoes_Horario.criarTabela_Publicacoes_horario(db);//tabela do horario publicacao ->TA A BUSCAR NA API
+ 
+
+
+
+
 
 
  await Funcoes_AreasFavoritas.createAreasFavoritas_douserTable(db);//TA A BUSCAR NA API

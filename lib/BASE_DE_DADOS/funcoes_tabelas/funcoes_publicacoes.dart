@@ -6,133 +6,44 @@ class Funcoes_Publicacoes {
   static Future<void> criarTabela_Publicacoes(Database db) async {
     await db.execute('CREATE TABLE publicacao('
         'id INTEGER PRIMARY KEY,'
-        ' nome TEXT,'
-        'local TEXT,'
-        'classificacao_media INTEGER,'
-        'area_id INTEGER,'
-        'caminho_imagem TEXT,'
-        'descricao_local TEXT,'
-        'topico_id INTEGER,'
-        'pagina_web TEXT,'
-        'data_publicacao TEXT,'
-        'telemovel TEXT,'
-        'email TEXT,'
-        'latitude TEXT,'
-        'longitude TEXT,'
-        'centro_id INTEGRER,'
-        'user_id INTEGER,'
+        'nome TEXT,' //
+        'local TEXT,'//
+        'area_id INTEGER,'//
+        'descricao_local TEXT,'//
+        'topico_id INTEGER,'//
+        'pagina_web TEXT,'//
+        'data_publicacao TEXT,'//
+        'telemovel TEXT,'//
+        'email TEXT,'//
+        'centro_id INTEGRER,'//
+        'user_id INTEGER,'//
+        'estado_publicacao TEXT,'//
         'FOREIGN KEY (user_id) REFERENCES usuario(id),'
         'FOREIGN KEY (centro_id) REFERENCES centros(id), '
         'FOREIGN KEY (topico_id) REFERENCES topicos(id),'
         'FOREIGN KEY (area_id) REFERENCES areas(id) )');
   }
 
-  static Future<void> insertPublicacoes(Database db) async {
+  static Future<void> insertPublicacao(Map<String, dynamic> publicacao) async {
+    Database db = await DatabaseHelper.basededados;
+
     await db.insert(
       'publicacao',
-      {
-        'nome': 'Estadio Municipal do Fontelo',
-        'local': 'Av.José Relvas 6',
-        'classificacao_media': '4.1',
-        'caminho_imagem': 'assets/images/fontelo.jpg',
-        'descricao_local':
-            'O Estádio Municipal do Fontelo é um estádio de futebol municipal situado no "Parque Desportivo Municipal do Fontelo", na cidade de Viseu, em Portugal.',
-        'pagina_web':'https://www.cm-viseu.pt/index.php/diretorio/desporto/instalcoes-esp-desp-municipais/parque-despotivo-fontelo/estadio-municipal-do-fontelo',
-        'telemovel':'232 427 427',
-        'email':'geral@cmviseu.pt',
-        'data_publicacao':'31/06/2023',
-        'area_id': 2,
-        'user_id':3,
-        'centro_id':5,
-        'topico_id': 1,
-        'latitude':'40.659533',
-        'longitude':'-7.900403'
-      },
+      publicacao,
+      conflictAlgorithm: ConflictAlgorithm.replace,
     );
-    await db.insert(
-      'publicacao',
-      {
-        'nome': 'Campo de Futebol de Santo Estevão',
-        'local': 'Praça do Comércio 45',
-        'classificacao_media': '4.3',
-        'caminho_imagem': 'assets/images/campodefutbol.jpg',
-        'descricao_local': 'ainda nao desenvolvi',
-        'area_id': 2,
-        'pagina_web':null,
-        'telemovel':null,
-        'email':null,
-        'data_publicacao':'02/03/2024',
-        'user_id':5,
-        'centro_id':4,
-        'topico_id': 1,
-        'latitude':'40.670266',
-        'longitude':'-7.930095'
-      },
-    );
-    /*
-    await db.insert(
-      'publicacao',
-      {'nome': 'Hospital S. Teotónio', 
-      'local': 'Av. Rei D.Duarte',
-      'classificacao_media': '4.5',
-      'caminho_imagem':'assets/images/hospital.png',
-      'area_id':1,
-      'topico_id':null,
-      },
-    );
-    await db.insert(
-      'publicacao',
-      {'nome': 'Restaurante Feitoria', 
-      'local': 'R.Montenegro 8',
-      'classificacao_media': '4.2',
-      'caminho_imagem':'assets/images/restaurante.jpg',
-      'area_id':3,
-      'topico_id':null,
-      },
-    );
-   
-   
-    await db.insert(
-      'publicacao',
-      {'nome': 'Entredesafios- Formação Profissional', 
-      'local': 'Quartel da Paz, Viseu',
-      'classificacao_media': '4.9',
-      'caminho_imagem':'assets/images/local_formacao.png',
-      'area_id':4,
-      'topico_id':6,
-      },
-    );
-    await db.insert(
-      'publicacao',
-      {'nome': 'Hotel Bela Vista', 
-      'local': 'R. Alexandre Herculano 510',
-      'classificacao_media': '3.6',
-      'caminho_imagem':'assets/images/local_alojamento.jpg',
-      'area_id':5,
-      'topico_id':null,
-      },
-    );
-    await db.insert(
-      'publicacao',
-      {'nome': 'Estação Rodoviária de Viseu', 
-      'local': 'Av. Dr. António José de Almeida 242',
-      'classificacao_media': '3.7',
-      'caminho_imagem':'assets/images/local_transportes.png',
-      'area_id':6,
-      'topico_id':null,
-      },
-    );
-    await db.insert(
-      'publicacao',
-      {'nome': 'Parque do Fontelo', 
-      'local': 'Av. José Relvas,Viseu',
-      'classificacao_media': '4.9',
-      'caminho_imagem':'assets/images/local_lazer.jpg',
-      'area_id':7,
-      'topico_id':null,
-      },
-    );*/
   }
+  static Future<List<Map<String, dynamic>>> consultarPublicacoesPorAutor(int userId) async {
+  Database db = await DatabaseHelper.basededados;
+
+  // Busca todas as publicações criadas por um determinado usuário
+  return await db.query(
+    'publicacao', // Nome da tabela
+    where: 'user_id = ?', // Condição para obter as publicações do autor
+    whereArgs: [userId], // Substitui o '?' pelo valor de userId
+  );
+}
+
 
   Future<List<Map<String, dynamic>>> consultaPublicacoes() async {
     Database db = await DatabaseHelper.basededados;
@@ -140,13 +51,14 @@ class Funcoes_Publicacoes {
   }
 
   Future<List<Map<String, dynamic>>> consultaPublicacoesPorCentroId(int centroId) async {
-    Database db = await DatabaseHelper.basededados;
-    return await db.query(
-      'publicacao',
-      where: 'centro_id = ?', 
-      whereArgs: [centroId], 
-    );
-  }
+  Database db = await DatabaseHelper.basededados;
+  return await db.query(
+    'publicacao',
+    where: 'centro_id = ? AND estado_publicacao != ?', 
+    whereArgs: [centroId, 'Por validar'], 
+  );
+}
+
 
 
   static Future<String> consultaNomeLocalPorId(int idLocal) async {
@@ -191,8 +103,8 @@ class Funcoes_Publicacoes {
     Database db = await DatabaseHelper.basededados;
     return await db.query(
       'publicacao',
-      where: 'topico_id = ?',
-      whereArgs: [idTopico],
+      where: 'topico_id = ? AND estado_publicacao != ?',
+      whereArgs: [idTopico, 'Por validar'],
     );
   }
 
@@ -225,5 +137,31 @@ class Funcoes_Publicacoes {
     }
     return null;
   }
+    static Future<void> deletePublicacoesByCentroId(int centroId) async {
+    
+    Database db = await DatabaseHelper.basededados;
+
+    // Excluir todas as publicações que possuem o centroId especificado
+    await db.delete(
+      'publicacao', // Nome da tabela
+      where: 'centro_id = ?', // Condição para exclusão
+      whereArgs: [centroId], // Substitui o '?' pelo valor do centroId
+    );
+
+   // print("Publicações com centro_id = $centroId deletadas com sucesso.");
+  }
+    static Future<int> contarPUBAtivosPorUsuario(int userId) async {
+    Database db = await DatabaseHelper.basededados;
+
+    // Faz a contagem de eventos cujo estado seja diferente de "Por validar" e que foram criados pelo usuário
+    int? count = Sqflite.firstIntValue(await db.rawQuery(
+      'SELECT COUNT(*) FROM publicacao WHERE user_id = ? AND estado_publicacao != ?',
+      [userId, 'Por validar'],
+    ));
+
+    // Retorna o valor da contagem ou 0 se for null
+    return count ?? 0;
+  }
+
 }
 

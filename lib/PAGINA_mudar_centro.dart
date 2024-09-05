@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:ficha3/BASE_DE_DADOS/APIS/api_eventos.dart';
+import 'package:ficha3/BASE_DE_DADOS/APIS/api_publicacoes.dart';
 import 'package:ficha3/PROVIDERS_GLOBAL_NA_APP/usuario_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:ficha3/BASE_DE_DADOS/APIS/api_centro.dart';
@@ -102,6 +103,74 @@ class _Pag_mudar_centroState extends State<Pag_mudar_centro> {
       );
     }
   }
+  Future<void> _carregarDadosPublicacoes() async {
+  try {
+    // Certifique-se de que o Centro foi carregado
+    final centroProvider =
+        Provider.of<Centro_Provider>(context, listen: false);
+    final centroSelecionado = centroProvider.centroSelecionado;
+    final usuarioProvider =
+        Provider.of<Usuario_Provider>(context, listen: false);
+    final userId = usuarioProvider.usuarioSelecionado!.id_user;
+
+    if (centroSelecionado != null) {
+      print('8->>Iniciando o carregamento das PUBLICAÇÕES...');
+      await ApiPublicacoes().fetchAndStorePublicacoes(centroSelecionado.id);
+
+      print('9->>Iniciando o carregamento dos COMENTÁRIOS DAS PUBLICAÇÕES...');
+      await ApiPublicacoes().fetchAndStoreComentarios(centroSelecionado.id, userId);
+
+      print(
+          '     ----->TUDO RELACIONADO A PUBLICAÇÕES CARREGADO COM SUCESSO<------------');
+    } else {
+      print('Nenhum centro selecionado');
+      throw Exception('Nenhum centro selecionado');
+    }
+  } catch (e) {
+    print('Erro ao carregar os dados das publicações: $e');
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset(
+              'assets/images/sem_wifi.png',
+              width: 120,
+              height: 120,
+            ),
+            const SizedBox(height: 5),
+            const Text(
+              'Não foi possível carregar os dados das publicações !!!',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'Verifique sua conexão com a internet e tente novamente.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _carregarDadosPublicacoes(); // Tenta carregar novamente apenas os dados das publicações
+            },
+            child: const Text('Tentar Novamente',
+                style: TextStyle(color: Color(0xFF15659F))),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 
   void selecionarCentroPorId(int idCentro) async {
   print('ID do Centro: $idCentro');
@@ -125,6 +194,7 @@ class _Pag_mudar_centroState extends State<Pag_mudar_centro> {
 
 
     await _carregarDadosEventos();
+    await _carregarDadosPublicacoes();
 
     // Redireciona para a página inicial após o carregamento dos dados
     Navigator.pushReplacementNamed(context, '/home');

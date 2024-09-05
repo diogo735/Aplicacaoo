@@ -1,8 +1,10 @@
 import 'dart:io';
 
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_eventos.dart';
+import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_publicacoes.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_topicosfavoritos_user.dart';
 import 'package:ficha3/PAGINA_INICIAL/PAGINA_PERFIL/pagina_eventos_do_user/pagina_eventos_do_user.dart';
+import 'package:ficha3/PAGINA_INICIAL/PAGINA_PERFIL/pagina_publicacoes_do_user/pagina_publicacoes_douser.dart';
 import 'package:ficha3/PROVIDERS_GLOBAL_NA_APP/centro_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:ficha3/PROVIDERS_GLOBAL_NA_APP/usuario_provider.dart';
@@ -25,6 +27,7 @@ class _pagina_de_perfilState extends State<pagina_de_perfil> {
   List<int> gruposMembro = [];
   List<int> topicosFavoritos = [];
   int n_eventos = 0;
+  int n_publicacoes = 0;
 
   @override
   void initState() {
@@ -32,6 +35,7 @@ class _pagina_de_perfilState extends State<pagina_de_perfil> {
     _carregarAreasFavoritas();
     _carregarGruposDoUsuario();
     _atualizarNumeroDeEventos();
+    _atualizarNumeroDePublicacoes();
     _carregarTopicosFavoritos();
   }
 
@@ -49,14 +53,34 @@ class _pagina_de_perfilState extends State<pagina_de_perfil> {
       int numeroDeEventos =
           await Funcoes_Eventos.contarEventosPorAutor(user_id);
 
-      // Verifique se o widget ainda está montado antes de chamar setState
-      if (!mounted) return;
+      if (!mounted)
+        return; // Verifica se o widget ainda está montado antes de setState
 
       setState(() {
         n_eventos = numeroDeEventos;
       });
     } catch (e) {
       print('Erro ao contar eventos: $e');
+    }
+  }
+
+  void _atualizarNumeroDePublicacoes() async {
+    try {
+      final usuarioProvider =
+          Provider.of<Usuario_Provider>(context, listen: false);
+      final user_id = usuarioProvider.usuarioSelecionado!.id_user;
+
+      int numeroDePublicacoes =
+          await Funcoes_Publicacoes.contarPUBAtivosPorUsuario(user_id);
+
+      if (!mounted)
+        return; // Verifica se o widget ainda está montado antes de setState
+
+      setState(() {
+        n_publicacoes = numeroDePublicacoes;
+      });
+    } catch (e) {
+      print('Erro ao contar publicações: $e');
     }
   }
 
@@ -70,8 +94,8 @@ class _pagina_de_perfilState extends State<pagina_de_perfil> {
           await Funcoes_AreasFavoritas.obeter_areas_favoritas_do_userid(
               user_id);
 
-      // Verifique se o widget ainda está montado antes de chamar setState
-      if (!mounted) return;
+      if (!mounted)
+        return; // Verifica se o widget ainda está montado antes de setState
 
       setState(() {
         areasFavoritas = areasFavoritasCarregadas;
@@ -87,13 +111,12 @@ class _pagina_de_perfilState extends State<pagina_de_perfil> {
           Provider.of<Usuario_Provider>(context, listen: false);
       final user_id = usuarioProvider.usuarioSelecionado!.id_user;
 
-      // Carregar os tópicos favoritos do usuário
       List<int> topicosFavoritosCarregados =
           await Funcoes_TopicosFavoritos.obeter_topicos_favoritos_do_userid(
               user_id);
 
-      // Verifique se o widget ainda está montado antes de chamar setState
-      if (!mounted) return;
+      if (!mounted)
+        return; // Verifica se o widget ainda está montado antes de setState
 
       setState(() {
         topicosFavoritos = topicosFavoritosCarregados;
@@ -109,10 +132,12 @@ class _pagina_de_perfilState extends State<pagina_de_perfil> {
           .usuarioSelecionado
           ?.id_user;
       int usuarioId = idUsuario ?? 0;
+
       List<int> gruposDoUsuario =
           await Funcoes_User_menbro_grupos.obterGruposDoUsuario(usuarioId);
 
-      if (!mounted) return;
+      if (!mounted)
+        return; // Verifica se o widget ainda está montado antes de setState
 
       setState(() {
         gruposMembro = gruposDoUsuario;
@@ -386,50 +411,53 @@ class _pagina_de_perfilState extends State<pagina_de_perfil> {
                                 color: const Color(0xFF979797),
                               ),
                             ),
-                            Container(
-                              padding: const EdgeInsets.all(
-                                  15), // Adiciona um espaçamento interno
-                              decoration: BoxDecoration(
-                                color:
-                                    Colors.white, // Cor de fundo do container
-                                borderRadius: BorderRadius.circular(
-                                    8), // Cantos arredondados
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.grey.withOpacity(0.3),
-                                    spreadRadius: 2,
-                                    blurRadius: 5,
-                                    offset: const Offset(
-                                        0, 3), // Sombra do container
+                            GestureDetector(
+                              onTap: () {
+                                // Navegar para a outra página
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        Pag_meus_locais(), 
                                   ),
-                                ],
-                              ),
-                              child: const Column(
-                                children: [
-                                  Text(
-                                    '3',
-                                    style: TextStyle(
-                                      color: Colors.black,
-                                      fontSize: 20,
-                                      fontFamily: 'Roboto',
-                                      fontWeight: FontWeight.w900,
-                                      height: 0.06,
-                                      letterSpacing: 0.15,
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(
+                                    15), // Adiciona um espaçamento interno
+                                decoration: BoxDecoration(
+                                  color:
+                                      Colors.white, // Cor de fundo do container
+                                  borderRadius: BorderRadius.circular(
+                                      8), // Cantos arredondados
+                                ),
+                                child: Column(
+                                  children: [
+                                    Text(
+                                      '$n_publicacoes',
+                                      style: const TextStyle(
+                                        color: Colors.black,
+                                        fontSize: 20,
+                                        fontFamily: 'Roboto',
+                                        fontWeight: FontWeight.w900,
+                                        height: 0.06,
+                                        letterSpacing: 0.15,
+                                      ),
                                     ),
-                                  ),
-                                  SizedBox(height: 25),
-                                  Text(
-                                    'Publicações',
-                                    style: TextStyle(
-                                      color: Color(0xFF646464),
-                                      fontSize: 14,
-                                      fontFamily: 'Roboto',
-                                      fontWeight: FontWeight.w300,
-                                      height: 0.12,
-                                      letterSpacing: 0.15,
+                                    const SizedBox(height: 25),
+                                    const Text(
+                                      'Publicações',
+                                      style: TextStyle(
+                                        color: Color(0xFF646464),
+                                        fontSize: 14,
+                                        fontFamily: 'Roboto',
+                                        fontWeight: FontWeight.w300,
+                                        height: 0.12,
+                                        letterSpacing: 0.15,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
                           ],
@@ -522,7 +550,6 @@ class _pagina_de_perfilState extends State<pagina_de_perfil> {
                                           right: 10, bottom: 10),
                                       child: CARD_TOPICO_INTERESSES(
                                         topico_id: topicoId,
-                                        
                                       ),
                                     ),
                                 ],

@@ -8,6 +8,11 @@ import 'package:path/path.dart';
 import 'package:ficha3/BASE_DE_DADOS/basededados.dart';
 
 class Funcoes_Usuarios {
+
+   static const String fotoPadraoUrl = 'https://i.ibb.co/zZ3GpDJ/user-padrao.png';
+  static const String fundoPadraoUrl = 'https://i.ibb.co/LrwShRv/imagem-fundo-padrao.png';
+
+
   static Future<void> createUsuariosTable(Database db) async {
     await criarPastaUsuariosImagens();
     await db.execute('CREATE TABLE usuario('
@@ -38,48 +43,7 @@ class Funcoes_Usuarios {
     }
   }
 
-  static Future<void> insertUsuarios(Database db) async {
-    await db.insert(
-      'usuario',
-      {
-        'nome': 'Susana',
-        'sobrenome': 'Carvalho',
-        'caminho_foto': 'assets/images/pessoa5.jpg',
-        'caminho_fundo': 'assets/images/fundo_susana.jpg',
-        'centro_id': 5,
-        'sobre_min':
-            'Para mim, a neve não é apenas um clima, é uma paixão que aquece meu coração gelado! ❄️⛷️🏂 #AmoNeve #InvernoÉVida'
-      },
-    );
-   
-     /*
-     await db.insert(
-      'usuario',
-      {
-        'nome': 'Lucas',
-        'sobrenome': 'Oliveira',
-        'caminho_foto': 'assets/images/pessoa7.jpeg'
-      },
-    );
-     await db.insert(
-      'usuario',
-      {
-        'nome': 'Julia',
-        'sobrenome': 'Matos',
-        'caminho_foto': 'assets/images/pessoa8.jpg'
-      },
-    );
-     
-     await db.insert(
-      'usuario',
-      {
-        'nome': 'Luara ',
-        'sobrenome': 'Costa',
-        'caminho_foto': 'assets/images/pessoa9.jpg'
-      },
-    );*/
-  }
-
+ 
   static Future<void> criarPastaUsuariosImagens() async {
     if (await Permission.storage.request().isGranted) {
       final directory = await getExternalStorageDirectory();
@@ -96,46 +60,76 @@ class Funcoes_Usuarios {
     }
   }
 
-  static Future<void> _downloadAndSaveImage(String url, String filePath) async {
-    final response = await http.get(Uri.parse(url));
-    if (response.statusCode == 200) {
-      final Uint8List bytes = response.bodyBytes;
-      final File file = File(filePath);
+   static Future<String?> _downloadAndSaveImage(String url, String filePath, {String? fallbackUrl}) async {
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final Uint8List bytes = response.bodyBytes;
+        final File file = File(filePath);
 
-      if (!await file.parent.exists()) {
-        await file.parent.create(recursive: true);
+        if (!await file.parent.exists()) {
+          await file.parent.create(recursive: true);
+        }
+
+        await file.writeAsBytes(bytes);
+        print('Imagem baixada e salva em: $filePath');
+        return filePath;
+      } else {
+       // print('Falha ao baixar imagem da URL principal: $url');
+        if (fallbackUrl != null) {
+         // print('Tentando baixar imagem da URL padrão...');
+          return await _downloadAndSaveImage(fallbackUrl, filePath);
+        }
       }
-
-      await file.writeAsBytes(bytes);
-      print('Imagem baixada e salva em: $filePath');
-    } else {
-      print('Erro ao baixar imagem: $url');
+    } catch (e) {
+     // print('Erro ao baixar imagem: $e');
+      if (fallbackUrl != null) {
+       // print('Tentando baixar imagem da URL padrão...');
+        return await _downloadAndSaveImage(fallbackUrl, filePath);
+      }
     }
+    print('Não foi possível baixar a imagem após tentar ambas as URLs.');
+    return null;
   }
 
   static Future<void> insertUsuario(Map<String, dynamic> usuario) async {
     Database db = await DatabaseHelper.basededados;
 
+    // Verifica e cria o diretório de imagens, se necessário
     final directory = await getExternalStorageDirectory();
     final imagesFolder = Directory('${directory!.path}/ALL_IMAGES/usuarios');
 
-    // Use o ID do usuário para criar os nomes dos arquivos
-    final String caminhoFotoLocal =
-        '${imagesFolder.path}/fotodeperfil_user${usuario['id']}.jpg';
-    final String caminhoFundoLocal =
-        '${imagesFolder.path}/fundoperfil_user${usuario['id']}.jpg';
+    if (!await imagesFolder.exists()) {
+      await imagesFolder.create(recursive: true);
+      print('Pasta de imagens de usuários criada em: ${imagesFolder.path}');
+    }
 
-    await _downloadAndSaveImage(usuario['caminho_foto'], caminhoFotoLocal);
-    await _downloadAndSaveImage(usuario['caminho_fundo'], caminhoFundoLocal);
+    // Define os caminhos locais para as imagens
+    final String caminhoFotoLocal = '${imagesFolder.path}/fotodeperfil_user${usuario['id']}.jpg';
+    final String caminhoFundoLocal = '${imagesFolder.path}/fundoperfil_user${usuario['id']}.jpg';
 
-    usuario['caminho_foto'] = caminhoFotoLocal;
-    usuario['caminho_fundo'] = caminhoFundoLocal;
+    // Baixa e salva a imagem de perfil
+    usuario['caminho_foto'] = await _downloadAndSaveImage(
+      usuario['caminho_foto'] ?? '',
+      caminhoFotoLocal,
+      fallbackUrl: Funcoes_Usuarios.fotoPadraoUrl,
+    ) ?? Funcoes_Usuarios.fotoPadraoUrl;
 
+    // Baixa e salva a imagem de fundo
+    usuario['caminho_fundo'] = await _downloadAndSaveImage(
+      usuario['caminho_fundo'] ?? '',
+      caminhoFundoLocal,
+      fallbackUrl: Funcoes_Usuarios.fundoPadraoUrl,
+    ) ?? Funcoes_Usuarios.fundoPadraoUrl;
+
+    // Insere o usuário no banco de dados
     await db.insert(
       'usuario',
       usuario,
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
+
+    print('Usuário ${usuario['id']} inserido com sucesso no banco de dados.');
   }
 
   Future<List<Map<String, dynamic>>> consultaUsuarios() async {

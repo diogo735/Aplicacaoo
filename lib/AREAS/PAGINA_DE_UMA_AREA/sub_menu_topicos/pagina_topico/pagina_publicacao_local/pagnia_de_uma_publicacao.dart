@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_publicacoes.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_imagens_de_publicacoes.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_horario_publicacao.dart';
+import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_usuarios.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_comentarios_de_publicacoes.dart';
@@ -19,7 +20,8 @@ class pagina_publicacao extends StatefulWidget {
   final int idPublicacao;
   final Color cor;
 
-  const pagina_publicacao({super.key, required this.idPublicacao,required this.cor});
+  const pagina_publicacao(
+      {super.key, required this.idPublicacao, required this.cor});
   @override
   _pagina_publicacaoState createState() => _pagina_publicacaoState();
 }
@@ -119,13 +121,27 @@ class _pagina_publicacaoState extends State<pagina_publicacao> {
         website = detalhes.first['pagina_web'] ?? '';
         contacto = detalhes.first['telemovel'] ?? '';
         userid = detalhes.first['user_id'];
-        data_pub = detalhes.first['data_publicacao'] ?? '';
+        DateTime dateTime = DateTime.parse(detalhes.first['data_publicacao']);
+      data_pub = DateFormat('dd/MM/yyyy \'às\' HH:mm').format(dateTime);
       });
     }
   }
 
+  TimeOfDay? _timeOfDayFromString(String hora) {
+    if (hora == 'Fechado') {
+      return null; // Retorna null se o horário for "Fechado"
+    }
+
+    final partes = hora.split(':');
+    return TimeOfDay(
+      hour: int.parse(partes[0]),
+      minute: int.parse(partes[1]),
+    );
+  }
+
   String? obterEstadoEstabelecimento() {
     int diaAtual = DateTime.now().weekday;
+    TimeOfDay agora = TimeOfDay.now();
 
     List<String> diasSemana = [
       'Segunda-feira',
@@ -140,22 +156,30 @@ class _pagina_publicacaoState extends State<pagina_publicacao> {
     for (var horario in horarios) {
       String diaHorario = horario['dia_semana'];
       if (diasSemana.indexOf(diaHorario) + 1 == diaAtual) {
-        String horaAbertura = horario['hora_aberto'];
-        String horaFechamento = horario['hora_fechar'];
-        int horaAtual = DateTime.now().hour;
-        int minutoAtual = DateTime.now().minute;
+        String horaAberto = horario['hora_aberto'];
+        String horaFechar = horario['hora_fechar'];
 
-        int horaAberturaInt = int.parse(horaAbertura.split(':')[0]);
-        int minutoAberturaInt = int.parse(horaAbertura.split(':')[1]);
-        int horaFechamentoInt = int.parse(horaFechamento.split(':')[0]);
-        int minutoFechamentoInt = int.parse(horaFechamento.split(':')[1]);
+        // Verifica se o horário é "Fechado"
+        if (horaAberto == 'Fechado' || horaFechar == 'Fechado') {
+          return 'Fechado';
+        }
 
-        if ((horaAtual > horaAberturaInt ||
-                (horaAtual == horaAberturaInt &&
-                    minutoAtual >= minutoAberturaInt)) &&
-            (horaAtual < horaFechamentoInt ||
-                (horaAtual == horaFechamentoInt &&
-                    minutoAtual <= minutoFechamentoInt))) {
+        // Converte as horas para TimeOfDay
+        TimeOfDay? horaAbertura = _timeOfDayFromString(horaAberto);
+        TimeOfDay? horaFechamento = _timeOfDayFromString(horaFechar);
+
+        if (horaAbertura == null || horaFechamento == null) {
+          return 'Fechado';
+        }
+
+        // Converte TimeOfDay para DateTime para comparação
+        DateTime agoraDT = DateTime(0, 0, 0, agora.hour, agora.minute);
+        DateTime aberturaDT =
+            DateTime(0, 0, 0, horaAbertura.hour, horaAbertura.minute);
+        DateTime fechamentoDT =
+            DateTime(0, 0, 0, horaFechamento.hour, horaFechamento.minute);
+
+        if (agoraDT.isAfter(aberturaDT) && agoraDT.isBefore(fechamentoDT)) {
           return 'Aberto Agora';
         } else {
           return 'Fechado';
@@ -172,7 +196,7 @@ class _pagina_publicacaoState extends State<pagina_publicacao> {
     for (var imagem in imagens) {
       if (imagem['publicacao_id'] == widget.idPublicacao) {
         caminhos.add(imagem['caminho_imagem']);
-        print(imagem['caminho_imagem']);
+        //print(imagem['caminho_imagem']);
       }
     }
     setState(() {
@@ -202,21 +226,14 @@ class _pagina_publicacaoState extends State<pagina_publicacao> {
     ];
 
     for (var horario in horarios) {
-      print(horario);
-    }
-
-    print('Dia Atual: $diaAtual');
-
-    for (var horario in horarios) {
       String diaHorario = horario['dia_semana'];
-      print('Dia Horário: $diaHorario');
-
       if (diasSemana.indexOf(diaHorario) + 1 == diaAtual) {
         String horaAberto = horario['hora_aberto'];
         String horaFechar = horario['hora_fechar'];
         return 'das $horaAberto às $horaFechar';
       }
     }
+    return null; // Explicitamente retornar null se não houver horário para o dia atual
   }
 
   double calcular_media_classificacao() {
@@ -278,13 +295,13 @@ class _pagina_publicacaoState extends State<pagina_publicacao> {
                               MaterialPageRoute(
                                 builder: (context) => pag_todas_imagens(
                                   cor: widget.cor,
-                                   id_publicacao: widget.idPublicacao,),
+                                  id_publicacao: widget.idPublicacao,
+                                ),
                               ),
                             );
                           },
                           child: Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 7),
+                            padding: const EdgeInsets.symmetric(horizontal: 7),
                             child: Container(
                               width: MediaQuery.of(context).size.width - 25,
                               height: MediaQuery.of(context).size.height / 3,
@@ -293,8 +310,9 @@ class _pagina_publicacaoState extends State<pagina_publicacao> {
                               ),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(5),
-                                child: Image.asset(
-                                  caminhos_Imagens[index],
+                                child: Image.file(
+                                  File(caminhos_Imagens[
+                                      index]), // Converte o caminho em um objeto File
                                   fit: BoxFit.cover,
                                 ),
                               ),
@@ -354,7 +372,7 @@ class _pagina_publicacaoState extends State<pagina_publicacao> {
               ),
               Row(
                 ///////////////////////////avaliacao////////////////////////////////
-          
+
                 children: [
                   Padding(
                     padding: const EdgeInsets.only(left: 14),
@@ -407,7 +425,7 @@ class _pagina_publicacaoState extends State<pagina_publicacao> {
               const SizedBox(
                 height: 20,
               ), ///////////////////////////descricao////////////////////////////////
-               Row(
+              Row(
                 children: [
                   Padding(
                     padding: const EdgeInsets.only(left: 14),
@@ -497,7 +515,10 @@ class _pagina_publicacaoState extends State<pagina_publicacao> {
                       child: Align(
                         alignment: Alignment.centerLeft,
                         child: Text(
-                          horarioAtual ?? '',
+                          // Exibe "Fechado" apenas se a variável `horarioAtual` for "Fechado"
+                          horarioAtual == 'Fechado'
+                              ? 'Fechado'
+                              : horarioAtual ?? '',
                           style: const TextStyle(
                             color: Colors.black,
                             fontSize: 14,
@@ -518,13 +539,22 @@ class _pagina_publicacaoState extends State<pagina_publicacao> {
                         itemBuilder: (context, index) {
                           String diaSemana = horarios[index]['dia_semana']
                               .replaceAll('-feira', '');
-                          String horaAbertura =
-                              horarios[index]['hora_aberto'];
+                          String horaAbertura = horarios[index]['hora_aberto'];
                           String horaFechamento =
                               horarios[index]['hora_fechar'];
+
                           // Ajuste o tamanho do dia da semana para que todos tenham o mesmo tamanho
                           String diaSemanaAjustado = diaSemana.padRight(10);
-          
+
+                          // Verifique se o horário é "Fechado"
+                          String horarioExibido;
+                          if (horaAbertura == 'Fechado' ||
+                              horaFechamento == 'Fechado') {
+                            horarioExibido = 'Fechado';
+                          } else {
+                            horarioExibido = '$horaAbertura - $horaFechamento';
+                          }
+
                           return Padding(
                             padding:
                                 const EdgeInsets.only(left: 45, bottom: 10),
@@ -542,22 +572,18 @@ class _pagina_publicacaoState extends State<pagina_publicacao> {
                                         fontSize: 16,
                                         fontFamily: 'Roboto',
                                         fontWeight: FontWeight.w400,
-                                        //height: 1,
                                         letterSpacing: 0.15,
                                       ),
                                     ),
                                   ),
-          
                                   const SizedBox(width: 10),
-          
                                   Text(
-                                    '$horaAbertura - $horaFechamento',
+                                    horarioExibido,
                                     style: const TextStyle(
                                       color: Colors.black,
                                       fontSize: 16,
                                       fontFamily: 'Roboto',
                                       fontWeight: FontWeight.w400,
-                                      //height: 1,
                                       letterSpacing: 0.15,
                                     ),
                                   ),
@@ -569,12 +595,12 @@ class _pagina_publicacaoState extends State<pagina_publicacao> {
                       ),
                     ],
                   )),
-          
+
               const SizedBox(
                 height: 5,
               ),
               /////////////////////////////////////////////localização///////////////
-               Row(
+              Row(
                 children: [
                   Padding(
                     padding: const EdgeInsets.only(left: 14),
@@ -648,7 +674,7 @@ class _pagina_publicacaoState extends State<pagina_publicacao> {
               const SizedBox(
                 height: 25,
               ),
-               Row(
+              Row(
                 children: [
                   Padding(
                     padding: const EdgeInsets.only(left: 14),
@@ -721,7 +747,8 @@ class _pagina_publicacaoState extends State<pagina_publicacao> {
                             context,
                             MaterialPageRoute(
                                 builder: (context) => criar_cometario_pub(
-                                    id_publicacao: widget.idPublicacao,cor:widget.cor)),
+                                    id_publicacao: widget.idPublicacao,
+                                    cor: widget.cor)),
                           );
                         },
                         style: ButtonStyle(
@@ -732,10 +759,9 @@ class _pagina_publicacaoState extends State<pagina_publicacao> {
                           overlayColor: WidgetStateProperty.all<Color>(
                               Colors.green[100]!),
                           side: WidgetStateProperty.all<BorderSide>(
-                               BorderSide(
-                                  color: widget.cor, width: 1)),
-                          shape: WidgetStateProperty.all<
-                              RoundedRectangleBorder>(
+                              BorderSide(color: widget.cor, width: 1)),
+                          shape:
+                              WidgetStateProperty.all<RoundedRectangleBorder>(
                             RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(15),
                             ),
@@ -771,14 +797,14 @@ class _pagina_publicacaoState extends State<pagina_publicacao> {
                         context,
                         MaterialPageRoute(
                             builder: (context) => pag_cometarios_pub(
-                              cor: widget.cor,
+                                  cor: widget.cor,
                                   id_publicacao: widget.idPublicacao,
                                 )),
                       );
                     },
                     style: ButtonStyle(
-                      backgroundColor: WidgetStateProperty.all<Color>(
-                          widget.cor),
+                      backgroundColor:
+                          WidgetStateProperty.all<Color>(widget.cor),
                       foregroundColor: WidgetStateProperty.all<Color>(
                           const Color.fromARGB(255, 255, 255, 255)),
                       overlayColor: WidgetStateProperty.all<Color>(
@@ -816,7 +842,8 @@ class _pagina_publicacaoState extends State<pagina_publicacao> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => criar_cometario_pub(cor: widget.cor,
+                            builder: (context) => criar_cometario_pub(
+                                cor: widget.cor,
                                 id_publicacao: widget.idPublicacao)),
                       );
                     },
@@ -825,10 +852,10 @@ class _pagina_publicacaoState extends State<pagina_publicacao> {
                           WidgetStateProperty.all<Color>(Colors.white),
                       foregroundColor:
                           WidgetStateProperty.all<Color>(widget.cor),
-                      overlayColor:
-                          WidgetStateProperty.all<Color>(widget.cor.withOpacity(0.3)),
+                      overlayColor: WidgetStateProperty.all<Color>(
+                          widget.cor.withOpacity(0.3)),
                       side: WidgetStateProperty.all<BorderSide>(
-                           BorderSide(color: widget.cor, width: 1)),
+                          BorderSide(color: widget.cor, width: 1)),
                       shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                         RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(15),
@@ -843,7 +870,7 @@ class _pagina_publicacaoState extends State<pagina_publicacao> {
                 height: 15,
               ),
               /////////////////////////////////////////////mais informações///////////////
-               Row(
+              Row(
                 children: [
                   Padding(
                     padding: const EdgeInsets.only(left: 14),
@@ -883,10 +910,10 @@ class _pagina_publicacaoState extends State<pagina_publicacao> {
                     style: ButtonStyle(
                       backgroundColor: WidgetStateProperty.all<Color>(
                           const Color.fromARGB(255, 255, 255, 255)),
-                      foregroundColor: WidgetStateProperty.all<Color>(
-                          widget.cor),
-                      overlayColor:
-                          WidgetStateProperty.all<Color>(widget.cor.withOpacity(0.3)),
+                      foregroundColor:
+                          WidgetStateProperty.all<Color>(widget.cor),
+                      overlayColor: WidgetStateProperty.all<Color>(
+                          widget.cor.withOpacity(0.3)),
                       side: WidgetStateProperty.all<BorderSide>(
                           BorderSide(color: widget.cor, width: 1)),
                       shape: WidgetStateProperty.all<RoundedRectangleBorder>(
@@ -920,14 +947,13 @@ class _pagina_publicacaoState extends State<pagina_publicacao> {
                       style: ButtonStyle(
                         backgroundColor: WidgetStateProperty.all<Color>(
                             const Color.fromARGB(255, 255, 255, 255)),
-                        foregroundColor: WidgetStateProperty.all<Color>(
-                            widget.cor),
+                        foregroundColor:
+                            WidgetStateProperty.all<Color>(widget.cor),
                         overlayColor: WidgetStateProperty.all<Color>(
                             widget.cor.withOpacity(0.3)),
                         side: WidgetStateProperty.all<BorderSide>(
-                             BorderSide(color: widget.cor, width: 1)),
-                        shape:
-                            WidgetStateProperty.all<RoundedRectangleBorder>(
+                            BorderSide(color: widget.cor, width: 1)),
+                        shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                           RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(5),
                           ),
@@ -961,14 +987,13 @@ class _pagina_publicacaoState extends State<pagina_publicacao> {
                     style: ButtonStyle(
                       backgroundColor: WidgetStateProperty.all<Color>(
                           const Color.fromARGB(255, 255, 255, 255)),
-                      foregroundColor: WidgetStateProperty.all<Color>(
-                          widget.cor),
+                      foregroundColor:
+                          WidgetStateProperty.all<Color>(widget.cor),
                       overlayColor: WidgetStateProperty.all<Color>(
                           widget.cor.withOpacity(0.3)),
                       side: WidgetStateProperty.all<BorderSide>(
-                           BorderSide(color: widget.cor, width: 1)),
-                      shape:
-                          WidgetStateProperty.all<RoundedRectangleBorder>(
+                          BorderSide(color: widget.cor, width: 1)),
+                      shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                         RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(5),
                         ),
@@ -999,7 +1024,7 @@ class _pagina_publicacaoState extends State<pagina_publicacao> {
               const SizedBox(
                 height: 20,
               ),
-               Row(
+              Row(
                 children: [
                   Padding(
                     padding: const EdgeInsets.only(left: 14),

@@ -204,11 +204,11 @@ class _pag_cometarios_pubState extends State<pag_cometarios_pub> {
                 itemCount: comentarios.length,
                 itemBuilder: (context, index) {
                   var comentario = comentarios[index];
-                  print('ID do Comentário ENVIADOOOO: ${comentario['id']}');
-                  print('ID do Usuário: ${comentario['user_id']}');
+                 // print('ID do Comentário ENVIADOOOO: ${comentario['id']}');
+                  //print('ID do Usuário: ${comentario['user_id']}');
 
-                  print(
-                      'Texto do Comentário: ${comentario['texto_comentario']}');
+                  //print(
+                     // 'Texto do Comentário: ${comentario['texto_comentario']}');
 
                   return Padding(
                     padding: const EdgeInsets.only(

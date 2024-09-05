@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:ficha3/BASE_DE_DADOS/APIS/api_publicacoes.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
@@ -17,7 +20,8 @@ class criar_cometario_pub extends StatefulWidget {
   final Color cor;
 
   // ignore: non_constant_identifier_names
-  const criar_cometario_pub({super.key, required this.id_publicacao,required this.cor});
+  const criar_cometario_pub(
+      {super.key, required this.id_publicacao, required this.cor});
 
   @override
   // ignore: library_private_types_in_public_api
@@ -68,29 +72,6 @@ class _criar_cometario_pubState extends State<criar_cometario_pub> {
 
   // ignore: non_constant_identifier_names
 
-  void _sumeterFormulario(int userid) {
-    if (_formKey.currentState!.validate()) {
-      String comentario = _comentarioController.text;
-      int avaliacao = _avaliacao;
-
-      print('Comentário: $comentario');
-      print('Avaliação: $avaliacao');
-
-      setState(() {
-        _avaliacao = 0;
-        descricao = '';
-      });
-
-      String data = DateFormat('dd/MM/yyyy').format(DateTime.now());
-      Funcoes_Comentarios_Publicacoes.inserir_comentario_feito_pelo_user(
-        userid,
-        avaliacao,
-        comentario,
-        data,
-        widget.id_publicacao,
-      );
-    }
-  }
 
   void _onRatingUpdate(double rating) {
     setState(() {
@@ -125,7 +106,7 @@ class _criar_cometario_pubState extends State<criar_cometario_pub> {
 
     return Scaffold(
       appBar: AppBar(
-        title:  Text(
+        title: Text(
           'Criar Comentario',
           style: TextStyle(
             fontSize: 18,
@@ -135,7 +116,7 @@ class _criar_cometario_pubState extends State<criar_cometario_pub> {
           ),
         ),
         backgroundColor: Colors.white,
-        iconTheme:  IconThemeData(color: widget.cor),
+        iconTheme: IconThemeData(color: widget.cor),
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () {
@@ -163,10 +144,12 @@ class _criar_cometario_pubState extends State<criar_cometario_pub> {
                         height: 50,
                         decoration: BoxDecoration(
                           image: DecorationImage(
-                            image: fotoPub.isNotEmpty
-                                ? AssetImage(fotoPub)
+                            image: fotoPub.isNotEmpty &&
+                                    File(fotoPub).existsSync()
+                                ? FileImage(File(
+                                    fotoPub)) // Usa FileImage se o arquivo existir
                                 : const AssetImage(
-                                        'assets/images/sem_imagem.png')
+                                        'assets/images/sem_imagem.png') // Usa AssetImage como fallback
                                     as ImageProvider,
                             fit: BoxFit.cover,
                           ),
@@ -211,7 +194,7 @@ class _criar_cometario_pubState extends State<criar_cometario_pub> {
                       letterSpacing: 0.15,
                     ),
                   ),
-                   SizedBox(height: 5),
+                  SizedBox(height: 5),
                   RatingBar.builder(
                     initialRating: 0,
                     minRating: 1,
@@ -229,7 +212,7 @@ class _criar_cometario_pubState extends State<criar_cometario_pub> {
                   const SizedBox(width: 10),
                   Text(
                     descricao,
-                    style:  TextStyle(
+                    style: TextStyle(
                       color: widget.cor,
                       fontSize: 16,
                       fontFamily: 'Roboto',
@@ -269,27 +252,64 @@ class _criar_cometario_pubState extends State<criar_cometario_pub> {
                   Align(
                     alignment: Alignment.bottomRight,
                     child: ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
                         FocusScope.of(context).unfocus();
                         if (_avaliacao == 0 ||
-                            _comentarioController.text == '') {
+                            _comentarioController.text.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content:
-                                  Text('Por favor, preencha todos os campos !'),
+                                  Text('Por favor, preencha todos os campos!'),
                               backgroundColor: Colors.red,
                             ),
                           );
                         } else {
-                          _sumeterFormulario(user_id);
-                          Navigator.pop(context, true);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Comentário publicado!'),
-                              backgroundColor: Colors.green,
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
+                          // Preparar os dados do comentário
+                          Map<String, dynamic> comentario = {
+                            'user_id': user_id,
+                            'publicacao_id':
+                                widget.id_publicacao, // ID da publicação
+                            'conteudo': _comentarioController.text,
+                            'classificacao': _avaliacao,
+                             'data_comentario': DateFormat("yyyy-MM-dd HH:mm:ss.SSS'+00'").format(DateTime.now().toUtc()),
+                          };
+
+                          String resultado = await ApiPublicacoes()
+                              .criarComentario(comentario);
+
+                          if (resultado ==
+                              "Comentário publicado com sucesso!") {
+                            
+                            Navigator.pop(context,
+                                true); // Fechar a página e retornar verdadeiro
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(resultado),
+                                backgroundColor: Colors.green,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content:
+                                    resultado == "Sem conexão com a internet."
+                                        ? Row(
+                                            children: [
+                                              const Icon(
+                                                Icons.wifi_off,
+                                                color: Colors.white,
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Text(resultado),
+                                            ],
+                                          )
+                                        : Text(resultado),
+                                backgroundColor: Colors.red,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
                         }
                       },
                       style: ElevatedButton.styleFrom(
@@ -298,7 +318,7 @@ class _criar_cometario_pubState extends State<criar_cometario_pub> {
                       ),
                       child: const Text('Publicar'),
                     ),
-                  ),
+                  )
                 ],
               ),
             ),

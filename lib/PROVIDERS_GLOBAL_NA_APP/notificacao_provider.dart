@@ -55,8 +55,7 @@ class NotificacaoService extends ChangeNotifier {
             Map<String, dynamic>.from(notificacao);
 
         // Print do estado antes de mostrar a notificação
-        print(
-            'Antes de mostrar a notificação: ${notificacaoModificavel['mensagem']} - lida: ${notificacaoModificavel['lida']}, ja_mostrei_notificacao: ${notificacaoModificavel['ja_mostrei_notificacao']}');
+      //  print(  'Antes de mostrar a notificação: ${notificacaoModificavel['mensagem']} - lida: ${notificacaoModificavel['lida']}, ja_mostrei_notificacao: ${notificacaoModificavel['ja_mostrei_notificacao']}');
 
         if (notificacaoModificavel['lida'] == 0 &&
             notificacaoModificavel['ja_mostrei_notificacao'] == 0) {
@@ -69,11 +68,9 @@ class NotificacaoService extends ChangeNotifier {
           // Atualiza o estado da notificação no banco de dados
           await Funcoes_Notificacoes.updateNotificacao(
               notificacaoModificavel['id'], {'ja_mostrei_notificacao': 1});
-          print(
-              'Notificação atualizada no banco de dados com id: ${notificacaoModificavel['id']}');
+          //print( 'Notificação atualizada no banco de dados com id: ${notificacaoModificavel['id']}');
           // Print do estado depois de mostrar a notificação
-          print(
-              'Depois de mostrar a notificação: ${notificacaoModificavel['mensagem']} - lida: ${notificacaoModificavel['lida']}, ja_mostrei_notificacao: ${notificacaoModificavel['ja_mostrei_notificacao']}');
+         // print( 'Depois de mostrar a notificação: ${notificacaoModificavel['mensagem']} - lida: ${notificacaoModificavel['lida']}, ja_mostrei_notificacao: ${notificacaoModificavel['ja_mostrei_notificacao']}');
         }
       }
     } catch (error) {

@@ -119,6 +119,7 @@ Future<List<Map<String, dynamic>>> consultaTopicosPorArea(int areaId) async {
   );
   return topicos;
 }
+
 static Future<Map<String, String>> obterDadosTopico(int idTopico) async {
     Database db = await DatabaseHelper.basededados;
     List<Map<String, dynamic>> resultado = await db.query(

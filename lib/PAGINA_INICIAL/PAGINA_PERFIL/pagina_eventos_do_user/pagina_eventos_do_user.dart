@@ -57,91 +57,83 @@ class _Pag_meus_eventosState extends State<Pag_meus_eventos>
     });
   }
 
-  void _carregarDados() async {
-    await _carregarEventos();
-    await _carregarDadosDaAPI();
+ void _carregarDados() async {
+  await _carregarEventos();
+  await _carregarDadosDaAPI();
 
+  if (mounted) {
     setState(() {
       _isLoading = false; // Define como falso após o carregamento dos dados
     });
   }
+}
+
 
   Future<void> _carregarDadosDaAPI() async {
-    final centroProvider = Provider.of<Centro_Provider>(context, listen: false);
-    final usuarioProvider =
-        Provider.of<Usuario_Provider>(context, listen: false);
+  final centroProvider = Provider.of<Centro_Provider>(context, listen: false);
+  final usuarioProvider = Provider.of<Usuario_Provider>(context, listen: false);
 
-    final centroSelecionado = centroProvider.centroSelecionado;
-    final userId = usuarioProvider.usuarioSelecionado!.id_user;
+  final centroSelecionado = centroProvider.centroSelecionado;
+  final userId = usuarioProvider.usuarioSelecionado!.id_user;
 
-    // Verificar conectividade com a internet
-    var connectivityResult = await (Connectivity().checkConnectivity());
+  // Verificar conectividade com a internet
+  var connectivityResult = await (Connectivity().checkConnectivity());
 
-    if (connectivityResult == ConnectivityResult.none) {
-      print(
-          'Sem conexão com a internet. Não será possível carregar dados da API.');
-      return; // Se não houver conexão, sai da função.
-    }
+  if (connectivityResult == ConnectivityResult.none) {
+    print('Sem conexão com a internet. Não será possível carregar dados da API.');
+    return; // Se não houver conexão, sai da função.
+  }
 
-    if (centroSelecionado != null) {
-      try {
-        print('4->>Iniciando o carregamento dos EVENTOS...');
-        await ApiEventos().fetchAndStoreEventos(centroSelecionado.id, userId);
+  if (centroSelecionado != null) {
+    try {
+      print('4->>Iniciando o carregamento dos EVENTOS...');
+      await ApiEventos().fetchAndStoreEventos(centroSelecionado.id, userId);
 
-        print('5->>Iniciando o carregamento dos PARTICIPANTES DOS EVENTOS...');
-        await ApiEventos()
-            .fetchAndStoreParticipantes(centroSelecionado.id, userId);
+      print('5->>Iniciando o carregamento dos PARTICIPANTES DOS EVENTOS...');
+      await ApiEventos().fetchAndStoreParticipantes(centroSelecionado.id, userId);
 
-        print('6->>Iniciando o carregamento dos IMAGENS DOS EVENTOS...');
-        await ApiEventos()
-            .fetchAndStoreImagensEvento(centroSelecionado.id, userId);
+      print('6->>Iniciando o carregamento dos IMAGENS DOS EVENTOS...');
+      await ApiEventos().fetchAndStoreImagensEvento(centroSelecionado.id, userId);
 
-        print('7->>Iniciando o carregamento dos COMENTARIOS DOS EVENTOS...');
-        await ApiEventos()
-            .fetchAndStoreComentariosEvento(centroSelecionado.id, userId);
+      print('7->>Iniciando o carregamento dos COMENTARIOS DOS EVENTOS...');
+      await ApiEventos().fetchAndStoreComentariosEvento(centroSelecionado.id, userId);
 
-        // Após carregar os dados da API, atualize a lista de eventos locais
-        await _carregarEventos();
-      } on SocketException catch (e) {
-        print('Erro de conectividade: $e');
-      } catch (e) {
-        print('Erro ao carregar dados da API: $e');
-      }
+      // Após carregar os dados da API, atualize a lista de eventos locais
+      await _carregarEventos();
+    } on SocketException catch (e) {
+      print('Erro de conectividade: $e');
+    } catch (e) {
+      print('Erro ao carregar dados da API: $e');
     }
   }
+}
+
 
   @override
   void dispose() {
     _tabController.dispose();
-    // Cancelar o timer da base de dados
+    
     super.dispose();
   }
 
   Future<void> _carregarEventos() async {
-    final usuarioProvider =
-        Provider.of<Usuario_Provider>(context, listen: false);
-    final userId = usuarioProvider.usuarioSelecionado!.id_user;
+  final usuarioProvider = Provider.of<Usuario_Provider>(context, listen: false);
+  final userId = usuarioProvider.usuarioSelecionado!.id_user;
 
-    List<Map<String, dynamic>> eventosCarregados =
-        await Funcoes_Eventos.consultaEventosPorAutor(userId);
+  List<Map<String, dynamic>> eventosCarregados = await Funcoes_Eventos.consultaEventosPorAutor(userId);
 
+  if (mounted) {
     setState(() {
       eventos = eventosCarregados;
-
-      _pendentesCount = eventos
-          .where((evento) => evento['estado_evento'] == 'Por validar')
-          .length;
-      _ativosCount =
-          eventos.where((evento) => evento['estado_evento'] == 'Ativa').length;
-      _finalizadosCount = eventos
-          .where((evento) => evento['estado_evento'] == 'Finalizada')
-          .length;
-      _reportadosCount = eventos
-          .where((evento) => evento['estado_evento'] == 'Denunciada')
-          .length;
+      _pendentesCount = eventos.where((evento) => evento['estado_evento'] == 'Por validar').length;
+      _ativosCount = eventos.where((evento) => evento['estado_evento'] == 'Ativa').length;
+      _finalizadosCount = eventos.where((evento) => evento['estado_evento'] == 'Finalizada').length;
+      _reportadosCount = eventos.where((evento) => evento['estado_evento'] == 'Denunciada').length;
       print("Eventos carregados");
     });
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
