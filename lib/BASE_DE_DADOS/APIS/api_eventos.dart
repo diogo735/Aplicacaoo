@@ -11,7 +11,7 @@ import 'package:ficha3/BASE_DE_DADOS/APIS/TOKENJTW.dart';
 
 class ApiEventos {
   final String apiUrlEventos =
-      'https://backend-teste-q43r.onrender.com/eventos/listarEventos/';
+      'https://backend-teste-q43r.onrender.com/eventos/listarEventosAPP/';
   // final String apiUrlCriarEvento = 'https://backend-teste-q43r.onrender.com/eventos/criar';
   final String apiUrlAtualizarEventos =
       'https://backend-teste-q43r.onrender.com/eventos/update/';

@@ -15,7 +15,7 @@ class ApiPublicacoes {
       'https://backend-teste-q43r.onrender.com/comentarios/comentariospubdeambos/centro';
 
   final String apiUrlcriar =
-      'https://backend-teste-q43r.onrender.com/publicacoes/create';
+      'https://backend-teste-q43r.onrender.com/publicacoes/createAPP';
 
   final String apiUrlComentario =
       'https://backend-teste-q43r.onrender.com/comentarios/criarpubcomentario';
