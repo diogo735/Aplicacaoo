@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_eventos.dart';
+import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_partilhasfotos.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_publicacoes.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_topicosfavoritos_user.dart';
 import 'package:ficha3/PAGINA_INICIAL/PAGINA_PERFIL/pagina_eventos_do_user/pagina_eventos_do_user.dart';
@@ -28,7 +29,7 @@ class _pagina_de_perfilState extends State<pagina_de_perfil> {
   List<int> topicosFavoritos = [];
   int n_eventos = 0;
   int n_publicacoes = 0;
-
+int n_partilhas=0;
   @override
   void initState() {
     super.initState();
@@ -36,6 +37,7 @@ class _pagina_de_perfilState extends State<pagina_de_perfil> {
     _carregarGruposDoUsuario();
     _atualizarNumeroDeEventos();
     _atualizarNumeroDePublicacoes();
+    _atualizarNumerodePartilhas();
     _carregarTopicosFavoritos();
   }
 
@@ -63,6 +65,26 @@ class _pagina_de_perfilState extends State<pagina_de_perfil> {
       print('Erro ao contar eventos: $e');
     }
   }
+  void _atualizarNumerodePartilhas() async {
+    try {
+      final usuarioProvider =
+          Provider.of<Usuario_Provider>(context, listen: false);
+      final user_id = usuarioProvider.usuarioSelecionado!.id_user;
+
+      int numeroDpartilhas =
+          await Funcoes_Partilhas().contarPartilhasPorUsuario(user_id);
+
+      if (!mounted)
+        return; // Verifica se o widget ainda está montado antes de setState
+
+      setState(() {
+        n_partilhas = numeroDpartilhas;
+      });
+    } catch (e) {
+      print('Erro ao contar eventos: $e');
+    }
+  }
+
 
   void _atualizarNumeroDePublicacoes() async {
     try {
@@ -366,10 +388,10 @@ class _pagina_de_perfilState extends State<pagina_de_perfil> {
                                     8), // Cantos arredondados
                                 
                               ),
-                              child: const Column(
+                              child:  Column(
                                 children: [
                                   Text(
-                                    '0',
+                                    '$n_partilhas',
                                     style: TextStyle(
                                       color: Colors.black,
                                       fontSize: 20,

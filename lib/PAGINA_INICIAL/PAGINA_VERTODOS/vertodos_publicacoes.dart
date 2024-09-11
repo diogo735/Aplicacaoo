@@ -1,3 +1,4 @@
+import 'package:ficha3/AREAS/PAGINA_DE_UMA_AREA/sub_menu_topicos/pagina_topico/pagina_publicacao_local/pagnia_de_uma_publicacao.dart';
 import 'package:ficha3/BASE_DE_DADOS/APIS/api_geolocaliza%C3%A7%C3%A3o.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_imagens_de_publicacoes.dart';
 import 'package:ficha3/PROVIDERS_GLOBAL_NA_APP/centro_provider.dart';
@@ -24,62 +25,91 @@ class _vertodos_publicacoesState extends State<vertodos_publicacoes> {
     _carregarPublicacoes(); // Carregar publicações ao iniciar a tela
   }
 
-Future<void> _getLocation() async {
-  Localizacao localizacao = Localizacao();
-  try {
-    // Obter a posição atual do dispositivo
-    Position position = await localizacao.determinaposicao();
+  Future<void> _getLocation() async {
+    Localizacao localizacao = Localizacao();
+    try {
+      // Obter a posição atual do dispositivo
+      Position position = await localizacao.determinaposicao();
 
-    // Atualizar o estado com as coordenadas obtidas
+      // Atualizar o estado com as coordenadas obtidas
+      setState(() {
+        _latitude = position.latitude;
+        _longitude = position.longitude;
+      });
+    } catch (e) {
+      print("Erro ao obter a localização: $e");
+    }
+  }
+Color getColorForArea(int areaId) {
+    switch (areaId) {
+      case 1:
+        return const Color(0xFF53981D); // Desporto
+      case 2:
+        return const Color(0xFF8F3023); // Saúde
+      case 3:
+        return const Color(0xFFA91C7A); // Gastronomia
+      case 4:
+        return const Color(0xFF3779C6); // Formação
+      case 5:
+        return const Color(0xFF25ABAB); // Lazer
+      case 6:
+        return const Color(0xFFB7BB06); // Transportes
+      case 7:
+        return const Color(0xFF815520); // Alojamento
+      case 0:
+        return const Color.fromARGB(255, 255, 255, 255); // Ver Info
+      default:
+        return Colors.grey; // Cor padrão para IDs não reconhecidos
+    }
+  }
+  void _carregarPublicacoes() async {
+    await _getLocation();
+    Funcoes_Publicacoes funcoesPublicacoes = Funcoes_Publicacoes();
+    Funcoes_Publicacoes_Imagens funcoesPublicacoesImagens =
+        Funcoes_Publicacoes_Imagens();
+    final centroProvider = Provider.of<Centro_Provider>(context, listen: false);
+    final centroSelecionado = centroProvider.centroSelecionado;
+    int centroId = centroSelecionado!.id;
+
+    // Crie uma lista mutável a partir da lista retornada
+    List<Map<String, dynamic>> publicacoesCarregadas =
+        (await funcoesPublicacoes.consultaPublicacoesPorCentroId(centroId))
+            .map((publicacao) => Map<String, dynamic>.from(publicacao))
+            .toList();
+
+    for (var publicacao in publicacoesCarregadas) {
+      Map<String, dynamic>? primeiraImagem = await funcoesPublicacoesImagens
+          .retorna_primeira_imagem(publicacao['id']);
+      imagemPaths[publicacao['id']] = primeiraImagem != null
+          ? primeiraImagem['caminho_imagem']
+          : 'assets/images/sem_imagem.png';
+
+      String local = publicacao['local'];
+
+      // Obter coordenadas do local da publicação
+      Map<String, double> coordenadas =
+          await LocalizacaoOSM().getCoordinatesFromName(local);
+
+      // Salvar as coordenadas na publicação
+      publicacao['latitude'] = coordenadas['latitude'];
+      publicacao['longitude'] = coordenadas['longitude'];
+
+      // Calcular a distância entre o usuário e o local da publicação
+      double distance = calculateDistance(_latitude, _longitude,
+          coordenadas['latitude']!, coordenadas['longitude']!);
+
+      // Armazenar a distância formatada como string na publicação
+      publicacao['distance'] =
+          "${distance.toStringAsFixed(1)} Km"; // Certifique-se de que a distância é armazenada como String
+    }
+
+    if (!mounted) return;
     setState(() {
-      _latitude = position.latitude;
-      _longitude = position.longitude;
+      publicacoes = publicacoesCarregadas;
     });
-  } catch (e) {
-    print("Erro ao obter a localização: $e");
-  }
-}
- void _carregarPublicacoes() async {
-  await _getLocation();
-  Funcoes_Publicacoes funcoesPublicacoes = Funcoes_Publicacoes();
-  Funcoes_Publicacoes_Imagens funcoesPublicacoesImagens = Funcoes_Publicacoes_Imagens();
-  final centroProvider = Provider.of<Centro_Provider>(context, listen: false);
-  final centroSelecionado = centroProvider.centroSelecionado;
-  int centroId = centroSelecionado!.id;
-
-  // Crie uma lista mutável a partir da lista retornada
-  List<Map<String, dynamic>> publicacoesCarregadas = (await funcoesPublicacoes.consultaPublicacoesPorCentroId(centroId))
-      .map((publicacao) => Map<String, dynamic>.from(publicacao))
-      .toList();
-
-  for (var publicacao in publicacoesCarregadas) {
-    Map<String, dynamic>? primeiraImagem = await funcoesPublicacoesImagens.retorna_primeira_imagem(publicacao['id']);
-    imagemPaths[publicacao['id']] = primeiraImagem != null ? primeiraImagem['caminho_imagem'] : 'assets/images/sem_imagem.png';
-
-    String local = publicacao['local'];
-
-    // Obter coordenadas do local da publicação
-    Map<String, double> coordenadas = await LocalizacaoOSM().getCoordinatesFromName(local);
-
-    // Salvar as coordenadas na publicação
-    publicacao['latitude'] = coordenadas['latitude'];
-    publicacao['longitude'] = coordenadas['longitude'];
-
-    // Calcular a distância entre o usuário e o local da publicação
-    double distance = calculateDistance(_latitude, _longitude, coordenadas['latitude']!, coordenadas['longitude']!);
-
-    // Armazenar a distância formatada como string na publicação
-    publicacao['distance'] = "${distance.toStringAsFixed(1)} Km";  // Certifique-se de que a distância é armazenada como String
   }
 
-  if (!mounted) return;
-  setState(() {
-    publicacoes = publicacoesCarregadas;
-  });
-}
-
-
-   double calculateDistance(double startLatitude, double startLongitude,
+  double calculateDistance(double startLatitude, double startLongitude,
       double endLatitude, double endLongitude) {
     // Calcula a distância em metros
     double distanceInMeters = Geolocator.distanceBetween(
@@ -90,7 +120,6 @@ Future<void> _getLocation() async {
     return distanceInKilometers;
   }
 
-  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -318,19 +347,31 @@ Future<void> _getLocation() async {
         String imagePath =
             imagemPaths[publicacaoId] ?? 'assets/images/sem_imagem.png';
 
-        return Container(
-          margin: const EdgeInsets.only(left: 4, right: 10, top: 22),
-          child: CARD_PUBLICACAO(
-            nomePublicacao: filteredPublicacoes[index]['nome'],
-            local: filteredPublicacoes[index]['local'],
-            publicacaoId: publicacaoId,
-            classificacao_media:
-                filteredPublicacoes[index]['classificacao_media'].toString(),
-            imagePath: imagePath,
-         distancia: publicacoes[index]['distance']
-                                as String, 
-          ),
-        );
+        return GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => pagina_publicacao(
+                    idPublicacao: publicacaoId,
+                    cor: getColorForArea(filteredPublicacoes[index]['area_id']),
+                  ),
+                ),
+              );
+            },
+            child: Container(
+              margin: const EdgeInsets.only(left: 4, right: 10, top: 22),
+              child: CARD_PUBLICACAO(
+                nomePublicacao: filteredPublicacoes[index]['nome'],
+                local: filteredPublicacoes[index]['local'],
+                publicacaoId: publicacaoId,
+                classificacao_media: filteredPublicacoes[index]
+                        ['classificacao_media']
+                    .toString(),
+                imagePath: imagePath,
+                distancia: publicacoes[index]['distance'] as String,
+              ),
+            ));
       },
     );
   }

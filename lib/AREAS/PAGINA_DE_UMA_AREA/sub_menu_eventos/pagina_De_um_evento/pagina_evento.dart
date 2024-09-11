@@ -13,20 +13,24 @@ import 'package:ficha3/AREAS/PAGINA_DE_UMA_AREA/sub_menu_eventos/pagina_De_um_ev
 import 'package:ficha3/AREAS/PAGINA_DE_UMA_AREA/sub_menu_topicos/pagina_topico/pagina_publicacao_local/pagina_todasimagems/galeria_imagem.dart';
 import 'package:ficha3/BASE_DE_DADOS/APIS/api_eventos.dart';
 import 'package:ficha3/BASE_DE_DADOS/APIS/api_geolocaliza%C3%A7%C3%A3o.dart';
-import 'package:ficha3/BASE_DE_DADOS/basededados.dart';
+import 'package:ficha3/BASE_DE_DADOS/APIS/api_usuarios.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_comentarios_eventos.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_imagens_eventos.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_listaparticipantes_evento.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_topicos.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_usuarios.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_tipodeevento.dart';
-import 'package:ficha3/GRUPOS/PAGINA_DE_UM_GRUPO/paginal_lista_menbros/ver_perfil_outros_user/pagina_de_perfil.dart';
 import 'package:ficha3/PROVIDERS_GLOBAL_NA_APP/usuario_provider.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:ficha3/GRUPOS/PAGINA_DE_UM_GRUPO/paginal_lista_menbros/ver_perfil_outros_user/pagina_de_perfil.dart';
+
 import 'package:flutter/material.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_eventos.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+import 'package:flutter/services.dart';
 
 class PaginaEvento extends StatefulWidget {
   final int idEvento;
@@ -390,11 +394,120 @@ class _PaginaEventoState extends State<PaginaEvento> {
     return somaClassificacoes / comentarios.length;
   }
 
+  void _selecionarAmigo(
+      BuildContext context, int usuarioId, int eventoId) async {
+    // Carrega a lista de usuários do banco de dados
+    List<Map<String, dynamic>> usuarios =
+        await Funcoes_Usuarios().consultaUsuarios();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Selecione um amigo'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: usuarios.length,
+              itemBuilder: (context, index) {
+                var usuario = usuarios[index];
+                return ListTile(
+                  leading: CircleAvatar(
+                    backgroundImage: FileImage(File(usuario['caminho_foto'])),
+                  ),
+                  title: Text(usuario['nome']),
+                  onTap: () {
+                    _enviarNotificacao(
+                        usuarioId, usuario['id'], usuario['nome'], eventoId);
+                    Navigator.of(context)
+                        .pop(); // Fecha o diálogo após a seleção
+                  },
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _mostrarOpcoesDeCompartilhamento(
+      BuildContext context,
+      int usuarioId,
+      int eventoId,
+      String tituloEvento,
+      String dataEvento,
+      String localEvento) {
+    String partilha =
+        'Confira este evento: $tituloEvento \nData: $dataEvento \nLocal: $localEvento  \n\n Não perca! Compartilhe com os seus amigos';
+
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Wrap(
+          children: [
+            ListTile(
+              leading: Icon(
+                Icons.share,
+                color: const Color.fromARGB(255, 30, 112,
+                    179), // Altera a cor do ícone de compartilhamento para azul
+              ),
+              title: Text('Compartilhar nas Redes Sociais'),
+              onTap: () {
+                Share.share(partilha); // Compartilha a string formatada
+                Navigator.of(context).pop(); // Fecha o modal
+              },
+            ),
+            ListTile(
+              leading: Icon(
+                Icons.person,
+                color: const Color.fromARGB(255, 26, 125,
+                    206), // Altera a cor do ícone de compartilhamento para azul
+              ),
+              title: Text('Compartilhar com um Amigo'),
+              onTap: () {
+                Navigator.of(context).pop(); // Fecha o modal
+                _selecionarAmigo(context, usuarioId, eventoId);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _enviarNotificacao(
+      int usuarioId, int amigoId, String nomeAmigo, int eventoId) async {
+    try {
+      // Busque o título do evento antes de enviar a notificação
+      String tituloEvento =
+          await Funcoes_Eventos.consultaNomeEventoPorId(eventoId);
+
+      await ApiUsuarios().enviarNotificacaoEvento(usuarioId, amigoId, eventoId);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(
+                'Notificação enviada para $nomeAmigo sobre o evento "$tituloEvento"')),
+      );
+    } catch (e) {
+      print('Erro ao enviar notificação: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao enviar notificação')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final usuarioProvider =
         Provider.of<Usuario_Provider>(context, listen: false);
     user_id = usuarioProvider.usuarioSelecionado!.id_user;
+
+    // Aqui você usa as variáveis que já têm os dados reais do evento
+    String tituloEvento = nomeEvento; // Nome do evento carregado
+    String dataEvento = '$dia de $mes, $ano'; // Data do evento formatada
+    String localEvento = local; // Local do evento
 
     return Scaffold(
       appBar: AppBar(
@@ -413,7 +526,15 @@ class _PaginaEventoState extends State<PaginaEvento> {
             child: IconButton(
               padding: const EdgeInsets.all(3),
               icon: const Icon(Icons.share),
-              onPressed: () {},
+              onPressed: () {
+                _mostrarOpcoesDeCompartilhamento(
+                    context,
+                    user_id, // ID do usuário atual
+                    widget.idEvento, // ID do evento
+                    tituloEvento, // Nome real do evento
+                    dataEvento, // Data real do evento
+                    localEvento); // Substitua `usuarioId` e `eventoId` pelos valores corretos
+              }, // -----------------------------------------------------------
               iconSize: 23,
             ),
           ),
@@ -1223,7 +1344,6 @@ Widget buildSpeedDial(BuildContext context, Color cor, int idEvento) {
                               .removerParticipanteEvento(usuarioId, idEvento);
 
                           if (resultado == "Inscrição cancelada com sucesso!") {
-                           
                             await Funcoes_Participantes_Evento
                                 .removerParticipanteEvento(usuarioId, idEvento);
                           }

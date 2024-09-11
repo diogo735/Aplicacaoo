@@ -46,6 +46,7 @@ dependencies:
   timezone: ^0.9.4
   flutter_local_notifications: ^17.2.2
   mailer: ^6.1.2
+  share_plus: ^10.0.2
 
 
 dev_dependencies:

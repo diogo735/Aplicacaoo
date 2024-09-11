@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 Widget CARD_PARTILHA({
   required BuildContext context,
-  required String nomeEvento_OU_Local,
+  required String Titulo,
   required String fotouser,
   required String nomeuser,
   required String imagePath,
@@ -15,7 +15,7 @@ Widget CARD_PARTILHA({
   // Criar um TextPainter com o texto e estilo
   TextPainter textPainter = TextPainter(
     text: TextSpan(
-      text: nomeEvento_OU_Local,
+      text: Titulo,
       style: TextStyle(
         fontSize: 16.0,
         fontWeight: FontWeight.w900,
@@ -137,8 +137,8 @@ Widget CARD_PARTILHA({
                                     ),
                                     // Nome do evento
                                     SizedBox(height: 3),
-                                 /*   Text(
-                                      nomeEvento_OU_Local,
+                                    Text(
+                                      Titulo,
                                       style: TextStyle(
                                         color: const Color(0xFF15659F),
                                         fontSize: 16,
@@ -149,7 +149,7 @@ Widget CARD_PARTILHA({
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
                                     ),
-                                    */
+                                    
                                   ],
                                 ),
                               ),

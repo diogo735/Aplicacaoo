@@ -40,40 +40,22 @@ Widget CARD_PARTILHA({
     titulo = detalhesPartilha['titulo'];
     idUsuario = detalhesPartilha['id_usuario'];
     imagem_Da_partilha = detalhesPartilha['caminho_imagem'];
-    hora_partilha = detalhesPartilha['hora'];
-    idEvento = detalhesPartilha['id_evento'];
-    idLocal = detalhesPartilha['id_local'];
-    data_partilha = detalhesPartilha['data'];
+
     //gostos_ = detalhesPartilha['gostos'].toString();
+    // Converta a string de 'createdAt' em um objeto DateTime
+    DateTime createdAt = DateTime.parse(detalhesPartilha['data']);
+
+    // Separe a data e a hora usando o objeto DateTime
+    data_partilha =
+        "${createdAt.day.toString().padLeft(2, '0')}/${createdAt.month.toString().padLeft(2, '0')}/${createdAt.year}";
+    hora_partilha =
+        "${createdAt.hour.toString().padLeft(2, '0')}:${createdAt.minute.toString().padLeft(2, '0')}";
 
     if (idUsuario != null) {
       nomeCompleto =
           await Funcoes_Usuarios.consultaNomeCompletoUsuarioPorId(idUsuario!);
       caminhoFotoUser =
           await Funcoes_Usuarios.consultaCaminhoFotoUsuarioPorId(idUsuario!);
-    }
-
-    if (idEvento != null) {
-      // Se o ID do evento não for nulo, busca os detalhes do evento
-      nomeEvento = await Funcoes_Eventos.consultaNomeEventoPorId(idEvento!);
-      List<Map<String, dynamic>> detalhesEvento =
-          await Funcoes_Eventos.consultaDetalhesEventoPorId(idEvento!);
-      if (detalhesEvento.isNotEmpty) {
-        diaEvento = detalhesEvento.first['dia_realizacao'];
-        mesEvento = detalhesEvento.first['mes_realizacao'];
-        numeroParticipantes = detalhesEvento.first['numero_inscritos'];
-        capa_evento = detalhesEvento.first['caminho_imagem'];
-      }
-    } else if (idLocal != null) {
-      // Se o ID do evento for nulo e o ID do local não for nulo, busca os detalhes do local
-      nomeLocal = await Funcoes_Publicacoes.consultaNomeLocalPorId(idLocal!);
-      List<Map<String, dynamic>> detalhesLocal =
-          await Funcoes_Publicacoes.consultaDetalhesPublicacaoPorId(idLocal!);
-      if (detalhesLocal.isNotEmpty) {
-        classlocal = detalhesLocal.first['classificacao_media'].toString();
-        moradalocal = detalhesLocal.first['local'];
-        capa_locla = detalhesLocal.first['caminho_imagem'];
-      }
     }
   }
 
@@ -216,7 +198,7 @@ Widget CARD_PARTILHA({
                       ),
                     ),
                   ),
-                 /* Container(
+                  /* Container(
                     decoration: const BoxDecoration(
                       border: Border(
                         top: BorderSide(

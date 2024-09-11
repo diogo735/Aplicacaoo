@@ -603,7 +603,7 @@ Future<String> removerParticipanteEvento(int usuarioId, int eventoId) async {
         body: jsonEncode(eventoData),
       );
 
-      if (response.statusCode == 201) {
+      if (response.statusCode == 201 ||response.statusCode == 200) {
         // Decodifica a resposta JSON
         final responseData = jsonDecode(response.body);
 

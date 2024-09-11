@@ -124,12 +124,12 @@ class _CarregandoPaginaState extends State<CarregandoPagina> {
     String imagemArea = '';
 
     switch (areaId) {
-      case 1:
+      case 2:
         nomeArea = 'Saúde';
         corArea = const Color(0xFF8F3023);
         imagemArea = 'assets/images/fav_saude.png';
         break;
-      case 2:
+      case 1:
         nomeArea = 'Desporto';
         corArea = const Color(0xFF53981D);
         imagemArea = 'assets/images/fav_desporto.png';
@@ -144,7 +144,7 @@ class _CarregandoPaginaState extends State<CarregandoPagina> {
         corArea = const Color(0xFF3779C6);
         imagemArea = 'assets/images/fav_formacao.png';
         break;
-      case 5:
+      case 7:
         nomeArea = 'Alojamento';
         corArea = const Color(0xFF815520);
         imagemArea = 'assets/images/fav_alojamento.png';
@@ -154,7 +154,7 @@ class _CarregandoPaginaState extends State<CarregandoPagina> {
         corArea = const Color(0xFFB7BB06);
         imagemArea = 'assets/images/fav_transportes.png';
         break;
-      case 7:
+      case 5:
         nomeArea = 'Lazer';
         corArea = const Color(0xFF25ABAB);
         imagemArea = 'assets/images/fav_lazer.png';
@@ -242,19 +242,19 @@ class _CarregandoPaginaState extends State<CarregandoPagina> {
 
   Color getCorPorAreaId(int idArea) {
     switch (idArea) {
-      case 1:
-        return const Color(0xFF8F3023); // Saúde
       case 2:
+        return const Color(0xFF8F3023); // Saúde
+      case 1:
         return const Color(0xFF53981D); // Desporto
       case 3:
         return const Color(0xFFA91C7A); // Gastronomia
       case 4:
         return const Color(0xFF3779C6); // Formação
-      case 5:
+      case 7:
         return const Color(0xFF815520); // Alojamento
       case 6:
         return const Color(0xFFB7BB06); // Transportes
-      case 7:
+      case 5:
         return const Color(0xFF25ABAB); // Lazer
       default:
         return const Color(0xFF15659F); // Cor padrão
@@ -813,9 +813,11 @@ class _CarregandoPaginaState extends State<CarregandoPagina> {
               right: 20.0,
               child: ElevatedButton.icon(
                 onPressed: () {
+                  
                   Navigator.push(
                     context,
                     MaterialPageRoute(
+                      
                       builder: (context) => ValidarEventoCriar(
                         dataInicio: widget.dataInicio,
                         dataFim: widget.dataFim,

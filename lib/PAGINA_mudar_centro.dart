@@ -1,6 +1,9 @@
 import 'dart:io';
 
 import 'package:ficha3/BASE_DE_DADOS/APIS/api_eventos.dart';
+import 'package:ficha3/BASE_DE_DADOS/APIS/api_foruns.dart';
+import 'package:ficha3/BASE_DE_DADOS/APIS/api_mensagem_foruns.dart';
+import 'package:ficha3/BASE_DE_DADOS/APIS/api_partilhas.dart';
 import 'package:ficha3/BASE_DE_DADOS/APIS/api_publicacoes.dart';
 import 'package:ficha3/PROVIDERS_GLOBAL_NA_APP/usuario_provider.dart';
 import 'package:flutter/material.dart';
@@ -74,7 +77,7 @@ class _Pag_mudar_centroState extends State<Pag_mudar_centro> {
               ),
               const SizedBox(height: 5),
               const Text(
-                'Não foi possível carregar os dados dos eventos !!!',
+                'Não foi possível carregar os dados dos EVENTOS !!!',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 16,
@@ -103,6 +106,74 @@ class _Pag_mudar_centroState extends State<Pag_mudar_centro> {
       );
     }
   }
+
+  Future<void> _carregarDadosPartilhas() async {
+  try {
+    // Certifique-se de que o Centro foi carregado
+    final centroProvider =
+        Provider.of<Centro_Provider>(context, listen: false);
+    final centroSelecionado = centroProvider.centroSelecionado;
+    final usuarioProvider =
+        Provider.of<Usuario_Provider>(context, listen: false);
+    final user_id = usuarioProvider.usuarioSelecionado!.id_user;
+
+    if (centroSelecionado != null) {
+      print('2.0->>Iniciando o carregamento das PARTILHAS...');
+      await ApiPartilhas().fetchAndStorePartilhas(centroSelecionado.id);
+
+      print('2.0.1->>Iniciando o carregamento dos COMENTARIOS DAS PARTILHAS...');
+      await ApiPartilhas().fetchAndStoreComentarios();
+
+      print(
+          '     ----->TUDO RELACIONADO A PARTILHAS CARREGADO COM SUCESSO<------------');
+    } else {
+      print('Nenhum centro selecionado');
+      throw Exception('Nenhum centro selecionado');
+    }
+  } catch (e) {
+    print('Erro ao carregar os dados das partilhas: $e');
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset(
+              'assets/images/sem_wifi.png',
+              width: 120,
+              height: 120,
+            ),
+            const SizedBox(height: 5),
+            const Text(
+              'Não foi possível carregar os dados das PARTILHAS!!!',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'Verifique sua conexão com a internet e tente novamente.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _carregarDadosPartilhas(); // Tenta carregar novamente apenas os dados das partilhas
+            },
+            child: const Text('Tentar Novamente',
+                style: TextStyle(color: Color(0xFF15659F))),
+          ),
+        ],
+      ),
+    );
+  }
+}
   Future<void> _carregarDadosPublicacoes() async {
   try {
     // Certifique-se de que o Centro foi carregado
@@ -170,6 +241,73 @@ class _Pag_mudar_centroState extends State<Pag_mudar_centro> {
     );
   }
 }
+ Future<void> _carregarDadosForuns() async {
+  try {
+    // Certifique-se de que o Centro foi carregado
+    final centroProvider =
+        Provider.of<Centro_Provider>(context, listen: false);
+    final centroSelecionado = centroProvider.centroSelecionado;
+    final usuarioProvider =
+        Provider.of<Usuario_Provider>(context, listen: false);
+    final userId = usuarioProvider.usuarioSelecionado!.id_user;
+
+    if (centroSelecionado != null) {
+       print('2.2.2->>Iniciando o carregamento dos FORUNS...');
+         await ApiForuns().fetchAndStoreForuns(centroSelecionado.id);
+
+        print('2.2.3->>Iniciando o carregamento das MENSAGENS DOS FORUNS...');
+        await ApiMensagensForum().fetchAndStoreMensagensForum();
+
+      print(
+          '     ----->TUDO RELACIONADO A foruns CARREGADO COM SUCESSO<------------');
+    } else {
+      print('Nenhum centro selecionado');
+      throw Exception('Nenhum centro selecionado');
+    }
+  } catch (e) {
+    print('Erro ao carregar os dados dos foruns: $e');
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset(
+              'assets/images/sem_wifi.png',
+              width: 120,
+              height: 120,
+            ),
+            const SizedBox(height: 5),
+            const Text(
+              'Não foi possível carregar os dados dos forunss !!!',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'Verifique sua conexão com a internet e tente novamente.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _carregarDadosForuns(); // Tenta carregar novamente apenas os dados das publicações
+            },
+            child: const Text('Tentar Novamente',
+                style: TextStyle(color: Color(0xFF15659F))),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 
   void selecionarCentroPorId(int idCentro) async {
@@ -195,6 +333,8 @@ class _Pag_mudar_centroState extends State<Pag_mudar_centro> {
 
     await _carregarDadosEventos();
     await _carregarDadosPublicacoes();
+    await _carregarDadosPartilhas();
+    await _carregarDadosForuns();
 
     // Redireciona para a página inicial após o carregamento dos dados
     Navigator.pushReplacementNamed(context, '/home');

@@ -298,4 +298,19 @@ Future<List<Map<String, dynamic>>> consultaPartilhasComCentroId(int centroId) as
       throw Exception('Nenhuma partilha encontrada com este id');
     }
   }
+  Future<int> contarPartilhasPorUsuario(int idUsuario) async {
+  Database db = await DatabaseHelper.basededados;
+  
+  // Faz uma consulta SQL para contar o número de partilhas do usuário
+  List<Map<String, dynamic>> result = await db.rawQuery(
+    'SELECT COUNT(*) as total FROM partilha WHERE id_usuario = ?',
+    [idUsuario],
+  );
+  
+  // O resultado será uma lista com um mapa contendo a chave 'total'
+  int totalPartilhas = Sqflite.firstIntValue(result) ?? 0;
+
+  return totalPartilhas;
+}
+
 }

@@ -34,6 +34,7 @@ class _CriarPartilhaState extends State<CriarPartilha> {
   int _currentLenght_descricao = 0;
   final int _maxLength_descricao = 150;
   ValueNotifier<bool> isButtonEnabled = ValueNotifier(false);
+  bool isLoading = false;
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
@@ -94,16 +95,16 @@ class _CriarPartilhaState extends State<CriarPartilha> {
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               ListTile(
-                leading: Icon(Icons.photo_library),
-                title: Text('Escolher da Galeria'),
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Escolher da Galeria'),
                 onTap: () {
                   _pickImage();
                   Navigator.of(context).pop();
                 },
               ),
               ListTile(
-                leading: Icon(Icons.photo_camera),
-                title: Text('Tirar Foto'),
+                leading: const Icon(Icons.photo_camera),
+                title: const Text('Tirar Foto'),
                 onTap: () {
                   _takePhoto();
                   Navigator.of(context).pop();
@@ -138,65 +139,77 @@ class _CriarPartilhaState extends State<CriarPartilha> {
     final DateFormat formatter = DateFormat('dd/MM/yyyy');
     return formatter.format(data);
   }
-Future<void> _salvarPartilha() async {
-  if (_formKey.currentState!.validate()) {
-    if (_imagemSelecionada != null) {
-      try {
-        // Carregar a imagem e obter a URL
-        final imageUrl = await _uploadImage(_imagemSelecionada!);
 
-        // Obter os dados do usuário e do centro
-        final userProvider = Provider.of<Usuario_Provider>(context, listen: false);
-        final centroProvider = Provider.of<Centro_Provider>(context, listen: false);
-
-        String datafomatada = formatarData(DateTime.now());
-
-        // Adaptar os dados da partilha para o formato esperado pelo backend (álbum)
-        Map<String, dynamic> album = {
-          'nome': _tituloController.text, // Título da partilha -> nome do álbum
-          'descricao': _descricaoController.text,
-          'capa_imagem_album': imageUrl, // Caminho da imagem
-          'centro_id': centroProvider.centroSelecionado?.id ?? 1,
-          'area_id': widget.idArea,
-          'autor_id': userProvider.usuarioSelecionado?.id_user ?? 1, // Usuário (autor)
-          'estado': 'Ativa', // Opcional, pode ser "Ativa" por padrão
-        };
-
-        // Enviar os dados para a API
-        await ApiPartilhas().criarPartilha(album);
-
-        // Exibir feedback de sucesso
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Partilha criada com sucesso!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-
-        // Limpar os campos do formulário
-        _tituloController.clear();
-        _descricaoController.clear();
+  Future<void> _salvarPartilha() async {
+    if (_formKey.currentState!.validate()) {
+      if (_imagemSelecionada != null) {
         setState(() {
-          _imagemSelecionada = null;
+          isLoading = true; // Ativar o estado de carregamento
         });
+        try {
+          // Carregar a imagem e obter a URL
+          final imageUrl = await _uploadImage(_imagemSelecionada!);
 
-        // Retornar para a página anterior
-        Navigator.pop(context);
-      } catch (e) {
-        // Exibir mensagem de erro
+          // Obter os dados do usuário e do centro
+          final userProvider =
+              Provider.of<Usuario_Provider>(context, listen: false);
+          final centroProvider =
+              Provider.of<Centro_Provider>(context, listen: false);
+
+          // Adaptar os dados da partilha para o formato esperado pelo backend (álbum)
+          Map<String, dynamic> album = {
+            'titulo':
+                _tituloController.text, // Título da partilha -> nome do álbum
+            'descricao': _descricaoController.text,
+            'caminho_imagem': imageUrl, // Caminho da imagem
+            'centro_id': centroProvider.centroSelecionado?.id ?? 1,
+            'area_id': widget.idArea,
+            'id_user': userProvider.usuarioSelecionado?.id_user ??
+                1, // Usuário (autor)
+          };
+
+          // Enviar os dados para a API
+          await ApiPartilhas().criarPartilha(album);
+
+          // Exibir feedback de sucesso
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Partilha criada com sucesso!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+
+          // Limpar os campos do formulário
+          _tituloController.clear();
+          _descricaoController.clear();
+          setState(() {
+            _imagemSelecionada = null;
+          });
+
+          // Retornar para a página anterior
+          Navigator.pop(context);
+        } catch (e, stacktrace) {
+          // Exibir o erro detalhado no console
+          print('Erro ao criar a partilha: $e');
+          print('Stacktrace: $stacktrace');
+
+          // Exibir mensagem de erro no SnackBar
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Falha ao criar a partilha: $e')),
+          );
+        } finally {
+          setState(() {
+            isLoading = false; // Desativar o estado de carregamento
+          });
+        }
+      } else {
+        // Caso a imagem não tenha sido selecionada
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Falha ao criar a partilha: $e')),
+          const SnackBar(content: Text('Por favor, selecione uma imagem.')),
         );
       }
-    } else {
-      // Caso a imagem não tenha sido selecionada
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Por favor, selecione uma imagem.')),
-      );
     }
   }
-}
-
 
   @override
   void initState() {
@@ -215,11 +228,11 @@ Future<void> _salvarPartilha() async {
     _tituloController.addListener(_updateButtonState);
   }
 
-void _updateButtonState() {
-  final isDescricaoNotEmpty = _descricaoController.text.isNotEmpty;
-  final isTituloNotEmpty = _tituloController.text.isNotEmpty;
-  isButtonEnabled.value = isDescricaoNotEmpty && isTituloNotEmpty;
-}
+  void _updateButtonState() {
+    final isDescricaoNotEmpty = _descricaoController.text.isNotEmpty;
+    final isTituloNotEmpty = _tituloController.text.isNotEmpty;
+    isButtonEnabled.value = isDescricaoNotEmpty && isTituloNotEmpty;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -246,7 +259,7 @@ void _updateButtonState() {
                 Row(
                   children: [
                     Padding(
-                      padding: EdgeInsets.only(left: 0),
+                      padding: const EdgeInsets.only(left: 0),
                       child: Align(
                         alignment: Alignment.centerLeft,
                         child: Icon(
@@ -256,10 +269,10 @@ void _updateButtonState() {
                         ),
                       ),
                     ),
-                    SizedBox(
+                    const SizedBox(
                       width: 6,
                     ),
-                    Text(
+                    const Text(
                       'Selecionar Partilha',
                       style: TextStyle(
                         color: Colors.black,
@@ -296,12 +309,12 @@ void _updateButtonState() {
                                 ),
                               ),
                             )
-                          : Padding(
-                              padding: const EdgeInsets.all(10.0),
+                          : const Padding(
+                              padding: EdgeInsets.all(10.0),
                               child: Icon(
                                 Icons.add_a_photo,
                                 size: 50,
-                                color: const Color.fromARGB(255, 147, 145, 145),
+                                color: Color.fromARGB(255, 147, 145, 145),
                               ),
                             ),
                     ),
@@ -311,7 +324,7 @@ void _updateButtonState() {
                 Row(
                   children: [
                     Padding(
-                      padding: EdgeInsets.only(left: 0),
+                      padding: const EdgeInsets.only(left: 0),
                       child: Align(
                         alignment: Alignment.centerLeft,
                         child: Icon(
@@ -321,10 +334,10 @@ void _updateButtonState() {
                         ),
                       ),
                     ),
-                    SizedBox(
+                    const SizedBox(
                       width: 6,
                     ),
-                    Text(
+                    const Text(
                       'Detalhes da Partilha',
                       style: TextStyle(
                         color: Colors.black,
@@ -336,15 +349,15 @@ void _updateButtonState() {
                     ),
                   ],
                 ),
-                SizedBox(
+                const SizedBox(
                   height: 5,
                 ),
-                SizedBox(
+                const SizedBox(
                   child: Padding(
-                    padding: const EdgeInsets.only(left: 15.0),
+                    padding: EdgeInsets.only(left: 15.0),
                     child: Text.rich(
                       TextSpan(
-                        children: const [
+                        children: [
                           TextSpan(
                             text: 'Título',
                             style: TextStyle(
@@ -360,18 +373,18 @@ void _updateButtonState() {
                     ),
                   ),
                 ),
-                SizedBox(
+                const SizedBox(
                   height: 5,
                 ),
                 Column(
                   children: [
                     TextField(
                       controller: _tituloController,
-                      cursorColor: Color(0xFF15659F),
+                      cursorColor: const Color(0xFF15659F),
                       decoration: InputDecoration(
                         hintText: 'insira o titulo da partilha...',
-                        hintStyle: TextStyle(color: Color(0xFF6C757D)),
-                        border: OutlineInputBorder(
+                        hintStyle: const TextStyle(color: Color(0xFF6C757D)),
+                        border: const OutlineInputBorder(
                           borderSide: BorderSide(
                               color: Color.fromARGB(150, 158, 158, 158)),
                         ),
@@ -395,12 +408,12 @@ void _updateButtonState() {
                     ),
                   ],
                 ),
-                SizedBox(
+                const SizedBox(
                   child: Padding(
-                    padding: const EdgeInsets.only(left: 15.0),
+                    padding: EdgeInsets.only(left: 15.0),
                     child: Text.rich(
                       TextSpan(
-                        children: const [
+                        children: [
                           TextSpan(
                             text: 'Descrição ',
                             style: TextStyle(
@@ -416,20 +429,20 @@ void _updateButtonState() {
                     ),
                   ),
                 ),
-                SizedBox(
+                const SizedBox(
                   height: 5,
                 ),
                 Column(
                   children: [
                     TextField(
                       controller: _descricaoController,
-                      cursorColor: Color(0xFF15659F),
+                      cursorColor: const Color(0xFF15659F),
                       minLines: 4,
                       maxLines: 5,
                       decoration: InputDecoration(
                         hintText: 'insira a descrição da partilha...',
-                        hintStyle: TextStyle(color: Color(0xFF6C757D)),
-                        border: OutlineInputBorder(
+                        hintStyle: const TextStyle(color: Color(0xFF6C757D)),
+                        border: const OutlineInputBorder(
                           borderSide: BorderSide(
                               color: Color.fromARGB(150, 158, 158, 158)),
                         ),
@@ -461,22 +474,28 @@ void _updateButtonState() {
                     builder: (context, isEnabled, child) {
                       return ElevatedButton.icon(
                         onPressed: isEnabled ? _salvarPartilha : null,
-                        icon: Icon(
-                          Icons.check,
-                          size: 25,
-                          color: Colors.white,
-                        ),
-                        label: Text(
-                          'Publicar',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontFamily: 'Roboto',
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                        icon: isLoading
+                            ? const CircularProgressIndicator(
+                                color: Colors.white,
+                              )
+                            : const Icon(
+                                Icons.check,
+                                size: 25,
+                                color: Colors.white,
+                              ),
+                        label: isLoading
+                            ? const SizedBox.shrink()
+                            : const Text(
+                                'Publicar',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontFamily: 'Roboto',
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                         style: ElevatedButton.styleFrom(
-                          minimumSize: Size(double.infinity, 50),
+                          minimumSize: const Size(double.infinity, 50),
                           backgroundColor: widget.cor,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
@@ -492,7 +511,7 @@ void _updateButtonState() {
                     onPressed: () {
                       Navigator.pop(context);
                     },
-                    child: Text(
+                    child: const Text(
                       'Cancelar',
                       style: TextStyle(
                         fontSize: 15,

@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:ficha3/BASE_DE_DADOS/APIS/TOKENJTW.dart';
 import 'package:ficha3/BASE_DE_DADOS/APIS/api_areas.dart';
 import 'package:ficha3/BASE_DE_DADOS/APIS/api_eventos.dart';
+import 'package:ficha3/BASE_DE_DADOS/APIS/api_foruns.dart';
+import 'package:ficha3/BASE_DE_DADOS/APIS/api_mensagem_foruns.dart';
 import 'package:ficha3/BASE_DE_DADOS/APIS/api_partilhas.dart';
 import 'package:ficha3/BASE_DE_DADOS/APIS/api_publicacoes.dart';
 import 'package:ficha3/BASE_DE_DADOS/APIS/api_topicos.dart';
@@ -124,6 +126,12 @@ class _LoadingScreenState extends State<LoadingScreen> {
 
         print('2.2->>Iniciando o carregamento das AREAS FAVORITAS...');
         await ApiUsuarios().fetchAndStoreAreasFavoritas();
+
+        print('2.2.2->>Iniciando o carregamento dos FORUNS...');
+         await ApiForuns().fetchAndStoreForuns(centroSelecionado.id);
+
+        print('2.2.3->>Iniciando o carregamento das MENSAGENS DOS FORUNS...');
+        await ApiMensagensForum().fetchAndStoreMensagensForum();
 
         print('2.3->>Iniciando o carregamento das TOPICOS FAVORITOS...');
         await ApiUsuarios().fetchAndStoreTopicosFavoritos();

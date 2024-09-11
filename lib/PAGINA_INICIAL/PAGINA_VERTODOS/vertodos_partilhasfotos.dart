@@ -1,3 +1,4 @@
+import 'package:ficha3/AREAS/PAGINA_DE_UMA_AREA/sub_menu_partilhas/Pagina_de_uma_partilha/pagina_de_uma_partilha.dart';
 import 'package:ficha3/PROVIDERS_GLOBAL_NA_APP/centro_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_eventos.dart';
@@ -23,7 +24,7 @@ class _vertodos_partilhasState extends State<vertodos_partilhas> {
 
   /// Função para carregar os eventos da base de dados
   void _carregarPartilhas() async {
-   final centroProvider = Provider.of<Centro_Provider>(context, listen: false);
+    final centroProvider = Provider.of<Centro_Provider>(context, listen: false);
     final centroSelecionado = centroProvider.centroSelecionado;
     int centroId = centroSelecionado!.id;
     List<Map<String, dynamic>> partilhasCarregadas =
@@ -54,7 +55,7 @@ class _vertodos_partilhasState extends State<vertodos_partilhas> {
           child: Column(
             children: [
               Container(
-                color: Color.fromARGB(255, 255, 255,
+                color: const Color.fromARGB(255, 255, 255,
                     255), // Cor de fundo da TabBar // Cor de fundo da TabBar
                 child: TabBar(
                   isScrollable: true,
@@ -214,8 +215,8 @@ class _vertodos_partilhasState extends State<vertodos_partilhas> {
                         itemCount: partilhas.length,
                         itemBuilder: (context, index) {
                           return Container(
-                            margin:
-                                EdgeInsets.only(left: 4, right: 10, top: 22),
+                            margin: const EdgeInsets.only(
+                                left: 4, right: 10, top: 22),
                             child: FutureBuilder<String>(
                               future: partilhas[index]['id_evento'] != null
                                   ? Funcoes_Eventos.consultaNomeEventoPorId(
@@ -241,18 +242,33 @@ class _vertodos_partilhasState extends State<vertodos_partilhas> {
                                                   partilhas[index]
                                                       ['id_usuario']),
                                           builder: (context, fotoSnapshot) {
-                                            return CARD_PARTILHA(
-                                             nomeEvento_OU_Local: partilhas[
-                                                          index]['id_evento'] !=
-                                                      null
-                                                  ? eventoSnapshot.data ?? ''
-                                                  : localSnapshot.data ?? '',
-                                              fotouser: fotoSnapshot.data ?? '',
-                                              nomeuser:
-                                                  usuarioSnapshot.data ?? '',
-                                              imagePath: partilhas[index]
-                                                  ['caminho_imagem'],
-                                                  context: context,
+                                            return GestureDetector(
+                                              onTap: () {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        PaginaDaPartilha(
+                                                      cor: const Color(
+                                                          0xFF15659F),
+                                                      idpartilha:
+                                                          partilhas[index]
+                                                              ['id'],
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                              child: CARD_PARTILHA(
+                                                Titulo: partilhas[index]
+                                                    ['titulo'],
+                                                fotouser:
+                                                    fotoSnapshot.data ?? '',
+                                                nomeuser:
+                                                    usuarioSnapshot.data ?? '',
+                                                imagePath: partilhas[index]
+                                                    ['caminho_imagem'],
+                                                context: context,
+                                              ),
                                             );
                                           },
                                         );
@@ -267,7 +283,8 @@ class _vertodos_partilhasState extends State<vertodos_partilhas> {
                       ),
                     ),
                     Container(
-                      child: !partilhas.any((partilha) => partilha['area_id'] == 1)
+                      child: !partilhas
+                              .any((partilha) => partilha['area_id'] == 2)
                           ? Center(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -277,8 +294,8 @@ class _vertodos_partilhasState extends State<vertodos_partilhas> {
                                     width: 50,
                                     height: 50,
                                   ),
-                                  SizedBox(height: 8),
-                                  Text(
+                                  const SizedBox(height: 8),
+                                  const Text(
                                     'Saude\n'
                                     'ainda nao tem partilhas !\n',
                                     style: TextStyle(
@@ -288,71 +305,97 @@ class _vertodos_partilhasState extends State<vertodos_partilhas> {
                                 ],
                               ),
                             )
-                          :  ListView.builder(
-                        scrollDirection: Axis.vertical,
-                        itemCount: partilhas.length,
-                        itemBuilder: (context, index) {
-                          if (partilhas[index]['area_id'] == 1) {
-                            return Container(
-                              margin:
-                                  EdgeInsets.only(left: 4, right: 10, top: 22),
-                              child: FutureBuilder<String>(
-                                future: partilhas[index]['id_evento'] != null
-                                    ? Funcoes_Eventos.consultaNomeEventoPorId(
-                                        partilhas[index]['id_evento'])
-                                    : Future.value(''),
-                                builder: (context, eventoSnapshot) {
-                                  return FutureBuilder<String>(
-                                    future: Funcoes_Usuarios
-                                        .consultaNomeCompletoUsuarioPorId(
-                                            partilhas[index]['id_usuario']),
-                                    builder: (context, usuarioSnapshot) {
-                                      return FutureBuilder<String>(
-                                        future:
-                                            partilhas[index]['id_local'] != null
-                                                ? Funcoes_Publicacoes
-                                                    .consultaNomeLocalPorId(
-                                                        partilhas[index]
-                                                            ['id_local'])
-                                                : Future.value(''),
-                                        builder: (context, localSnapshot) {
-                                          return FutureBuilder<String>(
-                                            future: Funcoes_Usuarios
-                                                .consultaCaminhoFotoUsuarioPorId(
-                                                    partilhas[index]
-                                                        ['id_usuario']),
-                                            builder: (context, fotoSnapshot) {
-                                              return CARD_PARTILHA(
-                                                nomeEvento_OU_Local: partilhas[
-                                                                index]
-                                                            ['id_evento'] !=
-                                                        null
-                                                    ? eventoSnapshot.data ?? ''
-                                                    : localSnapshot.data ?? '',
-                                                fotouser:
-                                                    fotoSnapshot.data ?? '',
-                                                nomeuser:
-                                                    usuarioSnapshot.data ?? '',
-                                                imagePath: partilhas[index]
-                                                    ['caminho_imagem'], context: context,
-                                              );
-                                            },
-                                          );
-                                        },
-                                      );
-                                    },
+                          : ListView.builder(
+                              scrollDirection: Axis.vertical,
+                              itemCount: partilhas.length,
+                              itemBuilder: (context, index) {
+                                if (partilhas[index]['area_id'] == 2) {
+                                  return Container(
+                                    margin: const EdgeInsets.only(
+                                        left: 4, right: 10, top: 22),
+                                    child: FutureBuilder<String>(
+                                      future: partilhas[index]['id_evento'] !=
+                                              null
+                                          ? Funcoes_Eventos
+                                              .consultaNomeEventoPorId(
+                                                  partilhas[index]['id_evento'])
+                                          : Future.value(''),
+                                      builder: (context, eventoSnapshot) {
+                                        return FutureBuilder<String>(
+                                          future: Funcoes_Usuarios
+                                              .consultaNomeCompletoUsuarioPorId(
+                                                  partilhas[index]
+                                                      ['id_usuario']),
+                                          builder: (context, usuarioSnapshot) {
+                                            return FutureBuilder<String>(
+                                              future: partilhas[index]
+                                                          ['id_local'] !=
+                                                      null
+                                                  ? Funcoes_Publicacoes
+                                                      .consultaNomeLocalPorId(
+                                                          partilhas[index]
+                                                              ['id_local'])
+                                                  : Future.value(''),
+                                              builder:
+                                                  (context, localSnapshot) {
+                                                return FutureBuilder<String>(
+                                                  future: Funcoes_Usuarios
+                                                      .consultaCaminhoFotoUsuarioPorId(
+                                                          partilhas[index]
+                                                              ['id_usuario']),
+                                                  builder:
+                                                      (context, fotoSnapshot) {
+                                                    return GestureDetector(
+                                                        onTap: () {
+                                                          Navigator.push(
+                                                            context,
+                                                            MaterialPageRoute(
+                                                              builder: (context) =>
+                                                                  PaginaDaPartilha(
+                                                                cor: const Color(
+                                                                    0xFF15659F),
+                                                                idpartilha:
+                                                                    partilhas[
+                                                                            index]
+                                                                        ['id'],
+                                                              ),
+                                                            ),
+                                                          );
+                                                        },
+                                                        child: CARD_PARTILHA(
+                                                          Titulo:
+                                                              partilhas[index]
+                                                                  ['titulo'],
+                                                          fotouser: fotoSnapshot
+                                                                  .data ??
+                                                              '',
+                                                          nomeuser:
+                                                              usuarioSnapshot
+                                                                      .data ??
+                                                                  '',
+                                                          imagePath: partilhas[
+                                                                  index][
+                                                              'caminho_imagem'],
+                                                          context: context,
+                                                        ));
+                                                  },
+                                                );
+                                              },
+                                            );
+                                          },
+                                        );
+                                      },
+                                    ),
                                   );
-                                },
-                              ),
-                            );
-                          } else {
-                            return SizedBox.shrink();
-                          }
-                        },
-                      ),
+                                } else {
+                                  return const SizedBox.shrink();
+                                }
+                              },
+                            ),
                     ),
                     Container(
-                      child: !partilhas.any((partilha) => partilha['area_id'] == 2)
+                      child: !partilhas
+                              .any((partilha) => partilha['area_id'] == 1)
                           ? Center(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -362,8 +405,8 @@ class _vertodos_partilhasState extends State<vertodos_partilhas> {
                                     width: 50,
                                     height: 50,
                                   ),
-                                  SizedBox(height: 8),
-                                  Text(
+                                  const SizedBox(height: 8),
+                                  const Text(
                                     'Desporto\n'
                                     'ainda nao tem partilhas !\n',
                                     style: TextStyle(
@@ -373,72 +416,97 @@ class _vertodos_partilhasState extends State<vertodos_partilhas> {
                                 ],
                               ),
                             )
-                          :  ListView.builder(
-                        scrollDirection: Axis.vertical,
-                        itemCount: partilhas.length,
-                        itemBuilder: (context, index) {
-                          if (partilhas[index]['area_id'] == 2) {
-                            return Container(
-                              margin:
-                                  EdgeInsets.only(left: 4, right: 10, top: 22),
-                              child: FutureBuilder<String>(
-                                future: partilhas[index]['id_evento'] != null
-                                    ? Funcoes_Eventos.consultaNomeEventoPorId(
-                                        partilhas[index]['id_evento'])
-                                    : Future.value(''),
-                                builder: (context, eventoSnapshot) {
-                                  return FutureBuilder<String>(
-                                    future: Funcoes_Usuarios
-                                        .consultaNomeCompletoUsuarioPorId(
-                                            partilhas[index]['id_usuario']),
-                                    builder: (context, usuarioSnapshot) {
-                                      return FutureBuilder<String>(
-                                        future:
-                                            partilhas[index]['id_local'] != null
-                                                ? Funcoes_Publicacoes
-                                                    .consultaNomeLocalPorId(
-                                                        partilhas[index]
-                                                            ['id_local'])
-                                                : Future.value(''),
-                                        builder: (context, localSnapshot) {
-                                          return FutureBuilder<String>(
-                                            future: Funcoes_Usuarios
-                                                .consultaCaminhoFotoUsuarioPorId(
-                                                    partilhas[index]
-                                                        ['id_usuario']),
-                                            builder: (context, fotoSnapshot) {
-                                              return CARD_PARTILHA(
-                                                nomeEvento_OU_Local: partilhas[
-                                                                index]
-                                                            ['id_evento'] !=
-                                                        null
-                                                    ? eventoSnapshot.data ?? ''
-                                                    : localSnapshot.data ?? '',
-                                                fotouser:
-                                                    fotoSnapshot.data ?? '',
-                                                nomeuser:
-                                                    usuarioSnapshot.data ?? '',
-                                                imagePath: partilhas[index]
-                                                    ['caminho_imagem'],
-                                                    context: context,
-                                              );
-                                            },
-                                          );
-                                        },
-                                      );
-                                    },
+                          : ListView.builder(
+                              scrollDirection: Axis.vertical,
+                              itemCount: partilhas.length,
+                              itemBuilder: (context, index) {
+                                if (partilhas[index]['area_id'] == 1) {
+                                  return Container(
+                                    margin: const EdgeInsets.only(
+                                        left: 4, right: 10, top: 22),
+                                    child: FutureBuilder<String>(
+                                      future: partilhas[index]['id_evento'] !=
+                                              null
+                                          ? Funcoes_Eventos
+                                              .consultaNomeEventoPorId(
+                                                  partilhas[index]['id_evento'])
+                                          : Future.value(''),
+                                      builder: (context, eventoSnapshot) {
+                                        return FutureBuilder<String>(
+                                          future: Funcoes_Usuarios
+                                              .consultaNomeCompletoUsuarioPorId(
+                                                  partilhas[index]
+                                                      ['id_usuario']),
+                                          builder: (context, usuarioSnapshot) {
+                                            return FutureBuilder<String>(
+                                              future: partilhas[index]
+                                                          ['id_local'] !=
+                                                      null
+                                                  ? Funcoes_Publicacoes
+                                                      .consultaNomeLocalPorId(
+                                                          partilhas[index]
+                                                              ['id_local'])
+                                                  : Future.value(''),
+                                              builder:
+                                                  (context, localSnapshot) {
+                                                return FutureBuilder<String>(
+                                                  future: Funcoes_Usuarios
+                                                      .consultaCaminhoFotoUsuarioPorId(
+                                                          partilhas[index]
+                                                              ['id_usuario']),
+                                                  builder:
+                                                      (context, fotoSnapshot) {
+                                                    return GestureDetector(
+                                                        onTap: () {
+                                                          Navigator.push(
+                                                            context,
+                                                            MaterialPageRoute(
+                                                              builder: (context) =>
+                                                                  PaginaDaPartilha(
+                                                                cor: const Color(
+                                                                    0xFF15659F),
+                                                                idpartilha:
+                                                                    partilhas[
+                                                                            index]
+                                                                        ['id'],
+                                                              ),
+                                                            ),
+                                                          );
+                                                        },
+                                                        child: CARD_PARTILHA(
+                                                          Titulo:
+                                                              partilhas[index]
+                                                                  ['titulo'],
+                                                          fotouser: fotoSnapshot
+                                                                  .data ??
+                                                              '',
+                                                          nomeuser:
+                                                              usuarioSnapshot
+                                                                      .data ??
+                                                                  '',
+                                                          imagePath: partilhas[
+                                                                  index][
+                                                              'caminho_imagem'],
+                                                          context: context,
+                                                        ));
+                                                  },
+                                                );
+                                              },
+                                            );
+                                          },
+                                        );
+                                      },
+                                    ),
                                   );
-                                },
-                              ),
-                            );
-                          } else {
-                            return SizedBox.shrink();
-                          }
-                        },
-                      ),
+                                } else {
+                                  return const SizedBox.shrink();
+                                }
+                              },
+                            ),
                     ),
                     Container(
-                      child: !partilhas.any((partilha) => partilha['area_id'] == 3)
+                      child: !partilhas
+                              .any((partilha) => partilha['area_id'] == 3)
                           ? Center(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -448,8 +516,8 @@ class _vertodos_partilhasState extends State<vertodos_partilhas> {
                                     width: 50,
                                     height: 50,
                                   ),
-                                  SizedBox(height: 8),
-                                  Text(
+                                  const SizedBox(height: 8),
+                                  const Text(
                                     'Gastronomia\n'
                                     'ainda nao tem partilhas !\n',
                                     style: TextStyle(
@@ -459,72 +527,97 @@ class _vertodos_partilhasState extends State<vertodos_partilhas> {
                                 ],
                               ),
                             )
-                          :  ListView.builder(
-                        scrollDirection: Axis.vertical,
-                        itemCount: partilhas.length,
-                        itemBuilder: (context, index) {
-                          if (partilhas[index]['area_id'] == 3) {
-                            return Container(
-                              margin:
-                                  EdgeInsets.only(left: 4, right: 10, top: 22),
-                              child: FutureBuilder<String>(
-                                future: partilhas[index]['id_evento'] != null
-                                    ? Funcoes_Eventos.consultaNomeEventoPorId(
-                                        partilhas[index]['id_evento'])
-                                    : Future.value(''),
-                                builder: (context, eventoSnapshot) {
-                                  return FutureBuilder<String>(
-                                    future: Funcoes_Usuarios
-                                        .consultaNomeCompletoUsuarioPorId(
-                                            partilhas[index]['id_usuario']),
-                                    builder: (context, usuarioSnapshot) {
-                                      return FutureBuilder<String>(
-                                        future:
-                                            partilhas[index]['id_local'] != null
-                                                ? Funcoes_Publicacoes
-                                                    .consultaNomeLocalPorId(
-                                                        partilhas[index]
-                                                            ['id_local'])
-                                                : Future.value(''),
-                                        builder: (context, localSnapshot) {
-                                          return FutureBuilder<String>(
-                                            future: Funcoes_Usuarios
-                                                .consultaCaminhoFotoUsuarioPorId(
-                                                    partilhas[index]
-                                                        ['id_usuario']),
-                                            builder: (context, fotoSnapshot) {
-                                              return CARD_PARTILHA(
-                                                nomeEvento_OU_Local: partilhas[
-                                                                index]
-                                                            ['id_evento'] !=
-                                                        null
-                                                    ? eventoSnapshot.data ?? ''
-                                                    : localSnapshot.data ?? '',
-                                                fotouser:
-                                                    fotoSnapshot.data ?? '',
-                                                nomeuser:
-                                                    usuarioSnapshot.data ?? '',
-                                                imagePath: partilhas[index]
-                                                    ['caminho_imagem'],
-                                                    context: context,
-                                              );
-                                            },
-                                          );
-                                        },
-                                      );
-                                    },
+                          : ListView.builder(
+                              scrollDirection: Axis.vertical,
+                              itemCount: partilhas.length,
+                              itemBuilder: (context, index) {
+                                if (partilhas[index]['area_id'] == 3) {
+                                  return Container(
+                                    margin: const EdgeInsets.only(
+                                        left: 4, right: 10, top: 22),
+                                    child: FutureBuilder<String>(
+                                      future: partilhas[index]['id_evento'] !=
+                                              null
+                                          ? Funcoes_Eventos
+                                              .consultaNomeEventoPorId(
+                                                  partilhas[index]['id_evento'])
+                                          : Future.value(''),
+                                      builder: (context, eventoSnapshot) {
+                                        return FutureBuilder<String>(
+                                          future: Funcoes_Usuarios
+                                              .consultaNomeCompletoUsuarioPorId(
+                                                  partilhas[index]
+                                                      ['id_usuario']),
+                                          builder: (context, usuarioSnapshot) {
+                                            return FutureBuilder<String>(
+                                              future: partilhas[index]
+                                                          ['id_local'] !=
+                                                      null
+                                                  ? Funcoes_Publicacoes
+                                                      .consultaNomeLocalPorId(
+                                                          partilhas[index]
+                                                              ['id_local'])
+                                                  : Future.value(''),
+                                              builder:
+                                                  (context, localSnapshot) {
+                                                return FutureBuilder<String>(
+                                                  future: Funcoes_Usuarios
+                                                      .consultaCaminhoFotoUsuarioPorId(
+                                                          partilhas[index]
+                                                              ['id_usuario']),
+                                                  builder:
+                                                      (context, fotoSnapshot) {
+                                                    return GestureDetector(
+                                                        onTap: () {
+                                                          Navigator.push(
+                                                            context,
+                                                            MaterialPageRoute(
+                                                              builder: (context) =>
+                                                                  PaginaDaPartilha(
+                                                                cor: const Color(
+                                                                    0xFF15659F),
+                                                                idpartilha:
+                                                                    partilhas[
+                                                                            index]
+                                                                        ['id'],
+                                                              ),
+                                                            ),
+                                                          );
+                                                        },
+                                                        child: CARD_PARTILHA(
+                                                          Titulo:
+                                                              partilhas[index]
+                                                                  ['titulo'],
+                                                          fotouser: fotoSnapshot
+                                                                  .data ??
+                                                              '',
+                                                          nomeuser:
+                                                              usuarioSnapshot
+                                                                      .data ??
+                                                                  '',
+                                                          imagePath: partilhas[
+                                                                  index][
+                                                              'caminho_imagem'],
+                                                          context: context,
+                                                        ));
+                                                  },
+                                                );
+                                              },
+                                            );
+                                          },
+                                        );
+                                      },
+                                    ),
                                   );
-                                },
-                              ),
-                            );
-                          } else {
-                            return SizedBox.shrink();
-                          }
-                        },
-                      ),
+                                } else {
+                                  return const SizedBox.shrink();
+                                }
+                              },
+                            ),
                     ),
                     Container(
-                      child: !partilhas.any((partilha) => partilha['area_id'] == 4)
+                      child: !partilhas
+                              .any((partilha) => partilha['area_id'] == 4)
                           ? Center(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -534,8 +627,8 @@ class _vertodos_partilhasState extends State<vertodos_partilhas> {
                                     width: 50,
                                     height: 50,
                                   ),
-                                  SizedBox(height: 8),
-                                  Text(
+                                  const SizedBox(height: 8),
+                                  const Text(
                                     'Formação\n'
                                     'ainda nao tem partilhas !\n',
                                     style: TextStyle(
@@ -545,72 +638,97 @@ class _vertodos_partilhasState extends State<vertodos_partilhas> {
                                 ],
                               ),
                             )
-                          :  ListView.builder(
-                        scrollDirection: Axis.vertical,
-                        itemCount: partilhas.length,
-                        itemBuilder: (context, index) {
-                          if (partilhas[index]['area_id'] == 4) {
-                            return Container(
-                              margin:
-                                  EdgeInsets.only(left: 4, right: 10, top: 22),
-                              child: FutureBuilder<String>(
-                                future: partilhas[index]['id_evento'] != null
-                                    ? Funcoes_Eventos.consultaNomeEventoPorId(
-                                        partilhas[index]['id_evento'])
-                                    : Future.value(''),
-                                builder: (context, eventoSnapshot) {
-                                  return FutureBuilder<String>(
-                                    future: Funcoes_Usuarios
-                                        .consultaNomeCompletoUsuarioPorId(
-                                            partilhas[index]['id_usuario']),
-                                    builder: (context, usuarioSnapshot) {
-                                      return FutureBuilder<String>(
-                                        future:
-                                            partilhas[index]['id_local'] != null
-                                                ? Funcoes_Publicacoes
-                                                    .consultaNomeLocalPorId(
-                                                        partilhas[index]
-                                                            ['id_local'])
-                                                : Future.value(''),
-                                        builder: (context, localSnapshot) {
-                                          return FutureBuilder<String>(
-                                            future: Funcoes_Usuarios
-                                                .consultaCaminhoFotoUsuarioPorId(
-                                                    partilhas[index]
-                                                        ['id_usuario']),
-                                            builder: (context, fotoSnapshot) {
-                                              return CARD_PARTILHA(
-                                                nomeEvento_OU_Local: partilhas[
-                                                                index]
-                                                            ['id_evento'] !=
-                                                        null
-                                                    ? eventoSnapshot.data ?? ''
-                                                    : localSnapshot.data ?? '',
-                                                fotouser:
-                                                    fotoSnapshot.data ?? '',
-                                                nomeuser:
-                                                    usuarioSnapshot.data ?? '',
-                                                imagePath: partilhas[index]
-                                                    ['caminho_imagem'],
-                                                    context: context,
-                                              );
-                                            },
-                                          );
-                                        },
-                                      );
-                                    },
+                          : ListView.builder(
+                              scrollDirection: Axis.vertical,
+                              itemCount: partilhas.length,
+                              itemBuilder: (context, index) {
+                                if (partilhas[index]['area_id'] == 4) {
+                                  return Container(
+                                    margin: const EdgeInsets.only(
+                                        left: 4, right: 10, top: 22),
+                                    child: FutureBuilder<String>(
+                                      future: partilhas[index]['id_evento'] !=
+                                              null
+                                          ? Funcoes_Eventos
+                                              .consultaNomeEventoPorId(
+                                                  partilhas[index]['id_evento'])
+                                          : Future.value(''),
+                                      builder: (context, eventoSnapshot) {
+                                        return FutureBuilder<String>(
+                                          future: Funcoes_Usuarios
+                                              .consultaNomeCompletoUsuarioPorId(
+                                                  partilhas[index]
+                                                      ['id_usuario']),
+                                          builder: (context, usuarioSnapshot) {
+                                            return FutureBuilder<String>(
+                                              future: partilhas[index]
+                                                          ['id_local'] !=
+                                                      null
+                                                  ? Funcoes_Publicacoes
+                                                      .consultaNomeLocalPorId(
+                                                          partilhas[index]
+                                                              ['id_local'])
+                                                  : Future.value(''),
+                                              builder:
+                                                  (context, localSnapshot) {
+                                                return FutureBuilder<String>(
+                                                  future: Funcoes_Usuarios
+                                                      .consultaCaminhoFotoUsuarioPorId(
+                                                          partilhas[index]
+                                                              ['id_usuario']),
+                                                  builder:
+                                                      (context, fotoSnapshot) {
+                                                    return GestureDetector(
+                                                        onTap: () {
+                                                          Navigator.push(
+                                                            context,
+                                                            MaterialPageRoute(
+                                                              builder: (context) =>
+                                                                  PaginaDaPartilha(
+                                                                cor: const Color(
+                                                                    0xFF15659F),
+                                                                idpartilha:
+                                                                    partilhas[
+                                                                            index]
+                                                                        ['id'],
+                                                              ),
+                                                            ),
+                                                          );
+                                                        },
+                                                        child: CARD_PARTILHA(
+                                                          Titulo:
+                                                              partilhas[index]
+                                                                  ['titulo'],
+                                                          fotouser: fotoSnapshot
+                                                                  .data ??
+                                                              '',
+                                                          nomeuser:
+                                                              usuarioSnapshot
+                                                                      .data ??
+                                                                  '',
+                                                          imagePath: partilhas[
+                                                                  index][
+                                                              'caminho_imagem'],
+                                                          context: context,
+                                                        ));
+                                                  },
+                                                );
+                                              },
+                                            );
+                                          },
+                                        );
+                                      },
+                                    ),
                                   );
-                                },
-                              ),
-                            );
-                          } else {
-                            return SizedBox.shrink();
-                          }
-                        },
-                      ),
+                                } else {
+                                  return const SizedBox.shrink();
+                                }
+                              },
+                            ),
                     ),
                     Container(
-                      child: !partilhas.any((partilha) => partilha['area_id'] == 5)
+                      child: !partilhas
+                              .any((partilha) => partilha['area_id'] == 7)
                           ? Center(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -620,8 +738,8 @@ class _vertodos_partilhasState extends State<vertodos_partilhas> {
                                     width: 50,
                                     height: 50,
                                   ),
-                                  SizedBox(height: 8),
-                                  Text(
+                                  const SizedBox(height: 8),
+                                  const Text(
                                     'Alojamento\n'
                                     'ainda nao tem partilhas !\n',
                                     style: TextStyle(
@@ -632,71 +750,114 @@ class _vertodos_partilhasState extends State<vertodos_partilhas> {
                               ),
                             )
                           : ListView.builder(
-                        scrollDirection: Axis.vertical,
-                        itemCount: partilhas.length,
-                        itemBuilder: (context, index) {
-                          if (partilhas[index]['area_id'] == 5) {
-                            return Container(
-                              margin:
-                                  EdgeInsets.only(left: 4, right: 10, top: 22),
-                              child: FutureBuilder<String>(
-                                future: partilhas[index]['id_evento'] != null
-                                    ? Funcoes_Eventos.consultaNomeEventoPorId(
-                                        partilhas[index]['id_evento'])
-                                    : Future.value(''),
-                                builder: (context, eventoSnapshot) {
-                                  return FutureBuilder<String>(
-                                    future: Funcoes_Usuarios
-                                        .consultaNomeCompletoUsuarioPorId(
-                                            partilhas[index]['id_usuario']),
-                                    builder: (context, usuarioSnapshot) {
-                                      return FutureBuilder<String>(
-                                        future:
-                                            partilhas[index]['id_local'] != null
-                                                ? Funcoes_Publicacoes
-                                                    .consultaNomeLocalPorId(
-                                                        partilhas[index]
-                                                            ['id_local'])
-                                                : Future.value(''),
-                                        builder: (context, localSnapshot) {
-                                          return FutureBuilder<String>(
-                                            future: Funcoes_Usuarios
-                                                .consultaCaminhoFotoUsuarioPorId(
-                                                    partilhas[index]
-                                                        ['id_usuario']),
-                                            builder: (context, fotoSnapshot) {
-                                              return CARD_PARTILHA(
-                                                nomeEvento_OU_Local: partilhas[
-                                                                index]
-                                                            ['id_evento'] !=
-                                                        null
-                                                    ? eventoSnapshot.data ?? ''
-                                                    : localSnapshot.data ?? '',
-                                                fotouser:
-                                                    fotoSnapshot.data ?? '',
-                                                nomeuser:
-                                                    usuarioSnapshot.data ?? '',
-                                                imagePath: partilhas[index]
-                                                    ['caminho_imagem'],
-                                                    context: context,
-                                              );
-                                            },
-                                          );
-                                        },
-                                      );
-                                    },
+                              scrollDirection: Axis.vertical,
+                              itemCount: partilhas.length,
+                              itemBuilder: (context, index) {
+                                if (partilhas[index]['area_id'] == 7) {
+                                  return Container(
+                                    margin: const EdgeInsets.only(
+                                        left: 4, right: 10, top: 22),
+                                    child: FutureBuilder<String>(
+                                      future: partilhas[index]['id_evento'] !=
+                                              null
+                                          ? Funcoes_Eventos
+                                              .consultaNomeEventoPorId(
+                                                  partilhas[index]['id_evento'])
+                                          : Future.value(''),
+                                      builder: (context, eventoSnapshot) {
+                                        return FutureBuilder<String>(
+                                          future: Funcoes_Usuarios
+                                              .consultaNomeCompletoUsuarioPorId(
+                                                  partilhas[index]
+                                                      ['id_usuario']),
+                                          builder: (context, usuarioSnapshot) {
+                                            return FutureBuilder<String>(
+                                              future: partilhas[index]
+                                                          ['id_local'] !=
+                                                      null
+                                                  ? Funcoes_Publicacoes
+                                                      .consultaNomeLocalPorId(
+                                                          partilhas[index]
+                                                              ['id_local'])
+                                                  : Future.value(''),
+                                              builder:
+                                                  (context, localSnapshot) {
+                                                return FutureBuilder<String>(
+                                                  future: partilhas[index]
+                                                              ['id_local'] !=
+                                                          null
+                                                      ? Funcoes_Publicacoes
+                                                          .consultaNomeLocalPorId(
+                                                              partilhas[index]
+                                                                  ['id_local'])
+                                                      : Future.value(''),
+                                                  builder:
+                                                      (context, localSnapshot) {
+                                                    return FutureBuilder<
+                                                        String>(
+                                                      future: Funcoes_Usuarios
+                                                          .consultaCaminhoFotoUsuarioPorId(
+                                                              partilhas[index][
+                                                                  'id_usuario']),
+                                                      builder: (context,
+                                                          fotoSnapshot) {
+                                                        return GestureDetector(
+                                                          onTap: () {
+                                                            Navigator.push(
+                                                              context,
+                                                              MaterialPageRoute(
+                                                                builder:
+                                                                    (context) =>
+                                                                        PaginaDaPartilha(
+                                                                  cor: const Color(
+                                                                      0xFF15659F),
+                                                                  idpartilha:
+                                                                      partilhas[
+                                                                              index]
+                                                                          [
+                                                                          'id'],
+                                                                ),
+                                                              ),
+                                                            );
+                                                          },
+                                                          child: CARD_PARTILHA(
+                                                            Titulo:
+                                                                partilhas[index]
+                                                                    ['titulo'],
+                                                            fotouser:
+                                                                fotoSnapshot
+                                                                        .data ??
+                                                                    '',
+                                                            nomeuser:
+                                                                usuarioSnapshot
+                                                                        .data ??
+                                                                    '',
+                                                            imagePath: partilhas[
+                                                                    index][
+                                                                'caminho_imagem'],
+                                                            context: context,
+                                                          ),
+                                                        );
+                                                      },
+                                                    );
+                                                  },
+                                                );
+                                              },
+                                            );
+                                          },
+                                        );
+                                      },
+                                    ),
                                   );
-                                },
-                              ),
-                            );
-                          } else {
-                            return SizedBox.shrink();
-                          }
-                        },
-                      ),
+                                } else {
+                                  return const SizedBox.shrink();
+                                }
+                              },
+                            ),
                     ),
                     Container(
-                      child: !partilhas.any((partilha) => partilha['area_id'] == 6)
+                      child: !partilhas
+                              .any((partilha) => partilha['area_id'] == 6)
                           ? Center(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -706,8 +867,8 @@ class _vertodos_partilhasState extends State<vertodos_partilhas> {
                                     width: 50,
                                     height: 50,
                                   ),
-                                  SizedBox(height: 8),
-                                  Text(
+                                  const SizedBox(height: 8),
+                                  const Text(
                                     'Transportes\n'
                                     'ainda nao tem partilhas !\n',
                                     style: TextStyle(
@@ -717,72 +878,97 @@ class _vertodos_partilhasState extends State<vertodos_partilhas> {
                                 ],
                               ),
                             )
-                          :  ListView.builder(
-                        scrollDirection: Axis.vertical,
-                        itemCount: partilhas.length,
-                        itemBuilder: (context, index) {
-                          if (partilhas[index]['area_id'] == 6) {
-                            return Container(
-                              margin:
-                                  EdgeInsets.only(left: 4, right: 10, top: 22),
-                              child: FutureBuilder<String>(
-                                future: partilhas[index]['id_evento'] != null
-                                    ? Funcoes_Eventos.consultaNomeEventoPorId(
-                                        partilhas[index]['id_evento'])
-                                    : Future.value(''),
-                                builder: (context, eventoSnapshot) {
-                                  return FutureBuilder<String>(
-                                    future: Funcoes_Usuarios
-                                        .consultaNomeCompletoUsuarioPorId(
-                                            partilhas[index]['id_usuario']),
-                                    builder: (context, usuarioSnapshot) {
-                                      return FutureBuilder<String>(
-                                        future:
-                                            partilhas[index]['id_local'] != null
-                                                ? Funcoes_Publicacoes
-                                                    .consultaNomeLocalPorId(
-                                                        partilhas[index]
-                                                            ['id_local'])
-                                                : Future.value(''),
-                                        builder: (context, localSnapshot) {
-                                          return FutureBuilder<String>(
-                                            future: Funcoes_Usuarios
-                                                .consultaCaminhoFotoUsuarioPorId(
-                                                    partilhas[index]
-                                                        ['id_usuario']),
-                                            builder: (context, fotoSnapshot) {
-                                              return CARD_PARTILHA(
-                                                nomeEvento_OU_Local: partilhas[
-                                                                index]
-                                                            ['id_evento'] !=
-                                                        null
-                                                    ? eventoSnapshot.data ?? ''
-                                                    : localSnapshot.data ?? '',
-                                                fotouser:
-                                                    fotoSnapshot.data ?? '',
-                                                nomeuser:
-                                                    usuarioSnapshot.data ?? '',
-                                                imagePath: partilhas[index]
-                                                    ['caminho_imagem'],
-                                                    context: context,
-                                              );
-                                            },
-                                          );
-                                        },
-                                      );
-                                    },
+                          : ListView.builder(
+                              scrollDirection: Axis.vertical,
+                              itemCount: partilhas.length,
+                              itemBuilder: (context, index) {
+                                if (partilhas[index]['area_id'] == 6) {
+                                  return Container(
+                                    margin: const EdgeInsets.only(
+                                        left: 4, right: 10, top: 22),
+                                    child: FutureBuilder<String>(
+                                      future: partilhas[index]['id_evento'] !=
+                                              null
+                                          ? Funcoes_Eventos
+                                              .consultaNomeEventoPorId(
+                                                  partilhas[index]['id_evento'])
+                                          : Future.value(''),
+                                      builder: (context, eventoSnapshot) {
+                                        return FutureBuilder<String>(
+                                          future: Funcoes_Usuarios
+                                              .consultaNomeCompletoUsuarioPorId(
+                                                  partilhas[index]
+                                                      ['id_usuario']),
+                                          builder: (context, usuarioSnapshot) {
+                                            return FutureBuilder<String>(
+                                              future: partilhas[index]
+                                                          ['id_local'] !=
+                                                      null
+                                                  ? Funcoes_Publicacoes
+                                                      .consultaNomeLocalPorId(
+                                                          partilhas[index]
+                                                              ['id_local'])
+                                                  : Future.value(''),
+                                              builder:
+                                                  (context, localSnapshot) {
+                                                return FutureBuilder<String>(
+                                                  future: Funcoes_Usuarios
+                                                      .consultaCaminhoFotoUsuarioPorId(
+                                                          partilhas[index]
+                                                              ['id_usuario']),
+                                                  builder:
+                                                      (context, fotoSnapshot) {
+                                                    return GestureDetector(
+                                                        onTap: () {
+                                                          Navigator.push(
+                                                            context,
+                                                            MaterialPageRoute(
+                                                              builder: (context) =>
+                                                                  PaginaDaPartilha(
+                                                                cor: const Color(
+                                                                    0xFF15659F),
+                                                                idpartilha:
+                                                                    partilhas[
+                                                                            index]
+                                                                        ['id'],
+                                                              ),
+                                                            ),
+                                                          );
+                                                        },
+                                                        child: CARD_PARTILHA(
+                                                          Titulo:
+                                                              partilhas[index]
+                                                                  ['titulo'],
+                                                          fotouser: fotoSnapshot
+                                                                  .data ??
+                                                              '',
+                                                          nomeuser:
+                                                              usuarioSnapshot
+                                                                      .data ??
+                                                                  '',
+                                                          imagePath: partilhas[
+                                                                  index][
+                                                              'caminho_imagem'],
+                                                          context: context,
+                                                        ));
+                                                  },
+                                                );
+                                              },
+                                            );
+                                          },
+                                        );
+                                      },
+                                    ),
                                   );
-                                },
-                              ),
-                            );
-                          } else {
-                            return SizedBox.shrink();
-                          }
-                        },
-                      ),
+                                } else {
+                                  return const SizedBox.shrink();
+                                }
+                              },
+                            ),
                     ),
                     Container(
-                      child: !partilhas.any((partilha) => partilha['area_id'] == 7)
+                      child: !partilhas
+                              .any((partilha) => partilha['area_id'] == 5)
                           ? Center(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -792,8 +978,8 @@ class _vertodos_partilhasState extends State<vertodos_partilhas> {
                                     width: 50,
                                     height: 50,
                                   ),
-                                  SizedBox(height: 8),
-                                  Text(
+                                  const SizedBox(height: 8),
+                                  const Text(
                                     'Lazer\n'
                                     'ainda nao tem partilhas !\n',
                                     style: TextStyle(
@@ -803,69 +989,93 @@ class _vertodos_partilhasState extends State<vertodos_partilhas> {
                                 ],
                               ),
                             )
-                          :  ListView.builder(
-                        scrollDirection: Axis.vertical,
-                        itemCount: partilhas.length,
-                        itemBuilder: (context, index) {
-                          if (partilhas[index]['area_id'] == 7) {
-                            return Container(
-                              margin:
-                                  EdgeInsets.only(left: 4, right: 10, top: 22),
-                              child: FutureBuilder<String>(
-                                future: partilhas[index]['id_evento'] != null
-                                    ? Funcoes_Eventos.consultaNomeEventoPorId(
-                                        partilhas[index]['id_evento'])
-                                    : Future.value(''),
-                                builder: (context, eventoSnapshot) {
-                                  return FutureBuilder<String>(
-                                    future: Funcoes_Usuarios
-                                        .consultaNomeCompletoUsuarioPorId(
-                                            partilhas[index]['id_usuario']),
-                                    builder: (context, usuarioSnapshot) {
-                                      return FutureBuilder<String>(
-                                        future:
-                                            partilhas[index]['id_local'] != null
-                                                ? Funcoes_Publicacoes
-                                                    .consultaNomeLocalPorId(
-                                                        partilhas[index]
-                                                            ['id_local'])
-                                                : Future.value(''),
-                                        builder: (context, localSnapshot) {
-                                          return FutureBuilder<String>(
-                                            future: Funcoes_Usuarios
-                                                .consultaCaminhoFotoUsuarioPorId(
-                                                    partilhas[index]
-                                                        ['id_usuario']),
-                                            builder: (context, fotoSnapshot) {
-                                              return CARD_PARTILHA(
-                                                nomeEvento_OU_Local: partilhas[
-                                                                index]
-                                                            ['id_evento'] !=
-                                                        null
-                                                    ? eventoSnapshot.data ?? ''
-                                                    : localSnapshot.data ?? '',
-                                                fotouser:
-                                                    fotoSnapshot.data ?? '',
-                                                nomeuser:
-                                                    usuarioSnapshot.data ?? '',
-                                                imagePath: partilhas[index]
-                                                    ['caminho_imagem'],
-                                                    context: context,
-                                              );
-                                            },
-                                          );
-                                        },
-                                      );
-                                    },
+                          : ListView.builder(
+                              scrollDirection: Axis.vertical,
+                              itemCount: partilhas.length,
+                              itemBuilder: (context, index) {
+                                if (partilhas[index]['area_id'] == 5) {
+                                  return Container(
+                                    margin: const EdgeInsets.only(
+                                        left: 4, right: 10, top: 22),
+                                    child: FutureBuilder<String>(
+                                      future: partilhas[index]['id_evento'] !=
+                                              null
+                                          ? Funcoes_Eventos
+                                              .consultaNomeEventoPorId(
+                                                  partilhas[index]['id_evento'])
+                                          : Future.value(''),
+                                      builder: (context, eventoSnapshot) {
+                                        return FutureBuilder<String>(
+                                          future: Funcoes_Usuarios
+                                              .consultaNomeCompletoUsuarioPorId(
+                                                  partilhas[index]
+                                                      ['id_usuario']),
+                                          builder: (context, usuarioSnapshot) {
+                                            return FutureBuilder<String>(
+                                              future: partilhas[index]
+                                                          ['id_local'] !=
+                                                      null
+                                                  ? Funcoes_Publicacoes
+                                                      .consultaNomeLocalPorId(
+                                                          partilhas[index]
+                                                              ['id_local'])
+                                                  : Future.value(''),
+                                              builder:
+                                                  (context, localSnapshot) {
+                                                return FutureBuilder<String>(
+                                                  future: Funcoes_Usuarios
+                                                      .consultaCaminhoFotoUsuarioPorId(
+                                                          partilhas[index]
+                                                              ['id_usuario']),
+                                                  builder:
+                                                      (context, fotoSnapshot) {
+                                                    return GestureDetector(
+                                                        onTap: () {
+                                                          Navigator.push(
+                                                            context,
+                                                            MaterialPageRoute(
+                                                              builder: (context) =>
+                                                                  PaginaDaPartilha(
+                                                                cor: const Color(
+                                                                    0xFF15659F),
+                                                                idpartilha:
+                                                                    partilhas[
+                                                                            index]
+                                                                        ['id'],
+                                                              ),
+                                                            ),
+                                                          );
+                                                        },
+                                                        child: CARD_PARTILHA(
+                                                          Titulo:
+                                                              partilhas[index]
+                                                                  ['titulo'],
+                                                          fotouser: fotoSnapshot
+                                                                  .data ??
+                                                              '',
+                                                          nomeuser:
+                                                              usuarioSnapshot
+                                                                      .data ??
+                                                                  '',
+                                                          imagePath: partilhas[
+                                                                  index][
+                                                              'caminho_imagem'],
+                                                          context: context,
+                                                        ));
+                                                  },
+                                                );
+                                              },
+                                            );
+                                          },
+                                        );
+                                      },
+                                    ),
                                   );
-                                },
-                              ),
-                            );
-                          } else {
-                            return SizedBox.shrink();
-                          }
-                        },
-                      ),
+                                } else {
+                                  return const SizedBox.shrink();
+                                }
+                              },
+                            ),
                     ),
                   ],
                 ),

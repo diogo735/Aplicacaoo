@@ -47,15 +47,15 @@ class ValidarEventoCriar extends StatefulWidget {
 }
 
 class _ValidarEventoCriarState extends State<ValidarEventoCriar> {
-  String formatarDataHora(DateTime dateTime) {
-    final DateFormat formatter = DateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-    return "${formatter.format(dateTime)}+00";
+  String formatarDataHora(DateTime data) {
+    return DateFormat("yyyy-MM-ddTHH:mm:ss").format(data) +
+        "Z"; // Formato ISO 8601 com UTC
   }
 
   void criarNovoEvento() async {
     String? capaImagemUrl;
     List<String> galeriaUrls = [];
-    
+
     if (widget.capa != null) {
       try {
         capaImagemUrl = await _uploadImage(widget.capa!);
@@ -108,13 +108,14 @@ class _ValidarEventoCriarState extends State<ValidarEventoCriar> {
     // Formatar as datas para o formato desejado
     String dataInicioatividade = formatarDataHora(dataHoraInicio);
     String dataFimatividade = formatarDataHora(dataHoraFim);
+   
 
     Map<String, dynamic> novoEvento = {
       'nome': widget.titulo,
       'descricao': widget.descricao,
       'topico_id': widget.idTopico,
-      'dataInicioatividade': dataInicioatividade,
-      'dataFimatividade': dataFimatividade,
+      'datainicioatividade': dataInicioatividade,
+      'datafimatividade': dataFimatividade,
       'estado': 'Por validar',
       'centro_id': centroSelecionado,
       'autor_id': user_id,
@@ -131,7 +132,7 @@ class _ValidarEventoCriarState extends State<ValidarEventoCriar> {
       if (eventoId != null) {
         print('Evento criado com sucesso! ID do evento: $eventoId');
         // Adicionar as URLs das imagens da galeria ao evento criado
-        if (galeriaUrls.isNotEmpty ) {
+        if (galeriaUrls.isNotEmpty) {
           try {
             String galeriaResultado = await apiEventos
                 .adicionarImagensGaleriaUrls(eventoId, galeriaUrls);
@@ -146,7 +147,6 @@ class _ValidarEventoCriarState extends State<ValidarEventoCriar> {
                     builder: (context) => PaginaEventoValidado(
                           cor: widget.idArea,
                         )),
-                        
               );
             } else {
               // Se houver outro resultado, você pode lidar com isso aqui

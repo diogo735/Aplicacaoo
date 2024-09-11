@@ -8,16 +8,16 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 
 class ApiPartilhas {
   final String apiUrlPartilhas =
-      'https://backend-teste-q43r.onrender.com/albuns/partilhasde1centro/';
+      'https://backend-teste-q43r.onrender.com/galeria_album/listar_imagens_por_centro_APP/';
 
   final String apiUrlCriarPartilha =
-      'https://backend-teste-q43r.onrender.com/albuns/create';
+      'https://backend-teste-q43r.onrender.com/galeria_album/criar_partilhaAPP';
 
   final String apiUrlComentarios =
-      'https://backend-teste-q43r.onrender.com/comentarios_albuns/todoscomentarios/';
+      'https://backend-teste-q43r.onrender.com/comentarios_albuns/todoscomentariosAPP/';
 
   final String apiUrlCriarComentario =
-      'https://backend-teste-q43r.onrender.com/comentarios_albuns/criarcomentario';
+      'https://backend-teste-q43r.onrender.com/comentarios_albuns/criarcomentarioAPP';
 
   final String apiUrlLikesDeUmCentro =
       'https://backend-teste-q43r.onrender.com/likepartilhas/likesde1centro/';
@@ -26,76 +26,76 @@ class ApiPartilhas {
       'https://backend-teste-q43r.onrender.com/likepartilhas/darlike1partilha';
   final String apiUrlDeletarLike =
       'https://backend-teste-q43r.onrender.com/likepartilhas/apagar1like1parilha';
-Future<void> fetchAndStorePartilhas(int centroId) async {
-  // Verificar conectividade
-  try {
-    await _checkConnectivity();
-  } catch (e) {
-    print('Erro de conectividade: $e');
-    return;
-  }
 
-  // Buscar o JWT Token para autenticação
-  String? jwtToken = TokenService().getToken();
-  if (jwtToken == null) {
-    throw Exception('JWT Token is not set.');
-  }
-
-  // Gerar a URL completa e verificar se está correta
-  String fullUrl = '$apiUrlPartilhas$centroId';
-  print('URL gerada: $fullUrl');
-
-  try {
-    // Verifique se a URL está correta
-    Uri uri = Uri.parse(fullUrl);
-    print('URI válida: $uri');
-
-    // Fazer a requisição GET para a API de "álbuns" (backend)
-    final response = await http.get(
-      uri,
-      headers: {
-        'Authorization': 'Bearer $jwtToken',
-      },
-    );
-
-    // Verificar o status da resposta
-    print('Status da resposta: ${response.statusCode}');
-    if (response.statusCode == 200) {
-      List<dynamic> albunsList = json.decode(response.body);
-
-      if (albunsList.isEmpty) {
-        print('Nenhuma partilha encontrada para o centro $centroId.');
-        return;  // Se não houver partilhas, não faz mais nada
-      }
-
-      await Funcoes_Partilhas.deleteAllPartilhas();
-
-      for (var album in albunsList) {
-        await Funcoes_Partilhas.insertPartilha({
-          'id': album['id'], // ID do álbum (partilha)
-          'titulo': album['nome'], // Título do álbum
-          'descricao': album['descricao'], // Descrição do álbum
-          'caminho_imagem': album['capa_imagem_album'], // Capa do álbum (imagem)
-          'data': album['createdAt'], // Data de criação
-          'hora': album['createdAt'], // Hora de criação (se aplicável)
-          'id_usuario': album['autor_id'], // ID do autor do álbum
-          'area_id': album['area_id'], // Área onde o álbum foi criado
-          'centro_id': album['centro_id'], // Centro relacionado ao álbum
-        });
-      }
-
-      print('Dados das partilhas carregados com sucesso.');
-    } else if (response.statusCode == 404) {
-      print('Nenhuma partilha encontrada para o centro $centroId.');
-    } else {
-      print('Falha ao carregar as partilhas (álbuns) para o centro $centroId.');
+  Future<void> fetchAndStorePartilhas(int centroId) async {
+    // Verificar conectividade
+    try {
+      await _checkConnectivity();
+    } catch (e) {
+      print('Erro de conectividade: $e');
+      return;
     }
-  } catch (e) {
-    print('Erro ao carregar os dados: $e');
+
+    // Buscar o JWT Token para autenticação
+    String? jwtToken = TokenService().getToken();
+    if (jwtToken == null) {
+      throw Exception('JWT Token is not set.');
+    }
+
+    // Gerar a URL completa e verificar se está correta
+    String fullUrl = '$apiUrlPartilhas$centroId';
+    print('URL gerada: $fullUrl');
+
+    try {
+      // Verifique se a URL está correta
+      Uri uri = Uri.parse(fullUrl);
+      print('URI válida: $uri');
+
+      // Fazer a requisição GET para a API de "álbuns" (backend)
+      final response = await http.get(
+        uri,
+        headers: {
+          'Authorization': 'Bearer $jwtToken',
+        },
+      );
+
+      // Verificar o status da resposta
+      print('Status da resposta: ${response.statusCode}');
+      if (response.statusCode == 200) {
+        List<dynamic> partilhasList = json.decode(response.body);
+        if (partilhasList.isEmpty) {
+          print('Nenhuma partilha encontrada para o centro $centroId.');
+          return; // Se não houver partilhas, não faz mais nada
+        }
+
+        await Funcoes_Partilhas.deleteAllPartilhas();
+
+        for (var partilha in partilhasList) {
+          await Funcoes_Partilhas.insertPartilha({
+            'id': partilha['id'], // ID do álbum (partilha)
+            'titulo': partilha['titulo'], // Título do álbum
+            'descricao': partilha['descricao'], // Descrição do álbum
+            'caminho_imagem':
+                partilha['caminho_imagem'], // Capa do álbum (imagem)
+            'data': partilha['createdAt'], // Data de criação
+            'hora': partilha['createdAt'], // Hora de criação (se aplicável)
+            'id_usuario': partilha['id_user'], // ID do autor do álbum
+            'area_id': partilha['area_id'], // Área onde o álbum foi criado
+            'centro_id': partilha['centro_id'], // Centro relacionado ao álbum
+          });
+        }
+
+        print('Dados das partilhas carregados com sucesso.');
+      } else if (response.statusCode == 404) {
+        print('Nenhuma partilha encontrada para o centro $centroId.');
+      } else {
+        print(
+            'Falha ao carregar as partilhas (álbuns) para o centro $centroId.');
+      }
+    } catch (e) {
+      print('Erro ao carregar os dados: $e');
+    }
   }
-}
-
-
 
   Future<void> criarPartilha(Map<String, dynamic> partilha) async {
     await _checkConnectivity();
@@ -115,7 +115,27 @@ Future<void> fetchAndStorePartilhas(int centroId) async {
     );
 
     if (response.statusCode == 201 || response.statusCode == 200) {
-      print('Partilha criada com sucesso');
+      final responseData = json.decode(response.body);
+      print('Partilha UPLOAD criada com sucesso');
+
+      // Acessando os dados corretos da partilha dentro de 'data'
+      final partilhaData = responseData['data'];
+
+      // Inserindo os dados localmente após imprimir
+      await Funcoes_Partilhas.insertPartilha({
+        'id': partilhaData['id'], // ID do álbum (partilha)
+        'titulo': partilhaData['titulo'], // Título do álbum
+        'descricao': partilhaData['descricao'], // Descrição do álbum
+        'caminho_imagem':
+            partilhaData['caminho_imagem'], // Capa do álbum (imagem)
+        'data': partilhaData['createdAt'], // Data de criação
+        'hora': partilhaData['createdAt'], // Hora de criação (se aplicável)
+        'id_usuario': partilhaData['id_user'], // ID do autor do álbum
+        'area_id': partilhaData['area_id'], // Área onde o álbum foi criado
+        'centro_id': partilhaData['centro_id'], // Centro relacionado ao álbum
+      });
+
+      print('Partilha armazenada localmente com sucesso');
     } else {
       print('Falha ao criar a partilha: ${response.body}');
     }

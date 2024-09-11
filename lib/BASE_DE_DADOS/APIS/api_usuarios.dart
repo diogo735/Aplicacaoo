@@ -591,4 +591,48 @@ class ApiUsuarios {
       throw Exception('Falha ao excluir a notificação no servidor');
     }
   }
+
+   Future<void> enviarNotificacaoEvento(int usuarioId, int amigoId, int eventoId) async {
+    // Verificar a conectividade com a internet
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.none) {
+      throw Exception('Sem conexão com a internet');
+    }
+
+    // Obter o token JWT
+    String? jwtToken = TokenService().getToken();
+    if (jwtToken == null) {
+      throw Exception('JWT Token não está definido.');
+    }
+
+    // Construir o mapa da notificação
+    Map<String, dynamic> notificacaoMap = {
+      'usuario_id': amigoId,
+      'tipo': 'evento',
+      'mensagem': 'O usuário $usuarioId quer que você veja o evento $eventoId',
+      'lida': 0, // 0 indica que a notificação ainda não foi lida
+      'ja_mostrei_notificacao': 0, // 0 indica que a notificação ainda não foi mostrada
+    };
+
+    // Enviar a notificação para o backend
+    final apiUrl = 'https://backend-teste-q43r.onrender.com/notificacoes/create';
+    final response = await http.post(
+      Uri.parse(apiUrl),
+      headers: {
+        'Authorization': 'Bearer $jwtToken',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(notificacaoMap),
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      // Se a notificação foi enviada com sucesso, insira-a no banco de dados local
+      await Funcoes_Notificacoes.insertNotificacao(notificacaoMap);
+      print('Notificação enviada e armazenada com sucesso!');
+    } else {
+      throw Exception('Falha ao enviar a notificação: ${response.body}');
+    }
+  }
+
+
 }

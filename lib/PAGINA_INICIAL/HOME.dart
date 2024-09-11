@@ -7,6 +7,7 @@ import 'package:ficha3/AREAS/PAGINA_DE_UMA_AREA/sub_menu_partilhas/Pagina_de_uma
 import 'package:ficha3/AREAS/PAGINA_DE_UMA_AREA/sub_menu_topicos/pagina_topico/pagina_publicacao_local/pagnia_de_uma_publicacao.dart';
 import 'package:ficha3/BASE_DE_DADOS/APIS/api_eventos.dart';
 import 'package:ficha3/BASE_DE_DADOS/APIS/api_geolocaliza%C3%A7%C3%A3o.dart';
+import 'package:ficha3/BASE_DE_DADOS/APIS/api_mensagem_foruns.dart';
 import 'package:ficha3/BASE_DE_DADOS/APIS/api_partilhas.dart';
 import 'package:ficha3/BASE_DE_DADOS/APIS/api_publicacoes.dart';
 import 'package:ficha3/BASE_DE_DADOS/funcoes_tabelas/funcoes_centros.dart';
@@ -54,9 +55,8 @@ class _InicioPageState extends State<InicioPage> {
   Timer? _timerDB;
   Map<int, int> numeroParticipantesPorEvento = {};
   Map<int, List<Map<String, dynamic>>> comentariosPorPublicacao = {};
- bool _isLoadingPublicacoes = true;
+  bool _isLoadingPublicacoes = true;
   @override
-
   void initState() {
     super.initState();
     _getLocation();
@@ -69,40 +69,40 @@ class _InicioPageState extends State<InicioPage> {
     _iniciarTimers();
   }
 
- void _iniciarTimers() {
-  _timerAPI = Timer.periodic(
-    Duration(seconds: 30),
-    (Timer t) {
+  void _iniciarTimers() {
+    _timerAPI = Timer.periodic(
+      Duration(seconds: 30),
+      (Timer t) {
+        if (mounted) {
+          _carregarEventosDaAPI();
+          _carregarPublicacoesDaAPI();
+          _carregarPartilhasDaAPI();
+          _carregarMensagensdosfrounsDaAPI();
+        } else {
+          t.cancel(); // Cancela o timer se o widget não estiver mais montado
+        }
+      },
+    );
+
+    Timer(Duration(milliseconds: 300), () {
       if (mounted) {
-        _carregarEventosDaAPI();
-        _carregarPublicacoesDaAPI();
-        _carregarPartilhasDaAPI();
+        carregarNumeroDeParticipantes();
+        carregarLocais();
+      }
+    });
+
+    _timerDB = Timer.periodic(Duration(seconds: 15), (Timer t) {
+      if (mounted) {
+        _carregarEventos();
+        _carregarPublicacoes();
+        carregarNumeroDeParticipantes();
+        _carregarPartilhasfotos();
+        carregarLocais();
       } else {
         t.cancel(); // Cancela o timer se o widget não estiver mais montado
       }
-    },
-  );
-
-  Timer(Duration(milliseconds: 300), () {
-    if (mounted) {
-      carregarNumeroDeParticipantes();
-      carregarLocais();
-    }
-  });
-
-  _timerDB = Timer.periodic(Duration(seconds: 15), (Timer t) {
-    if (mounted) {
-      _carregarEventos();
-      _carregarPublicacoes();
-      carregarNumeroDeParticipantes();
-      _carregarPartilhasfotos();
-      carregarLocais();
-    } else {
-      t.cancel(); // Cancela o timer se o widget não estiver mais montado
-    }
-  });
-}
-
+    });
+  }
 
   Future<void> _carregarComentariosPublicacoesLocal() async {
     Funcoes_Comentarios_Publicacoes funcoesComentarios =
@@ -154,13 +154,68 @@ class _InicioPageState extends State<InicioPage> {
         print('Iniciando o carregamento dos dados das partilhas da API...');
         await ApiPartilhas().fetchAndStorePartilhas(centroSelecionado.id);
         if (!mounted) return;
-    
 
         await ApiPartilhas().fetchAndStoreComentarios();
         if (!mounted) return;
         print('Dados dos comentários das partilhas carregados com sucesso.');
+      } else {
+        print('Nenhum centro selecionado');
+      }
+    } on SocketException catch (e) {
+      print('Erro de rede: $e');
+    } catch (e) {
+      print('Erro: $e');
+    }
+  }
+ Future<void> _carregarMensagensdosfrounsDaAPI() async {
+    try {
+      var connectivityResult = await (Connectivity().checkConnectivity());
+      if (!mounted) return;
+      if (connectivityResult == ConnectivityResult.none) {
+        print('Sem conexão com a internet');
+        return;
+      }
 
-       
+      final centroProvider =
+          Provider.of<Centro_Provider>(context, listen: false);
+      final centroSelecionado = centroProvider.centroSelecionado;
+
+      if (centroSelecionado != null) {
+        print('Iniciando o carregamento das mensagens dos foruns da API...');
+         print('2.2.3->>Iniciando o carregamento das MENSAGENS DOS FORUNS...');
+        await ApiMensagensForum().fetchAndStoreMensagensForum();
+        if (!mounted) return;
+        print('Dados dos comentários dos foruns carregados com sucesso.');
+      } else {
+        print('Nenhum centro selecionado');
+      }
+    } on SocketException catch (e) {
+      print('Erro de rede: $e');
+    } catch (e) {
+      print('Erro: $e');
+    }
+  }
+  Future<void> _carregarMensagensDaAPI() async {
+    try {
+      var connectivityResult = await (Connectivity().checkConnectivity());
+      if (!mounted) return;
+      if (connectivityResult == ConnectivityResult.none) {
+        print('Sem conexão com a internet');
+        return;
+      }
+
+      final centroProvider =
+          Provider.of<Centro_Provider>(context, listen: false);
+      final centroSelecionado = centroProvider.centroSelecionado;
+
+      if (centroSelecionado != null) {
+        print('Iniciando o carregamento dos dados das partilhas da API...');
+        await ApiPartilhas().fetchAndStorePartilhas(centroSelecionado.id);
+        if (!mounted) return;
+
+        await ApiPartilhas().fetchAndStoreComentarios();
+        if (!mounted) return;
+        print('Dados dos comentários das partilhas carregados com sucesso.');
       } else {
         print('Nenhum centro selecionado');
       }
@@ -294,61 +349,61 @@ class _InicioPageState extends State<InicioPage> {
 
   ///Função para carregar as PUBLICACOES da base de dados///////////////////////////////////////////////////////
   void _carregarPublicacoes() async {
-  setState(() {
-    _isLoadingPublicacoes = true; // Iniciar o carregamento
-  });
+    setState(() {
+      _isLoadingPublicacoes = true; // Iniciar o carregamento
+    });
 
-  await _getLocation();
+    await _getLocation();
 
-  Funcoes_Publicacoes funcoesPublicacoes = Funcoes_Publicacoes();
-  Funcoes_Publicacoes_Imagens funcoesPublicacoesImagens =
-      Funcoes_Publicacoes_Imagens();
-  final centroProvider = Provider.of<Centro_Provider>(context, listen: false);
-  final centroSelecionado = centroProvider.centroSelecionado;
-  int centroId = centroSelecionado!.id;
+    Funcoes_Publicacoes funcoesPublicacoes = Funcoes_Publicacoes();
+    Funcoes_Publicacoes_Imagens funcoesPublicacoesImagens =
+        Funcoes_Publicacoes_Imagens();
+    final centroProvider = Provider.of<Centro_Provider>(context, listen: false);
+    final centroSelecionado = centroProvider.centroSelecionado;
+    int centroId = centroSelecionado!.id;
 
-  List<Map<String, dynamic>> publicacoesCarregadas =
-      (await funcoesPublicacoes.consultaPublicacoesPorCentroId(centroId))
-          .map((publicacao) => Map<String, dynamic>.from(publicacao))
-          .toList();
+    List<Map<String, dynamic>> publicacoesCarregadas =
+        (await funcoesPublicacoes.consultaPublicacoesPorCentroId(centroId))
+            .map((publicacao) => Map<String, dynamic>.from(publicacao))
+            .toList();
 
-  for (var publicacao in publicacoesCarregadas) {
-    Map<String, dynamic>? primeiraImagem = await funcoesPublicacoesImagens
-        .retorna_primeira_imagem(publicacao['id']);
-    imagemPaths[publicacao['id']] = primeiraImagem != null
-        ? primeiraImagem['caminho_imagem']
-        : 'assets/images/sem_imagem.png';
+    for (var publicacao in publicacoesCarregadas) {
+      Map<String, dynamic>? primeiraImagem = await funcoesPublicacoesImagens
+          .retorna_primeira_imagem(publicacao['id']);
+      imagemPaths[publicacao['id']] = primeiraImagem != null
+          ? primeiraImagem['caminho_imagem']
+          : 'assets/images/sem_imagem.png';
 
-    String local = publicacao['local'];
+      String local = publicacao['local'];
 
-    Map<String, double> coordenadas =
-        await LocalizacaoOSM().getCoordinatesFromName(local);
+      Map<String, double> coordenadas =
+          await LocalizacaoOSM().getCoordinatesFromName(local);
 
-    List<Map<String, dynamic>> comentariosCarregados =
-        await Funcoes_Comentarios_Publicacoes()
-            .consultaComentariosPorPublicacao(publicacao['id']);
-    comentariosPorPublicacao[publicacao['id']] = comentariosCarregados;
+      List<Map<String, dynamic>> comentariosCarregados =
+          await Funcoes_Comentarios_Publicacoes()
+              .consultaComentariosPorPublicacao(publicacao['id']);
+      comentariosPorPublicacao[publicacao['id']] = comentariosCarregados;
 
-    double mediaClassificacao =
-        calcular_media_classificacao(comentariosCarregados);
+      double mediaClassificacao =
+          calcular_media_classificacao(comentariosCarregados);
 
-    publicacao['mediaClassificacao'] = mediaClassificacao;
+      publicacao['mediaClassificacao'] = mediaClassificacao;
 
-    publicacao['latitude'] = coordenadas['latitude'];
-    publicacao['longitude'] = coordenadas['longitude'];
+      publicacao['latitude'] = coordenadas['latitude'];
+      publicacao['longitude'] = coordenadas['longitude'];
 
-    double distance = calculateDistance(
-        _latitude, _longitude, coordenadas['latitude']!, coordenadas['longitude']!);
+      double distance = calculateDistance(_latitude, _longitude,
+          coordenadas['latitude']!, coordenadas['longitude']!);
 
-    publicacao['distance'] = "${distance.toStringAsFixed(1)} Km";
+      publicacao['distance'] = "${distance.toStringAsFixed(1)} Km";
+    }
+
+    if (!mounted) return;
+    setState(() {
+      publicacoes = publicacoesCarregadas;
+      _isLoadingPublicacoes = false; // Finaliza o carregamento
+    });
   }
-
-  if (!mounted) return;
-  setState(() {
-    publicacoes = publicacoesCarregadas;
-    _isLoadingPublicacoes = false; // Finaliza o carregamento
-  });
-}
 
   void _carregarPartilhasfotos() async {
     Funcoes_Partilhas funcoespartilhas = Funcoes_Partilhas();
@@ -525,28 +580,28 @@ class _InicioPageState extends State<InicioPage> {
     });
   }
 
-Future<void> carregarLocais() async {
-  for (var evento in eventos) {
-    if (!mounted) return; // Verificação antes de realizar qualquer operação
+  Future<void> carregarLocais() async {
+    for (var evento in eventos) {
+      if (!mounted) return; // Verificação antes de realizar qualquer operação
 
-    int eventoId = evento['id'];
-    double latitude = evento['latitude']; // Supondo que você tenha latitude
-    double longitude = evento['longitude']; // Supondo que você tenha longitude
+      int eventoId = evento['id'];
+      double latitude = evento['latitude']; // Supondo que você tenha latitude
+      double longitude =
+          evento['longitude']; // Supondo que você tenha longitude
 
-    try {
-      String address = await _getAddressUsingOSM(latitude, longitude);
+      try {
+        String address = await _getAddressUsingOSM(latitude, longitude);
 
-      if (!mounted) return; // Verificação após a operação assíncrona
-      setState(() {
-        localPorEvento[eventoId] = address;
-      });
-    } catch (e) {
-      // Trate o erro, caso ocorra
-      print('Erro ao obter o endereço: $e');
+        if (!mounted) return; // Verificação após a operação assíncrona
+        setState(() {
+          localPorEvento[eventoId] = address;
+        });
+      } catch (e) {
+        // Trate o erro, caso ocorra
+        print('Erro ao obter o endereço: $e');
+      }
     }
   }
-}
-
 
   Future<String> _getAddressUsingOSM(double latitude, double longitude) async {
     LocalizacaoOSM localizacaoOSM = LocalizacaoOSM();
@@ -974,7 +1029,8 @@ Future<void> carregarLocais() async {
                             child: CARD_PUBLICACAO(
                               nomePublicacao: publicacoes[index]['nome'],
                               local: publicacoes[index]['local'],
-                              classificacao_media: mediaClassificacao.toStringAsFixed(1),
+                              classificacao_media:
+                                  mediaClassificacao.toStringAsFixed(1),
                               publicacaoId: publicacaoId,
                               imagePath: imagePath,
                               distancia:
@@ -1116,8 +1172,8 @@ Future<void> carregarLocais() async {
                                             },
                                             child: CARD_PARTILHA(
                                               context: context,
-                                              nomeEvento_OU_Local:
-                                                  'ainda sem isto', // Ajuste conforme necessário
+                                              Titulo: partilhas[index][
+                                                  'titulo'], // Ajuste conforme necessário
                                               fotouser: fotoSnapshot.data ?? '',
                                               nomeuser:
                                                   usuarioSnapshot.data ?? '',
@@ -1154,8 +1210,7 @@ Future<void> carregarLocais() async {
                             Text(
                               'Infelizmente,\n'
                               'o centro de ${centroSelecionado!.nome} \n'
-                              'não tem partilhas ainda!\n'
-                              'a api apagouse tenho que fazer de novo',
+                              'não tem partilhas ainda!\n',
                               style:
                                   TextStyle(fontSize: 16, color: Colors.grey),
                               textAlign: TextAlign.center,

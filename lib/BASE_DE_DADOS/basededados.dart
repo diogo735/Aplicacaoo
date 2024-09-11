@@ -126,12 +126,19 @@ class DatabaseHelper {
         db); //mensagens dos grupos
     await Funcoes_Mensagens_Grupos.insertMensagemGrupo(db);
 
-    await Funcoes_Foruns.createForumTable(db); //foruns
-    await Funcoes_Foruns.insertForum(db);
+    await Funcoes_Foruns.createForumTable(db);
+    await Funcoes_Mensagens_foruns.createMensagemForumTable(db);
+    print('Tabela mensagem_forum criada com sucesso!');
 
-    await Funcoes_Mensagens_foruns.createMensagemForumTable(
-        db); //mensagens dos foruns
-    await Funcoes_Mensagens_foruns.insertMensagemForum(db);
+    void enviarMensagem(int forumId, int userId, String mensagemTexto) async {
+      await Funcoes_Mensagens_foruns().processarInsercaoMensagem(
+        forumId: forumId,
+        userId: userId,
+        textoMensagem: mensagemTexto,
+      );
+    }
+
+    
 
     await FuncoesCodigoverificacao.createTable(db);
   }

@@ -31,8 +31,7 @@ class _submenupartilhasState extends State<submenupartilhas> {
 
   double bottomMargin = 20.0;
   double rightMargin = 12.0;
-  Timer? _timerAPI;
-  Timer? _timerDB;
+
   bool isLeft = false;
 
   void toggle() {
@@ -47,18 +46,10 @@ class _submenupartilhasState extends State<submenupartilhas> {
     super.initState();
     _carregarPartilhasDaAPI();
     _carregarPartilhas();
-     _iniciarTimers();
+ 
   }
 
-  void _iniciarTimers() {
-    // Carregar partilhas da API a cada 30 segundos
-    _timerAPI = Timer.periodic(
-        Duration(seconds: 10), (Timer t) => _carregarPartilhasDaAPI());
-
-    // Carregar partilhas da base de dados a cada 15 segundos
-    _timerDB = Timer.periodic(
-        Duration(seconds: 15), (Timer t) => _carregarPartilhas());
-  }
+ 
 
   Future<void> _carregarPartilhasDaAPI() async {
     try {
@@ -119,8 +110,7 @@ class _submenupartilhasState extends State<submenupartilhas> {
 
   @override
   void dispose() {
-    _timerAPI?.cancel();
-    _timerDB?.cancel();
+
     super.dispose();
   }
 

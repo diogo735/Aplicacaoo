@@ -106,40 +106,52 @@ class _PaginaDaPartilhaState extends State<PaginaDaPartilha> {
     return DateTime(ano, mes, dia, horas, minutos);
   }
 
-  Future<void> _carregarDados(int idPartilha) async {
-    try {
-      Map<String, dynamic> dados =
-          await Funcoes_Partilhas().buscarDetalhesPartilha(idPartilha);
-      setState(() {
-        titulo = dados['titulo'] ?? '';
-        descricao = dados['descricao'] ?? '';
-        caminhoImagem = dados['caminho_imagem'] ?? '';
-        data = dados['data'] ?? '';
-        hora = dados['hora'] ?? '';
-        idUsuario = dados['id_usuario'];
-        //idEvento = dados['id_evento'];
-        //idLocal = dados['id_local'];
-        areaId = dados['area_id'];
-      });
 
-      if (idUsuario != null) {
-        _carregarDadosUsuario(idUsuario!);
-      }
-      final usuarioProvider =
-          Provider.of<Usuario_Provider>(context, listen: false);
-      user_id = usuarioProvider.usuarioSelecionado!.id_user;
+Future<void> _carregarDados(int idPartilha) async {
+  try {
+    // Buscar detalhes da partilha
+    Map<String, dynamic> dados = await Funcoes_Partilhas().buscarDetalhesPartilha(idPartilha);
+    
+    // Verificação de integridade dos dados da partilha
+    if (dados.isEmpty) {
+      print('Nenhum dado encontrado para a partilha $idPartilha');
+      return;
+    }
 
-      int numLikes =
-          await Funcoes_Likes_das_Partilhas().countLikesPorPartilha(idPartilha);
+    // Atualizando o estado da partilha com os dados recebidos
+    setState(() {
+      titulo = dados['titulo'] ?? '';
+      descricao = dados['descricao'] ?? '';
+      caminhoImagem = dados['caminho_imagem'] ?? '';
+      data = dados['data'] ?? '';
+      hora = dados['hora'] ?? '';
+      idUsuario = dados['id_usuario'];
+      areaId = dados['area_id'];
+    });
 
-      bool deu_like = await Funcoes_Likes_das_Partilhas.verificarUserDeuLike(
-          user_id, widget.idpartilha);
-/////////////////////////////////////////////////////////////////////////////////
-      List<Map<String, dynamic>> comentariosCarregados =
-          await Funcoes_Comentarios_das_Partilhas()
-              .consultaComentariosPorPartilha(idPartilha);
+    if (idUsuario != null) {
+      _carregarDadosUsuario(idUsuario!);
+    }
 
-      DateTime _converterDataHora(String data, String hora) {
+    final usuarioProvider = Provider.of<Usuario_Provider>(context, listen: false);
+    user_id = usuarioProvider.usuarioSelecionado!.id_user;
+
+    // Carregar comentários da partilha
+    List<Map<String, dynamic>> comentariosCarregados = await Funcoes_Comentarios_das_Partilhas().consultaComentariosPorPartilha(idPartilha);
+
+    // Verificar se há comentários antes de processar
+    if (comentariosCarregados.isEmpty) {
+      print('Nenhum comentário encontrado para a partilha $idPartilha');
+      return;
+    }
+
+    // Verificando a estrutura dos comentários carregados
+    print('Comentários carregados: $comentariosCarregados');
+
+    // Função para converter as strings de data e hora separadas em um objeto DateTime
+    DateTime _converterDataHora(String data, String hora) {
+      try {
+        // Espera-se que a data seja no formato dd/MM/yyyy e a hora no formato HH:mm
         List<String> partesData = data.split('/');
         List<String> partesHora = hora.split(':');
 
@@ -150,50 +162,36 @@ class _PaginaDaPartilhaState extends State<PaginaDaPartilha> {
         int minutos = int.parse(partesHora[1]);
 
         return DateTime(ano, mes, dia, horas, minutos);
+      } catch (e) {
+        print('Erro ao converter data e hora: $e');
+        return DateTime.now(); // Retorna a data atual em caso de erro
       }
-
-      List<Map<String, dynamic>> comentariosOrdenados =
-          List.from(comentariosCarregados);
-      comentariosOrdenados.sort((a, b) {
-        DateTime dataHoraA =
-            _converterDataHora(a['data_comentario'], a['hora_comentario']);
-        DateTime dataHoraB =
-            _converterDataHora(b['data_comentario'], b['hora_comentario']);
-
-        return dataHoraB.compareTo(dataHoraA); // Ordena pelo masi recente
-      });
-      if (idEvento != null) {
-        // Se o ID do evento não for nulo, busca os detalhes do evento
-        nomeEvento = await Funcoes_Eventos.consultaNomeEventoPorId(idEvento!);
-        List<Map<String, dynamic>> detalhesEvento =
-            await Funcoes_Eventos.consultaDetalhesEventoPorId(idEvento!);
-        if (detalhesEvento.isNotEmpty) {
-          diaEvento = detalhesEvento.first['dia_realizacao'];
-          mesEvento = detalhesEvento.first['mes_realizacao'];
-          numeroParticipantes = detalhesEvento.first['numero_inscritos'];
-          capa_evento = detalhesEvento.first['caminho_imagem'];
-        }
-      } else if (idLocal != null) {
-        // Se o ID do evento for nulo e o ID do local não for nulo, busca os detalhes do local
-        nomeLocal = await Funcoes_Publicacoes.consultaNomeLocalPorId(idLocal!);
-        List<Map<String, dynamic>> detalhesLocal =
-            await Funcoes_Publicacoes.consultaDetalhesPublicacaoPorId(idLocal!);
-        if (detalhesLocal.isNotEmpty) {
-          classlocal = detalhesLocal.first['classificacao_media'].toString();
-          moradalocal = detalhesLocal.first['local'];
-          capa_locla = detalhesLocal.first['caminho_imagem'];
-        }
-      }
-      setState(() {
-        numeroDeLikes = numLikes;
-        isLiked = deu_like;
-        comentarios.clear();
-        comentarios.addAll(comentariosOrdenados);
-      });
-    } catch (e) {
-      print('deu erro no carregamento dos dados da partilha: $e');
     }
+
+    // Ordenar os comentários pela data e hora mais recente
+    List<Map<String, dynamic>> comentariosOrdenados = List.from(comentariosCarregados);
+    comentariosOrdenados.sort((a, b) {
+      try {
+        DateTime dataHoraA = _converterDataHora(a['data_comentario'], a['hora_comentario']);
+        DateTime dataHoraB = _converterDataHora(b['data_comentario'], b['hora_comentario']);
+        return dataHoraB.compareTo(dataHoraA); // Ordena pelo mais recente
+      } catch (e) {
+        print('Erro ao ordenar os comentários: $e');
+        return 0; // Manter a ordem atual em caso de erro
+      }
+    });
+
+    // Atualizar o estado com os comentários ordenados
+    setState(() {
+      comentarios.clear();
+      comentarios.addAll(comentariosOrdenados);
+    });
+  } catch (e) {
+    print('Erro ao carregar os dados da partilha: $e');
   }
+}
+
+
 
   String converter_mes(int numeroMes) {
     switch (numeroMes) {
@@ -742,8 +740,8 @@ class _PaginaDaPartilhaState extends State<PaginaDaPartilha> {
                                     'user_id': user_id, // ID do usuário
                                     'texto_comentario':
                                         mensagemTexto, // Texto do comentário
-                                    'album_id': widget
-                                        .idpartilha, // ID do álbum ou partilha
+                                    'id_galeria':
+                                        widget.idpartilha, // ID da galeria
                                   };
 
                                   // Enviar o comentário para a API
@@ -755,22 +753,48 @@ class _PaginaDaPartilhaState extends State<PaginaDaPartilha> {
                                     // Se o comentário foi salvo com sucesso na API
                                     await Funcoes_Comentarios_das_Partilhas
                                         .criarComentario(
-                                            user_id,
-                                            widget.idpartilha,
-                                            mensagemTexto,
-                                            context);
+                                      user_id,
+                                      widget.idpartilha,
+                                      mensagemTexto,
+                                      context,
+                                    );
 
                                     // Limpar o campo de texto e fechar o teclado
                                     controller.clear();
                                     FocusScope.of(context).unfocus();
 
+                                    // Mostrar mensagem de sucesso
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                            'Comentário enviado com sucesso!'),
+                                        backgroundColor: Colors.green,
+                                      ),
+                                    );
+
                                     print('Comentário enviado com sucesso!');
                                   } else {
+                                    // Mostrar mensagem de falha
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                            'Falha ao enviar o comentário para a API.'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
                                     print(
                                         'Falha ao enviar o comentário para a API.');
                                   }
-                                } catch (e) {
-                                  print('Erro ao enviar comentário: $e');
+                                } catch (error) {
+                                  // Mostrar mensagem de erro
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                          'Erro ao enviar o comentário: $error'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                  print('Erro ao enviar o comentário: $error');
                                 }
                               }
                             },

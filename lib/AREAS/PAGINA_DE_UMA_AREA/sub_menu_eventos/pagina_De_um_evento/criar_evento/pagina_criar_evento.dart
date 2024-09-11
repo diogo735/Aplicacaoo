@@ -49,8 +49,7 @@ class _CriarEventoState extends State<CriarEvento> {
   String? _imagemTipoEventoSelecionado;
   int? _idTopicoSelecionado;
   String? _nomeTopicoSelecionado;
-String? _imagemTopicoSelecionado;
-
+  String? _imagemTopicoSelecionado;
 
   List<File> _imagensSelecionadas = [];
 
@@ -550,8 +549,8 @@ String? _imagemTopicoSelecionado;
     final isHoraInicioSelecionada = _horaSelecionada_inicio != null;
     final isHoraFimSelecionada = _horaSelecionada_fim != null;
     final isTipoEventoSelecionado = _idTipoEventoSelecionado != null;
-    final isTopicoSelecionado=_idTopicoSelecionado!=null;
-    final isImagensGaleria=_imagensSelecionadas.isNotEmpty;
+    final isTopicoSelecionado = _idTopicoSelecionado != null;
+    final isImagensGaleria = _imagensSelecionadas.isNotEmpty;
 
     isButtonEnabled.value = isDescricaoNotEmpty &&
         isTituloNotEmpty &&
@@ -561,8 +560,8 @@ String? _imagemTopicoSelecionado;
         isDataFimSelecionada &&
         isHoraInicioSelecionada &&
         isHoraFimSelecionada &&
-        isTipoEventoSelecionado&&
-        isTopicoSelecionado&&
+        isTipoEventoSelecionado &&
+        isTopicoSelecionado &&
         isImagensGaleria;
   }
 
@@ -1511,9 +1510,8 @@ String? _imagemTopicoSelecionado;
 
                                 setState(() {
                                   _nomeTopicoSelecionado = dados["nome"];
-                                  _imagemTopicoSelecionado =
-                                      dados["imagem"];
-                                  _idTopicoSelecionado=idSelecionado;
+                                  _imagemTopicoSelecionado = dados["imagem"];
+                                  _idTopicoSelecionado = idSelecionado;
                                 });
                               }
                             },
@@ -1639,7 +1637,7 @@ String? _imagemTopicoSelecionado;
                                               setState(() {
                                                 _imagensSelecionadas
                                                     .removeAt(index);
-                                                    _updateButtonState();
+                                                _updateButtonState();
                                               });
                                             },
                                             child: Container(
@@ -1697,13 +1695,15 @@ String? _imagemTopicoSelecionado;
                               return ElevatedButton.icon(
                                 onPressed: isEnabled
                                     ? () {
-                                        // Redireciona para a página "evento"
+                                      
+                                      
+
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
                                             builder: (context) =>
                                                 CarregandoPagina(
-                                                  idTopico: _idTopicoSelecionado!,
+                                              idTopico: _idTopicoSelecionado!,
                                               idArea: widget.idArea,
                                               dataInicio:
                                                   _dataSelecionada_inicio,
